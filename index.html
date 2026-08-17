@@ -20,7 +20,7 @@
 <body>
     <div class="app-container">
         
-        <!-- Clean Compact Header -->
+        <!-- Clean Top Header -->
         <header class="clean-header">
             <div class="brand">
                 <span class="logo">☕</span>
@@ -28,18 +28,21 @@
             </div>
             <div class="header-right">
                 <div class="timer-badge" id="timerContainer">
-                    <span class="t-ico">⏱️</span>
-                    <strong id="timerDisplay">00:60</strong>
+                    <span>⏱️</span>
+                    <strong id="timerDisplay">02:00</strong>
                 </div>
-                <button id="themeBtn" class="sm-btn" aria-label="Theme">🌙</button>
-                <button id="soundBtn" class="sm-btn" aria-label="Sound">🔊</button>
+                <button id="themeBtn" class="sm-btn" title="Mode Terang/Gelap" aria-label="Theme">🌙</button>
+                <button id="soundBtn" class="sm-btn" title="Suara" aria-label="Sound">🔊</button>
             </div>
         </header>
 
-        <!-- Active Question Banner -->
-        <div class="clue-banner">
-            <span id="clueBadge" class="badge">1-MENDATAR</span>
-            <span id="clueText" class="text">Pilih kotak pada papan TTS untuk mulai...</span>
+        <!-- Prominent Active Question Display -->
+        <div class="active-question-card">
+            <div class="question-header">
+                <span id="clueBadge" class="q-badge">1-MENDATAR</span>
+                <button id="dirToggleBtn" class="dir-btn">🔄 Direction: Mendatar</button>
+            </div>
+            <p id="clueText" class="q-text">Sentuh kotak pada papan TTS untuk menampilkan pertanyaan...</p>
         </div>
 
         <!-- 11x11 TTS Grid Area -->
@@ -47,67 +50,33 @@
             <div id="ttsGrid" class="tts-grid-wrapper">
                 <!-- Dynamically generated 11x11 grid -->
             </div>
+
+            <!-- Hidden native input to trigger native Android software keyboard -->
+            <input type="text" id="hiddenInput" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="text" class="hidden-native-input" tabindex="-1">
         </main>
 
-        <!-- Quick Action Buttons -->
+        <!-- Action Toolbar -->
         <div class="action-bar">
             <button id="checkWordBtn" class="btn btn-check">✔️ Cek Jawaban</button>
             <button id="hintBtn" class="btn btn-hint">💡 Hint (<span id="hintCount">3</span>)</button>
-            <button id="restartBtn" class="btn btn-restart">🔄 Reset (60s)</button>
+            <button id="restartBtn" class="btn btn-restart">🔄 Reset (120s)</button>
         </div>
 
-        <!-- Virtual Touch Keyboard -->
-        <div class="keyboard">
-            <div class="kb-row">
-                <button class="kb-key" data-key="Q">Q</button>
-                <button class="kb-key" data-key="W">W</button>
-                <button class="kb-key" data-key="E">E</button>
-                <button class="kb-key" data-key="R">R</button>
-                <button class="kb-key" data-key="T">T</button>
-                <button class="kb-key" data-key="Y">Y</button>
-                <button class="kb-key" data-key="U">U</button>
-                <button class="kb-key" data-key="I">I</button>
-                <button class="kb-key" data-key="O">O</button>
-                <button class="kb-key" data-key="P">P</button>
-            </div>
-            <div class="kb-row">
-                <button class="kb-key" data-key="A">A</button>
-                <button class="kb-key" data-key="S">S</button>
-                <button class="kb-key" data-key="D">D</button>
-                <button class="kb-key" data-key="F">F</button>
-                <button class="kb-key" data-key="G">G</button>
-                <button class="kb-key" data-key="H">H</button>
-                <button class="kb-key" data-key="J">J</button>
-                <button class="kb-key" data-key="K">K</button>
-                <button class="kb-key" data-key="L">L</button>
-            </div>
-            <div class="kb-row">
-                <button class="kb-key kb-dir" data-key="DIR" id="dirToggleBtn">🔄 DTR</button>
-                <button class="kb-key" data-key="Z">Z</button>
-                <button class="kb-key" data-key="X">X</button>
-                <button class="kb-key" data-key="C">C</button>
-                <button class="kb-key" data-key="V">V</button>
-                <button class="kb-key" data-key="B">B</button>
-                <button class="kb-key" data-key="N">N</button>
-                <button class="kb-key" data-key="M">M</button>
-                <button class="kb-key kb-back" data-key="BACKSPACE">⌫</button>
-            </div>
-        </div>
-
-        <!-- Clue Lists Drawer -->
-        <details class="clues-drawer">
-            <summary class="drawer-title">📜 Daftar Pertanyaan Lengkap (15 Soal)</summary>
+        <!-- Full Visible Clues List Section (15 Questions) -->
+        <section class="all-clues-section">
+            <h3 class="section-title">📜 Daftar 15 Pertanyaan TTS</h3>
             <div class="clues-grid">
-                <div>
-                    <h4>➡️ Mendatar</h4>
+                <div class="clues-col">
+                    <h4 class="col-title">➡️ Mendatar (Across)</h4>
                     <ul id="acrossCluesList" class="clues-list"></ul>
                 </div>
-                <div>
-                    <h4>⬇️ Menurun</h4>
+                <div class="clues-col">
+                    <h4 class="col-title">⬇️ Menurun (Down)</h4>
                     <ul id="downCluesList" class="clues-list"></ul>
                 </div>
             </div>
-        </details>
+        </section>
+
     </div>
 
     <!-- Modal: Jawaban Salah -->
@@ -131,7 +100,7 @@
                 Selamat! Anda berhasil memecahkan seluruh 15 pertanyaan tepat waktu!
             </p>
             <p class="modal-quote">"Tetap rendah hati dan selalu biasakan membahas substansi."</p>
-            <button id="playAgainBtn" class="btn-modal btn-gold">Main Lagi (60 Detik)</button>
+            <button id="playAgainBtn" class="btn-modal btn-gold">Main Lagi (120 Detik)</button>
         </div>
     </div>
 
@@ -139,7 +108,7 @@
     <div id="defeatModal" class="modal-backdrop hidden">
         <div class="modal-card">
             <div class="modal-icon">⏱️❌</div>
-            <h2>WAKTU 60 DETIK HABIS!</h2>
+            <h2>WAKTU 120 DETIK HABIS!</h2>
             <p class="modal-message">
                 "Harus banyak belajar lagi dan biasakan membahas substansi."
             </p>
