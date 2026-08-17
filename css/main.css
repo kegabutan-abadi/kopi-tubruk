@@ -1,5 +1,5 @@
 /* ==========================================================================
-   KOPI TUBRUK - Ultra Clean Mobile Android Stylesheet
+   KOPI TUBRUK - Mobile Android Native Keyboard & Clean Display Stylesheet
    ========================================================================== */
 
 :root {
@@ -76,7 +76,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -88,7 +88,7 @@ body {
 }
 
 .brand .logo { font-size: 1.4rem; }
-.brand h2 { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
+.brand h2 { font-size: 1.15rem; font-weight: 800; color: var(--text-main); }
 
 .header-right {
   display: flex;
@@ -108,161 +108,177 @@ body {
 
 .timer-badge strong {
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--accent-gold);
 }
 
 .timer-warning {
   border-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.2) !important;
+  background: rgba(239, 68, 68, 0.25) !important;
+  animation: timer-pulse 0.6s infinite alternate;
+}
+
+@keyframes timer-pulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 .sm-btn {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.95rem;
 }
 
-/* Clue Banner */
-.clue-banner {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-  padding: 8px 12px;
+/* Prominent Active Question Display Card */
+.active-question-card {
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--accent-coffee);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
 }
 
-.clue-banner .badge {
-  background: var(--accent-coffee);
-  color: #fff;
-  font-size: 0.65rem;
+.q-badge {
+  background: linear-gradient(90deg, #d97736, #b45309);
+  color: #ffffff;
+  font-size: 0.75rem;
   font-weight: 800;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
-  white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
-.clue-banner .text {
-  font-size: 0.8rem;
+.dir-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--accent-gold);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.q-text {
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-main);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
-/* Grid Area */
+/* Grid Area & Hidden Input */
 .grid-section {
-  padding: 8px;
+  padding: 10px 8px;
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+.hidden-native-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  left: -9999px;
+  top: -9999px;
 }
 
 /* Action Bar */
 .action-bar {
   display: flex;
   gap: 6px;
-  padding: 4px 8px;
+  padding: 4px 10px 10px 10px;
 }
 
 .btn {
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-check { background: #059669; color: #fff; border-color: #059669; }
 .btn-hint { background: var(--bg-card); color: var(--accent-gold); }
 .btn-restart { background: var(--bg-card); color: var(--text-muted); }
 
-/* Virtual Keyboard */
-.keyboard {
+/* Full Visible Clues Section */
+.all-clues-section {
+  padding: 12px 10px;
   background: var(--bg-secondary);
-  padding: 6px 4px;
   border-top: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: auto;
 }
 
-.kb-row {
-  display: flex;
-  justify-content: center;
-  gap: 3px;
-}
-
-.kb-key {
-  flex: 1;
-  max-width: 36px;
-  height: 40px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  color: var(--text-main);
-  font-family: var(--font-mono);
-  font-weight: 800;
+.section-title {
   font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.kb-key:active { background: var(--accent-coffee); color: #fff; }
-.kb-dir, .kb-back { max-width: 50px; font-size: 0.75rem; color: var(--accent-gold); }
-
-/* Clues Drawer */
-.clues-drawer {
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  padding: 8px;
-}
-
-.drawer-title {
-  font-size: 0.75rem;
   font-weight: 800;
-  color: var(--accent-coffee);
-  cursor: pointer;
-  user-select: none;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
 }
 
 .clues-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 8px;
-  max-height: 140px;
-  overflow-y: auto;
+  gap: 10px;
 }
 
-.clues-grid h4 { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+.col-title {
+  font-size: 0.75rem;
+  color: var(--accent-coffee);
+  margin-bottom: 6px;
+  font-weight: 800;
+}
 
-.clues-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.clues-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .clues-list li {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  padding: 4px;
-  background: var(--bg-primary);
+  padding: 6px 8px;
+  background: var(--bg-card);
   border-radius: 4px;
+  border: 1px solid transparent;
   cursor: pointer;
+  line-height: 1.35;
 }
-.clues-list li.active-clue-item { border: 1px solid var(--accent-gold); color: var(--text-main); }
+
+.clues-list li strong {
+  color: var(--accent-gold);
+}
+
+.clues-list li.active-clue-item {
+  border-color: var(--accent-gold);
+  color: var(--text-main);
+  background: rgba(251, 191, 36, 0.15);
+}
 
 /* Modals */
 .modal-backdrop {
@@ -290,7 +306,9 @@ body {
 
 .modal-icon { font-size: 2.2rem; margin-bottom: 8px; }
 .modal-card h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
-.modal-message { font-size: 0.9rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 14px; }
+.modal-message { font-size: 0.95rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 14px; }
+.modal-quote { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 14px; font-style: italic; }
+
 .btn-modal {
   width: 100%;
   padding: 10px;
