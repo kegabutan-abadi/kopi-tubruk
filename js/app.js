@@ -1,24 +1,23 @@
 /**
- * KOPI TUBRUK - Main Application Controller
+ * KOPI TUBRUK - Main Controller (Native Keyboard & Touch Handling)
  */
 
 class AppController {
   constructor() {
     this.themeBtn = document.getElementById('themeBtn');
     this.soundBtn = document.getElementById('soundBtn');
-    this.securityBtn = document.getElementById('securityBtn');
+    this.hiddenInput = document.getElementById('hiddenInput');
     
     // Modals
     this.wrongModal = document.getElementById('wrongModal');
     this.defeatModal = document.getElementById('defeatModal');
     this.victoryModal = document.getElementById('victoryModal');
-    this.securityModal = document.getElementById('securityModal');
 
     this.init();
   }
 
   init() {
-    // Top Bar Buttons
+    // Theme & Sound Buttons
     if (this.themeBtn) {
       this.themeBtn.addEventListener('click', () => this.toggleTheme());
     }
@@ -30,24 +29,18 @@ class AppController {
       });
     }
 
-    if (this.securityBtn) {
-      this.securityBtn.addEventListener('click', () => {
-        if (this.securityModal) this.securityModal.classList.remove('hidden');
-      });
+    // Direction Toggle
+    const dirToggleBtn = document.getElementById('dirToggleBtn');
+    if (dirToggleBtn) {
+      dirToggleBtn.addEventListener('click', () => window.ttsEngine.toggleDirection());
     }
 
-    // Modal Action Buttons
+    // Modal Close Buttons
     const closeWrongBtn = document.getElementById('closeWrongModalBtn');
     if (closeWrongBtn) {
       closeWrongBtn.addEventListener('click', () => {
         if (this.wrongModal) this.wrongModal.classList.add('hidden');
-      });
-    }
-
-    const closeSecBtn = document.getElementById('closeSecurityModalBtn');
-    if (closeSecBtn) {
-      closeSecBtn.addEventListener('click', () => {
-        if (this.securityModal) this.securityModal.classList.add('hidden');
+        window.ttsEngine.focusNativeInput();
       });
     }
 
@@ -67,7 +60,7 @@ class AppController {
       });
     }
 
-    // Action Toolbar
+    // Action Bar
     const checkBtn = document.getElementById('checkWordBtn');
     if (checkBtn) {
       checkBtn.addEventListener('click', () => window.ttsEngine.checkWord());
@@ -83,33 +76,25 @@ class AppController {
       restartBtn.addEventListener('click', () => window.ttsEngine.loadLevel('level1'));
     }
 
-    const dirToggleBtn = document.getElementById('dirToggleBtn');
-    if (dirToggleBtn) {
-      dirToggleBtn.addEventListener('click', () => window.ttsEngine.toggleDirection());
-    }
-
-    // Virtual Keyboard Binding
-    document.querySelectorAll('.kb-key').forEach(keyEl => {
-      keyEl.addEventListener('click', (e) => {
-        const key = e.currentTarget.dataset.key;
-        if (!key) return;
-
-        if (key === 'BACKSPACE') {
-          window.ttsEngine.backspaceChar();
-        } else if (key === 'DIR') {
-          window.ttsEngine.toggleDirection();
-        } else {
-          window.ttsEngine.inputChar(key);
+    // Native Android Keyboard Input Handler via hidden input
+    if (this.hiddenInput) {
+      this.hiddenInput.addEventListener('input', (e) => {
+        const val = this.hiddenInput.value;
+        if (val) {
+          const char = val.slice(-1);
+          if (/^[a-zA-Z]$/.test(char)) {
+            window.ttsEngine.inputChar(char);
+          }
+          this.hiddenInput.value = '';
         }
       });
-    });
+    }
 
-    // Hardware Keyboard binding
+    // Global Keydown Handler for Backspace & Arrow Keys
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace') {
         window.ttsEngine.backspaceChar();
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        // Direction change
         if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
           window.ttsEngine.direction = 'across';
         } else {
@@ -121,7 +106,7 @@ class AppController {
       }
     });
 
-    // Load initial level
+    // Load Level 1
     window.ttsEngine.loadLevel('level1');
   }
 
