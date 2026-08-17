@@ -1,73 +1,46 @@
 /* ==========================================================================
-   KOPI TUBRUK - Main Android Design System & Layout
+   KOPI TUBRUK - Ultra Clean Mobile Android Stylesheet
    ========================================================================== */
 
 :root {
-  /* Dark Theme (Espresso Dark - Default) */
   --bg-primary: #120905;
   --bg-secondary: #1c100a;
   --bg-card: #27160d;
-  --bg-glass: rgba(39, 22, 13, 0.92);
   
   --text-main: #f5ebe6;
   --text-muted: #b8a398;
-  --text-inverse: #120905;
 
   --accent-coffee: #d97736;
   --accent-gold: #fbbf24;
-  --accent-sparkle: #38bdf8;
-  --accent-glow: rgba(217, 119, 54, 0.45);
-  
   --border-color: rgba(217, 119, 54, 0.28);
-  --border-active: #d97736;
 
   --cell-bg: #22120a;
   --cell-border: #3d2315;
-  --cell-filled: #311a0e;
   --cell-highlight: rgba(217, 119, 54, 0.38);
   --cell-active: #e67e22;
   --cell-text: #ffffff;
-  --cell-correct: #10b981;
-  --cell-wrong: #ef4444;
-
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
-  --shadow-glow: 0 0 20px rgba(217, 119, 54, 0.35);
 
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 [data-theme="light"] {
-  /* Light Theme (Cream & Coffee) */
   --bg-primary: #f8f4f0;
   --bg-secondary: #efe5dc;
   --bg-card: #ffffff;
-  --bg-glass: rgba(255, 255, 255, 0.95);
   
   --text-main: #2b170c;
   --text-muted: #735748;
-  --text-inverse: #ffffff;
 
   --accent-coffee: #b45309;
   --accent-gold: #d97706;
-  --accent-sparkle: #0284c7;
-  --accent-glow: rgba(180, 83, 9, 0.25);
-
   --border-color: rgba(180, 83, 9, 0.2);
-  --border-active: #b45309;
 
   --cell-bg: #ffffff;
   --cell-border: #e2d2c5;
-  --cell-filled: #fdf8f4;
   --cell-highlight: rgba(251, 191, 36, 0.35);
   --cell-active: #d97706;
   --cell-text: #2b170c;
-  --cell-correct: #059669;
-  --cell-wrong: #dc2626;
 }
 
 * {
@@ -79,225 +52,152 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: #080402;
+  background-color: var(--bg-primary);
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 0;
 }
 
-.mobile-frame {
+.app-container {
   width: 100%;
-  max-width: 480px;
-  height: 100vh;
-  max-height: 920px;
+  max-width: 440px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
 }
 
-/* Header Section */
-.app-header {
+/* Header */
+.clean-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 10px 12px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
 
-.brand-title {
+.brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.coffee-icon {
-  font-size: 1.6rem;
-  filter: drop-shadow(0 0 6px var(--accent-gold));
-}
+.brand .logo { font-size: 1.4rem; }
+.brand h2 { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
 
-.brand-title h1 {
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--text-main);
-}
-
-.sub-brand {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--accent-gold);
-  display: block;
-  margin-top: -2px;
-}
-
-.header-actions {
+.header-right {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
 }
 
-.icon-btn {
+.timer-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  color: var(--text-main);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: transform 0.15s, background 0.15s;
+  padding: 4px 10px;
+  border-radius: 20px;
 }
 
-.icon-btn:active {
-  transform: scale(0.9);
-}
-
-/* Info Bar */
-.game-info-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
-  padding: 8px 12px;
-  background: var(--bg-primary);
-}
-
-.info-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 6px 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.info-icon {
-  font-size: 1.1rem;
-}
-
-.info-data {
-  display: flex;
-  flex-direction: column;
-}
-
-.info-label {
-  font-size: 0.55rem;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.info-val {
+.timer-badge strong {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 800;
+  font-size: 0.9rem;
   color: var(--accent-gold);
 }
 
 .timer-warning {
   border-color: #ef4444 !important;
-  animation: timer-flash 0.6s infinite alternate;
+  background: rgba(239, 68, 68, 0.2) !important;
 }
 
-@keyframes timer-flash {
-  0% { background: rgba(239, 68, 68, 0.1); }
-  100% { background: rgba(239, 68, 68, 0.35); }
+.sm-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Active Clue Bar */
-.active-clue-bar {
+/* Clue Banner */
+.clue-banner {
   background: var(--bg-secondary);
-  border-y: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   padding: 8px 12px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.clue-badge {
-  background: linear-gradient(90deg, #d97736, #b45309);
-  color: #ffffff;
+.clue-banner .badge {
+  background: var(--accent-coffee);
+  color: #fff;
   font-size: 0.65rem;
   font-weight: 800;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
 }
 
-.clue-text {
+.clue-banner .text {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
-  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Board Area */
-.board-area {
+/* Grid Area */
+.grid-section {
   padding: 8px;
-  flex: 1;
   display: flex;
-  flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 
-/* Action Toolbar */
-.action-toolbar {
+/* Action Bar */
+.action-bar {
   display: flex;
   gap: 6px;
-  padding: 0 8px 8px 8px;
+  padding: 4px 8px;
 }
 
-.action-btn {
+.btn {
   flex: 1;
   padding: 8px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   font-family: var(--font-sans);
   font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: transform 0.1s, opacity 0.15s;
 }
 
-.action-btn:active {
-  transform: scale(0.96);
-}
-
-.btn-check {
-  background: linear-gradient(90deg, #10b981, #059669);
-  color: #fff;
-  border-color: #059669;
-}
-
-.btn-hint {
-  background: var(--bg-card);
-  color: var(--accent-gold);
-}
-
-.btn-restart {
-  background: var(--bg-card);
-  color: var(--text-muted);
-}
+.btn-check { background: #059669; color: #fff; border-color: #059669; }
+.btn-hint { background: var(--bg-card); color: var(--accent-gold); }
+.btn-restart { background: var(--bg-card); color: var(--text-muted); }
 
 /* Virtual Keyboard */
-.virtual-keyboard {
+.keyboard {
   background: var(--bg-secondary);
   padding: 6px 4px;
   border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-top: auto;
 }
 
 .kb-row {
@@ -308,131 +208,67 @@ body {
 
 .kb-key {
   flex: 1;
-  max-width: 38px;
-  height: 42px;
+  max-width: 36px;
+  height: 40px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 5px;
   color: var(--text-main);
   font-family: var(--font-mono);
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   user-select: none;
-  touch-action: manipulation;
 }
 
-.kb-key:active {
-  background: var(--accent-coffee);
-  color: #ffffff;
+.kb-key:active { background: var(--accent-coffee); color: #fff; }
+.kb-dir, .kb-back { max-width: 50px; font-size: 0.75rem; color: var(--accent-gold); }
+
+/* Clues Drawer */
+.clues-drawer {
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  padding: 8px;
 }
 
-.kb-func {
-  max-width: 54px;
+.drawer-title {
   font-size: 0.75rem;
-  background: var(--bg-primary);
-  color: var(--accent-gold);
+  font-weight: 800;
+  color: var(--accent-coffee);
+  cursor: pointer;
+  user-select: none;
 }
 
-/* Clues Container Drawer */
-.clues-container {
+.clues-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  padding: 8px;
-  max-height: 120px;
+  margin-top: 8px;
+  max-height: 140px;
   overflow-y: auto;
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-color);
 }
 
-.clues-column h3 {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--accent-coffee);
-  margin-bottom: 4px;
-}
+.clues-grid h4 { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
 
-.clues-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+.clues-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .clues-list li {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
-  padding: 4px 6px;
-  background: var(--bg-card);
-  border-radius: 4px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  line-height: 1.3;
-}
-
-.clues-list li.active-clue-item {
-  border-color: var(--accent-gold);
-  color: var(--text-main);
-  background: rgba(251, 191, 36, 0.15);
-}
-
-/* PWA Banner */
-.pwa-banner {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(90deg, #27160d, #1c100a);
-  border-top: 2px solid var(--accent-gold);
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 50;
-}
-
-.pwa-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pwa-icon { font-size: 1.4rem; }
-
-.pwa-text strong { font-size: 0.8rem; color: #fff; }
-.pwa-text p { font-size: 0.65rem; color: var(--text-muted); }
-
-.pwa-buttons { display: flex; gap: 6px; }
-
-.btn-install-pwa {
-  background: var(--accent-gold);
-  color: #120905;
-  border: none;
-  font-weight: 800;
-  font-size: 0.7rem;
-  padding: 6px 10px;
+  padding: 4px;
+  background: var(--bg-primary);
   border-radius: 4px;
   cursor: pointer;
 }
-
-.btn-close-pwa {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
-  cursor: pointer;
-}
+.clues-list li.active-clue-item { border: 1px solid var(--accent-gold); color: var(--text-main); }
 
 /* Modals */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -445,76 +281,25 @@ body {
 .modal-card {
   background: var(--bg-card);
   border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: 14px;
   padding: 20px;
-  max-width: 380px;
+  max-width: 320px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
 }
 
-.modal-icon {
-  font-size: 2.5rem;
-  margin-bottom: 8px;
-}
-
-.modal-card h2 {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 8px;
-}
-
-.modal-message {
-  font-size: 0.95rem;
-  line-height: 1.4;
-  color: var(--accent-gold);
-  margin-bottom: 12px;
-}
-
-.font-quote {
-  font-style: italic;
-  font-weight: 700;
-}
-
-.modal-sub {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-}
-
-.btn-modal-action {
+.modal-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.modal-card h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+.modal-message { font-size: 0.9rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 14px; }
+.btn-modal {
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(90deg, #d97736, #b45309);
-  color: #ffffff;
+  padding: 10px;
+  background: var(--accent-coffee);
+  color: #fff;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-weight: 800;
   font-size: 0.85rem;
   cursor: pointer;
 }
-
-.btn-gold {
-  background: linear-gradient(90deg, #fbbf24, #d97706);
-  color: #120905;
-}
-
-/* Security Features List */
-.security-features {
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 14px 0;
-}
-
-.sec-item {
-  display: flex;
-  gap: 10px;
-}
-
-.sec-ico { font-size: 1.2rem; }
-
-.sec-item strong { font-size: 0.8rem; color: var(--text-main); }
-.sec-item p { font-size: 0.7rem; color: var(--text-muted); }
+.btn-gold { background: var(--accent-gold); color: #120905; }
