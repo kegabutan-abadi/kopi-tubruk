@@ -1,5 +1,8 @@
 /**
- * KOPI TUBRUK - Crossword (TTS) Core Interactive Engine
+ * KOPI TUBRUK - Crossword (TTS) Core Engine (Native Android Keyboard Edition)
+ * - 120-Second Countdown Timer
+ * - Native Android Software Keyboard Integration
+ * - Prominent Active Question Display
  */
 
 class TTSEngine {
@@ -14,15 +17,15 @@ class TTSEngine {
     this.hintsLeft = 3;
     this.score = 0;
     
-    // 60-Second Countdown Timer
-    this.targetSeconds = 60;
-    this.timerLeft = 60;
+    // 120-Second Countdown Timer
+    this.targetSeconds = 120;
+    this.timerLeft = 120;
     this.timerInterval = null;
     this.isGameOver = false;
   }
 
-  // Dynamic DOM getters to prevent cached null references
   get gridContainer() { return document.getElementById('ttsGrid'); }
+  get hiddenInput() { return document.getElementById('hiddenInput'); }
   get activeClueBadge() { return document.getElementById('clueBadge'); }
   get activeClueText() { return document.getElementById('clueText'); }
   get acrossList() { return document.getElementById('acrossCluesList'); }
@@ -44,7 +47,6 @@ class TTSEngine {
     const rows = this.levelData.rows;
     const cols = this.levelData.cols;
 
-    // Initialize blank user grid
     this.gridMatrix = Array.from({ length: rows }, () => Array(cols).fill(''));
 
     this.hintsLeft = 3;
@@ -56,13 +58,13 @@ class TTSEngine {
     this.renderClues();
     this.selectFirstCell();
 
-    // Start 60-Second Countdown
-    this.start60sTimer();
+    // Start 120-Second Countdown
+    this.start120sTimer();
   }
 
-  start60sTimer() {
+  start120sTimer() {
     this.stopTimer();
-    this.timerLeft = 60;
+    this.timerLeft = 120;
     this.updateTimerDisplay();
 
     this.timerInterval = setInterval(() => {
@@ -86,12 +88,13 @@ class TTSEngine {
 
   updateTimerDisplay() {
     if (!this.timerDisplay) return;
-    const secs = String(Math.max(0, this.timerLeft)).padStart(2, '0');
-    this.timerDisplay.textContent = `00:${secs}`;
+    const mins = String(Math.floor(Math.max(0, this.timerLeft) / 60)).padStart(2, '0');
+    const secs = String(Math.max(0, this.timerLeft) % 60).padStart(2, '0');
+    this.timerDisplay.textContent = `${mins}:${secs}`;
     
     const container = document.getElementById('timerContainer');
     if (container) {
-      if (this.timerLeft <= 15) {
+      if (this.timerLeft <= 30) {
         container.classList.add('timer-warning');
       } else {
         container.classList.remove('timer-warning');
@@ -111,10 +114,7 @@ class TTSEngine {
 
   renderGrid() {
     const container = this.gridContainer;
-    if (!container) {
-      console.error("[TTSEngine] ttsGrid container not found in DOM!");
-      return;
-    }
+    if (!container) return;
     container.innerHTML = '';
     
     const rows = this.levelData.rows;
@@ -123,7 +123,6 @@ class TTSEngine {
     container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
     container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
-    // Map cell numbers
     const numberMap = {};
     if (this.levelData.numbers) {
       this.levelData.numbers.forEach(item => {
@@ -186,6 +185,7 @@ class TTSEngine {
     }
     this.updateHighlighting();
     this.updateActiveClueDisplay();
+    this.focusNativeInput();
   }
 
   selectCell(r, c) {
@@ -193,15 +193,25 @@ class TTSEngine {
     this.selectedCol = c;
     this.updateHighlighting();
     this.updateActiveClueDisplay();
+    this.focusNativeInput();
+  }
+
+  focusNativeInput() {
+    const input = this.hiddenInput;
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
   }
 
   toggleDirection() {
     this.direction = (this.direction === 'across') ? 'down' : 'across';
     if (this.dirToggleBtn) {
-      this.dirToggleBtn.textContent = (this.direction === 'across') ? '🔄 DTR' : '🔄 MNR';
+      this.dirToggleBtn.textContent = (this.direction === 'across') ? '🔄 Direction: Mendatar' : '🔄 Direction: Menurun';
     }
     this.updateHighlighting();
     this.updateActiveClueDisplay();
+    this.focusNativeInput();
   }
 
   updateHighlighting() {
@@ -430,7 +440,7 @@ class TTSEngine {
     } else if (isFullyFilled) {
       this.handleVictory();
     } else {
-      alert("Jawaban sejauh ini sudah BENAR! Lanjutkan mengisi seluruh 15 pertanyaan!");
+      alert("Jawaban sejauh ini BENAR! Lanjutkan mengisi 15 pertanyaan!");
     }
   }
 
@@ -454,18 +464,12 @@ class TTSEngine {
     this.isGameOver = true;
     this.stopTimer();
 
-    this.score += 1500 + (this.timerLeft * 50);
+    this.score += 2000 + (this.timerLeft * 30);
     this.updateScoreDisplay();
 
     if (window.soundEngine) window.soundEngine.playCorrect();
 
     const victoryModal = document.getElementById('victoryModal');
-    const vicTime = document.getElementById('vicTime');
-    const vicScore = document.getElementById('vicScore');
-
-    if (vicTime) vicTime.textContent = `${this.timerLeft}s`;
-    if (vicScore) vicScore.textContent = `${this.score}`;
-
     if (victoryModal) victoryModal.classList.remove('hidden');
   }
 
