@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Smart Sparkling / Glowing Ticker Border CSS
+   ========================================================================== */
+
+.smart-ticker-border {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  padding: 3px;
+  background: linear-gradient(
+    90deg, 
+    #d97736, 
+    #fbbf24, 
+    #38bdf8, 
+    #a855f7, 
+    #d97736
+  );
+  background-size: 300% 300%;
+  animation: border-sparkle-glow 6s ease infinite;
+  box-shadow: 0 0 25px var(--accent-glow);
+}
+
+@keyframes border-sparkle-glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Corner Sparkle Dots */
+.sparkle-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffffff, 0 0 20px #38bdf8;
+  z-index: 10;
+  animation: sparkle-pulse 1.5s ease-in-out infinite alternate;
+}
+
+.sparkle-tl { top: -2px; left: -2px; }
+.sparkle-tr { top: -2px; right: -2px; animation-delay: 0.4s; }
+.sparkle-bl { bottom: -2px; left: -2px; animation-delay: 0.8s; }
+.sparkle-br { bottom: -2px; right: -2px; animation-delay: 1.2s; }
+
+@keyframes sparkle-pulse {
+  0% { transform: scale(0.6); opacity: 0.4; }
+  100% { transform: scale(1.4); opacity: 1; }
+}
+
+.app-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  border-radius: calc(var(--radius-lg) - 2px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ticker Bar Layout */
+.ticker-wrapper {
+  display: flex;
+  align-items: center;
+  background: #000;
+  color: #fff;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.ticker-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(90deg, #d97736, #b45309);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  margin-right: 8px;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #22c55e;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.ticker-content-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  white-space: nowrap;
+}
+
+.ticker-text {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #fbbf24;
+  padding-left: 100%;
+  animation: marquee-scroll 22s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+
+.ticker-wrapper:hover .ticker-text {
+  animation-play-state: paused;
+}
