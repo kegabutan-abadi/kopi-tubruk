@@ -3,266 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KOPI TUBRUK - Teka Teki Silang Smart Android</title>
-    <meta name="description" content="Game TTS Smart KOPI TUBRUK - 15 Soal Interlocking, Timer 60 Detik, 100% Aman & Tanpa Izin HP. Sukseskan Budaya Membahas Substansi!">
+    <title>KOPI TUBRUK - Teka Teki Silang Android</title>
     <meta name="theme-color" content="#120905">
     
-    <!-- PWA Web Manifest -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
     <link rel="apple-touch-icon" href="icons/icon-192.svg">
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     
-    <!-- CSS Modules -->
     <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/ticker.css">
     <link rel="stylesheet" href="css/tts-board.css">
 </head>
 <body>
-    <!-- App Mobile Wrapper -->
-    <div class="mobile-frame">
+    <div class="app-container">
         
-        <!-- Smart Sparkling Glowing Ticker Border -->
-        <div class="smart-ticker-border">
-            <div class="sparkle-dot sparkle-tl"></div>
-            <div class="sparkle-dot sparkle-tr"></div>
-            <div class="sparkle-dot sparkle-bl"></div>
-            <div class="sparkle-dot sparkle-br"></div>
-            
-            <div class="app-screen">
-                
-                <!-- Top Status Header -->
-                <header class="app-header">
-                    <div class="brand-title">
-                        <span class="coffee-icon">☕</span>
-                        <div>
-                            <h1>KOPI TUBRUK</h1>
-                            <span class="sub-brand">TTS Smart & Substansial</span>
-                        </div>
-                    </div>
-                    <div class="header-actions">
-                        <button id="securityBtn" class="icon-btn" title="Garansi Keamanan 0 Izin" aria-label="Garansi Keamanan">🛡️</button>
-                        <button id="themeBtn" class="icon-btn" title="Ubah Mode Gelap/Terang" aria-label="Mode Gelap/Terang">🌙</button>
-                        <button id="soundBtn" class="icon-btn" title="Efek Suara" aria-label="Efek Suara">🔊</button>
-                    </div>
-                </header>
-
-                <!-- Smart Marquee Ticker -->
-                <div class="ticker-wrapper">
-                    <div class="ticker-label">
-                        <span class="pulse-led"></span> SMART TICKER
-                    </div>
-                    <div class="ticker-content">
-                        <span id="tickerText" class="marquee-text">
-                            ☕ Selamat Datang di KOPI TUBRUK! Murni, Jujur, dan Berisi. 💡 15 Pertanyaan Saling Terkait | ⏱️ Target Waktu: 60 Detik | 🛡️ 100% Aman & Tanpa Izin HP | Biasakan Membahas Substansi!
-                        </span>
-                    </div>
+        <!-- Clean Compact Header -->
+        <header class="clean-header">
+            <div class="brand">
+                <span class="logo">☕</span>
+                <h2>KOPI TUBRUK</h2>
+            </div>
+            <div class="header-right">
+                <div class="timer-badge" id="timerContainer">
+                    <span class="t-ico">⏱️</span>
+                    <strong id="timerDisplay">00:60</strong>
                 </div>
+                <button id="themeBtn" class="sm-btn" aria-label="Theme">🌙</button>
+                <button id="soundBtn" class="sm-btn" aria-label="Sound">🔊</button>
+            </div>
+        </header>
 
-                <!-- Info Bar: Timer, Score, Progress & Security Badge -->
-                <div class="game-info-bar">
-                    <div class="info-card timer-card" id="timerContainer">
-                        <span class="info-icon">⏱️</span>
-                        <div class="info-data">
-                            <span class="info-label">WAKTU</span>
-                            <span id="timerDisplay" class="info-val highlight-timer">00:60</span>
-                        </div>
-                    </div>
-                    
-                    <div class="info-card score-card">
-                        <span class="info-icon">⭐</span>
-                        <div class="info-data">
-                            <span class="info-label">SKOR</span>
-                            <span id="scoreDisplay" class="info-val">0</span>
-                        </div>
-                    </div>
+        <!-- Active Question Banner -->
+        <div class="clue-banner">
+            <span id="clueBadge" class="badge">1-MENDATAR</span>
+            <span id="clueText" class="text">Pilih kotak pada papan TTS untuk mulai...</span>
+        </div>
 
-                    <div class="info-card category-card">
-                        <span class="info-icon">🧩</span>
-                        <div class="info-data">
-                            <span class="info-label">TARGET</span>
-                            <span class="info-val">15 Soal</span>
-                        </div>
-                    </div>
-                </div>
+        <!-- 11x11 TTS Grid Area -->
+        <main class="grid-section">
+            <div id="ttsGrid" class="tts-grid-wrapper">
+                <!-- Dynamically generated 11x11 grid -->
+            </div>
+        </main>
 
-                <!-- Active Clue Marquee / Banner -->
-                <div class="active-clue-bar">
-                    <span id="clueBadge" class="clue-badge">1-MENDATAR</span>
-                    <p id="clueText" class="clue-text">Pilih kotak pada papan TTS untuk melihat pertanyaan...</p>
-                </div>
+        <!-- Quick Action Buttons -->
+        <div class="action-bar">
+            <button id="checkWordBtn" class="btn btn-check">✔️ Cek Jawaban</button>
+            <button id="hintBtn" class="btn btn-hint">💡 Hint (<span id="hintCount">3</span>)</button>
+            <button id="restartBtn" class="btn btn-restart">🔄 Reset (60s)</button>
+        </div>
 
-                <!-- Interactive TTS Board Area -->
-                <main class="board-area">
-                    <div class="board-scroll-container">
-                        <div id="ttsGrid" class="tts-grid-wrapper">
-                            <!-- Dynamically generated 11x11 grid -->
-                        </div>
-                    </div>
-                </main>
-
-                <!-- Action Toolbar & Hints -->
-                <div class="action-toolbar">
-                    <button id="checkWordBtn" class="action-btn btn-check">
-                        <span>✔️ Cek Jawaban</span>
-                    </button>
-                    <button id="hintBtn" class="action-btn btn-hint">
-                        <span>💡 Bantuan (<span id="hintCount">3</span>)</span>
-                    </button>
-                    <button id="restartBtn" class="action-btn btn-restart">
-                        <span>🔄 Ulangi (60s)</span>
-                    </button>
-                </div>
-
-                <!-- Virtual Touch Keyboard for Mobile -->
-                <div class="virtual-keyboard">
-                    <div class="kb-row">
-                        <button class="kb-key" data-key="Q">Q</button>
-                        <button class="kb-key" data-key="W">W</button>
-                        <button class="kb-key" data-key="E">E</button>
-                        <button class="kb-key" data-key="R">R</button>
-                        <button class="kb-key" data-key="T">T</button>
-                        <button class="kb-key" data-key="Y">Y</button>
-                        <button class="kb-key" data-key="U">U</button>
-                        <button class="kb-key" data-key="I">I</button>
-                        <button class="kb-key" data-key="O">O</button>
-                        <button class="kb-key" data-key="P">P</button>
-                    </div>
-                    <div class="kb-row">
-                        <button class="kb-key" data-key="A">A</button>
-                        <button class="kb-key" data-key="S">S</button>
-                        <button class="kb-key" data-key="D">D</button>
-                        <button class="kb-key" data-key="F">F</button>
-                        <button class="kb-key" data-key="G">G</button>
-                        <button class="kb-key" data-key="H">H</button>
-                        <button class="kb-key" data-key="J">J</button>
-                        <button class="kb-key" data-key="K">K</button>
-                        <button class="kb-key" data-key="L">L</button>
-                    </div>
-                    <div class="kb-row">
-                        <button class="kb-key kb-func" data-key="DIR" id="dirToggleBtn">🔄 DTR</button>
-                        <button class="kb-key" data-key="Z">Z</button>
-                        <button class="kb-key" data-key="X">X</button>
-                        <button class="kb-key" data-key="C">C</button>
-                        <button class="kb-key" data-key="V">V</button>
-                        <button class="kb-key" data-key="B">B</button>
-                        <button class="kb-key" data-key="N">N</button>
-                        <button class="kb-key" data-key="M">M</button>
-                        <button class="kb-key kb-func" data-key="BACKSPACE">⌫</button>
-                    </div>
-                </div>
-
-                <!-- Clue Lists Accordion / Drawer (Mendatar & Menurun) -->
-                <section class="clues-container">
-                    <div class="clues-column">
-                        <h3>➡️ Mendatar (Across)</h3>
-                        <ul id="acrossCluesList" class="clues-list"></ul>
-                    </div>
-                    <div class="clues-column">
-                        <h3>⬇️ Menurun (Down)</h3>
-                        <ul id="downCluesList" class="clues-list"></ul>
-                    </div>
-                </section>
-
-                <!-- PWA Web APK Installation Prompt Banner -->
-                <div id="pwaBanner" class="pwa-banner hidden">
-                    <div class="pwa-content">
-                        <span class="pwa-icon">📱</span>
-                        <div class="pwa-text">
-                            <strong>Instal KOPI TUBRUK di HP</strong>
-                            <p>Bisa dimainkan offline, 100% Tanpa Izin HP & Bebas Virus.</p>
-                        </div>
-                    </div>
-                    <div class="pwa-buttons">
-                        <button id="installPwaBtn" class="btn-install-pwa">INSTAL SEKARANG</button>
-                        <button id="closePwaBtn" class="btn-close-pwa">✕</button>
-                    </div>
-                </div>
-
+        <!-- Virtual Touch Keyboard -->
+        <div class="keyboard">
+            <div class="kb-row">
+                <button class="kb-key" data-key="Q">Q</button>
+                <button class="kb-key" data-key="W">W</button>
+                <button class="kb-key" data-key="E">E</button>
+                <button class="kb-key" data-key="R">R</button>
+                <button class="kb-key" data-key="T">T</button>
+                <button class="kb-key" data-key="Y">Y</button>
+                <button class="kb-key" data-key="U">U</button>
+                <button class="kb-key" data-key="I">I</button>
+                <button class="kb-key" data-key="O">O</button>
+                <button class="kb-key" data-key="P">P</button>
+            </div>
+            <div class="kb-row">
+                <button class="kb-key" data-key="A">A</button>
+                <button class="kb-key" data-key="S">S</button>
+                <button class="kb-key" data-key="D">D</button>
+                <button class="kb-key" data-key="F">F</button>
+                <button class="kb-key" data-key="G">G</button>
+                <button class="kb-key" data-key="H">H</button>
+                <button class="kb-key" data-key="J">J</button>
+                <button class="kb-key" data-key="K">K</button>
+                <button class="kb-key" data-key="L">L</button>
+            </div>
+            <div class="kb-row">
+                <button class="kb-key kb-dir" data-key="DIR" id="dirToggleBtn">🔄 DTR</button>
+                <button class="kb-key" data-key="Z">Z</button>
+                <button class="kb-key" data-key="X">X</button>
+                <button class="kb-key" data-key="C">C</button>
+                <button class="kb-key" data-key="V">V</button>
+                <button class="kb-key" data-key="B">B</button>
+                <button class="kb-key" data-key="N">N</button>
+                <button class="kb-key" data-key="M">M</button>
+                <button class="kb-key kb-back" data-key="BACKSPACE">⌫</button>
             </div>
         </div>
+
+        <!-- Clue Lists Drawer -->
+        <details class="clues-drawer">
+            <summary class="drawer-title">📜 Daftar Pertanyaan Lengkap (15 Soal)</summary>
+            <div class="clues-grid">
+                <div>
+                    <h4>➡️ Mendatar</h4>
+                    <ul id="acrossCluesList" class="clues-list"></ul>
+                </div>
+                <div>
+                    <h4>⬇️ Menurun</h4>
+                    <ul id="downCluesList" class="clues-list"></ul>
+                </div>
+            </div>
+        </details>
     </div>
 
-    <!-- Modal: Jawaban Salah / Peringatan Substansi -->
+    <!-- Modal: Jawaban Salah -->
     <div id="wrongModal" class="modal-backdrop hidden">
-        <div class="modal-card modal-shake">
+        <div class="modal-card">
             <div class="modal-icon">⚠️</div>
             <h2>Jawaban Kurang Tepat!</h2>
-            <p class="modal-message font-quote">
+            <p class="modal-message">
                 "Makanya belajar, biasakan membahas substansi."
             </p>
-            <p class="modal-sub">Periksa kembali korelasinya dengan pertanyaan menurun/mendatar lainnya.</p>
-            <button id="closeWrongModalBtn" class="btn-modal-action">Saya Mengerti & Siap Belajar</button>
+            <button id="closeWrongModalBtn" class="btn-modal">Saya Mengerti & Siap Belajar</button>
         </div>
     </div>
 
-    <!-- Modal: Kemenangan (Pemenang Substansial) -->
+    <!-- Modal: Kemenangan -->
     <div id="victoryModal" class="modal-backdrop hidden">
-        <div class="modal-card modal-bounce">
+        <div class="modal-card">
             <div class="modal-icon">☕🏆</div>
-            <h2 class="gold-gradient-text">USER ADALAH PEMENANG!</h2>
+            <h2>USER ADALAH PEMENANG!</h2>
             <p class="modal-message">
-                Selamat! Anda berhasil memecahkan seluruh 15 pertanyaan bersilangan secara tepat sebelum waktu 60 detik habis!
+                Selamat! Anda berhasil memecahkan seluruh 15 pertanyaan tepat waktu!
             </p>
-            <div class="victory-stats">
-                <div class="v-stat"><span>⏱️ Sisa Waktu:</span> <strong id="vicTime">0s</strong></div>
-                <div class="v-stat"><span>⭐ Total Skor:</span> <strong id="vicScore">0</strong></div>
-            </div>
-            <p class="modal-quote">"Tetap rendah hati dan selalu biasakan membahas substansi dalam setiap pemikiran."</p>
-            <button id="playAgainBtn" class="btn-modal-action btn-gold">Main Lagi (Reset 60 Detik)</button>
+            <p class="modal-quote">"Tetap rendah hati dan selalu biasakan membahas substansi."</p>
+            <button id="playAgainBtn" class="btn-modal btn-gold">Main Lagi (60 Detik)</button>
         </div>
     </div>
 
-    <!-- Modal: Kekalahan / Waktu Habis -->
+    <!-- Modal: Kekalahan -->
     <div id="defeatModal" class="modal-backdrop hidden">
         <div class="modal-card">
             <div class="modal-icon">⏱️❌</div>
             <h2>WAKTU 60 DETIK HABIS!</h2>
-            <p class="modal-message font-quote">
+            <p class="modal-message">
                 "Harus banyak belajar lagi dan biasakan membahas substansi."
             </p>
-            <p class="modal-sub">Jangan berkecil hati! Latihan dan kedalaman pengetahuan akan membuat pikiran makin tajam.</p>
-            <button id="retryDefeatBtn" class="btn-modal-action">Coba Lagi Dari Awal</button>
-        </div>
-    </div>
-
-    <!-- Modal: Garansi Keamanan & Filosofi Kopi Tubruk -->
-    <div id="securityModal" class="modal-backdrop hidden">
-        <div class="modal-card">
-            <div class="modal-icon">🛡️☕</div>
-            <h2>Garansi Keamanan & Makna KOPI TUBRUK</h2>
-            
-            <div class="security-features">
-                <div class="sec-item">
-                    <span class="sec-ico">✅</span>
-                    <div>
-                        <strong>0% Izin HP (Zero Permissions)</strong>
-                        <p>Aplikasi ini berbentuk Web APK PWA. Tidak meminta izin kontak, memori, mikrofon, lokasi, atau kamera.</p>
-                    </div>
-                </div>
-
-                <div class="sec-item">
-                    <span class="sec-ico">🦠</span>
-                    <div>
-                        <strong>100% Bebas Virus & Iklan</strong>
-                        <p>Murni berjalan di lingkungan sandbox browser Android Anda secara cepat, aman, dan offline.</p>
-                    </div>
-                </div>
-
-                <div class="sec-item">
-                    <span class="sec-ico">☕</span>
-                    <div>
-                        <strong>Makna Kopi Tubruk</strong>
-                        <p>Kopi tubruk melambangkan kejujuran rasa tanpa saringan buatan. Mengajarkan kita untuk fokus pada <em>substansi dasar</em> daripada sekadar penampilan luar.</p>
-                    </div>
-                </div>
-            </div>
-
-            <button id="closeSecurityModalBtn" class="btn-modal-action">Tutup & Lanjutkan Game</button>
+            <button id="retryDefeatBtn" class="btn-modal">Coba Lagi Dari Awal</button>
         </div>
     </div>
 
