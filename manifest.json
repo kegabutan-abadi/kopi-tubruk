@@ -1,0 +1,24 @@
+{
+  "name": "KOPI TUBRUK - Teka Teki Silang Smart",
+  "short_name": "KOPI TUBRUK",
+  "description": "Game TTS Smart Pengetahuan Umum, Sejarah, IPTEK & Budaya. 100% Aman & Tanpa Izin HP.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#120905",
+  "theme_color": "#1a0f0a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
