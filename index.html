@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KOPI TUBRUK - Teka Teki Silang Smart</title>
+    <meta name="description" content="Game Teka Teki Silang (TTS) Smart KOPI TUBRUK - Pengetahuan Umum, Sejarah, IPTEK, dan Budaya. 100% Aman & Tanpa Izin HP.">
+    <meta name="theme-color" content="#1a0f0a">
+    
+    <!-- PWA Web Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/ticker.css">
+    <link rel="stylesheet" href="css/tts-board.css">
+</head>
+<body>
+    <!-- App Container wrapped in Android frame simulator / view -->
+    <div class="mobile-frame">
+        
+        <!-- Smart Sparkling / Glowing Ticker Outer Border Wrapper -->
+        <div class="smart-ticker-border">
+            <div class="sparkle-dot sparkle-tl"></div>
+            <div class="sparkle-dot sparkle-tr"></div>
+            <div class="sparkle-dot sparkle-bl"></div>
+            <div class="sparkle-dot sparkle-br"></div>
+            
+            <div class="app-screen">
+                
+                <!-- Header Status Bar -->
+                <header class="app-header">
+                    <div class="brand-title">
+                        <span class="coffee-icon">☕</span>
+                        <h1>KOPI TUBRUK</h1>
+                        <span class="badge-smart">TTS SMART</span>
+                    </div>
+                    <div class="header-controls">
+                        <button id="securityBtn" class="icon-btn danger-pulse-btn" title="Info Keamanan & Izin" aria-label="Info Keamanan">
+                            🛡️
+                        </button>
+                        <button id="soundBtn" class="icon-btn" title="Toggle Sound" aria-label="Aktifkan Suara">
+                            🔊
+                        </button>
+                        <button id="themeBtn" class="icon-btn" title="Mode Gelap / Terang" aria-label="Ganti Tema">
+                            🌙
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Smart Glowing Ticker Bar -->
+                <div class="ticker-wrapper">
+                    <div class="ticker-label">
+                        <span class="live-dot"></span> SMART TICKER
+                    </div>
+                    <div class="ticker-content-container">
+                        <div class="ticker-text" id="tickerText">
+                            ✨ Selamat Datang di KOPI TUBRUK TTS! ☕ Asah Otak, Perluas Substansi Wawasan Anda! 💡 Kategori: Pengetahuan Umum, Sejarah, IPTEK & Budaya.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <main class="app-content">
+                    
+                    <!-- Game Info Bar & Controls -->
+                    <div class="game-bar">
+                        <div class="category-selector-wrapper">
+                            <label for="categorySelect">Kategori:</label>
+                            <select id="categorySelect" class="smart-select">
+                                <option value="level1">💡 Pengetahuan Umum</option>
+                                <option value="level2">🏛️ Sejarah & Peradaban</option>
+                                <option value="level3">🔬 IPTEK & Digital</option>
+                                <option value="level4">🌍 Geografi & Alam</option>
+                                <option value="level5">🎨 Seni & Budaya</option>
+                            </select>
+                        </div>
+                        
+                        <div class="game-stats">
+                            <div class="stat-item" title="Waktu">
+                                ⏱️ <span id="timerDisplay">00:00</span>
+                            </div>
+                            <div class="stat-item" title="Skor">
+                                ⭐ <span id="scoreDisplay">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Clue Quick Banner -->
+                    <div class="active-clue-bar" id="activeClueBar">
+                        <span class="clue-direction-badge" id="clueBadge">1 MENDATAR</span>
+                        <span class="clue-text" id="clueText">Pilih kotak TTS di bawah untuk mulai mengisi.</span>
+                    </div>
+
+                    <!-- Crossword Grid Board Container -->
+                    <div class="board-scroll-container">
+                        <div id="ttsGrid" class="tts-grid-wrapper">
+                            <!-- Dynamic Crossword Grid Generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Action Bar Buttons -->
+                    <div class="action-bar">
+                        <button id="checkWordBtn" class="action-btn secondary">
+                            🔍 Cek Kata
+                        </button>
+                        <button id="hintBtn" class="action-btn hint">
+                            💡 Petunjuk (<span id="hintCount">3</span>)
+                        </button>
+                        <button id="checkAllBtn" class="action-btn primary">
+                            ✔️ Selesai & Cek
+                        </button>
+                    </div>
+
+                    <!-- Clues Accordion / Tabs -->
+                    <div class="clues-container">
+                        <div class="clues-tabs">
+                            <button class="tab-btn active" data-tab="across">➡️ Mendatar</button>
+                            <button class="tab-btn" data-tab="down">⬇️ Menurun</button>
+                        </div>
+                        <div class="clues-panel">
+                            <ul id="acrossCluesList" class="clues-list active"></ul>
+                            <ul id="downCluesList" class="clues-list"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Virtual Keyboard for Mobile UI -->
+                    <div class="virtual-keyboard" id="virtualKeyboard">
+                        <div class="kb-row">
+                            <button class="kb-key">Q</button><button class="kb-key">W</button><button class="kb-key">E</button><button class="kb-key">R</button><button class="kb-key">T</button><button class="kb-key">Y</button><button class="kb-key">U</button><button class="kb-key">I</button><button class="kb-key">O</button><button class="kb-key">P</button>
+                        </div>
+                        <div class="kb-row">
+                            <button class="kb-key">A</button><button class="kb-key">S</button><button class="kb-key">D</button><button class="kb-key">F</button><button class="kb-key">G</button><button class="kb-key">H</button><button class="kb-key">J</button><button class="kb-key">K</button><button class="kb-key">L</button>
+                        </div>
+                        <div class="kb-row">
+                            <button class="kb-key wide-key" id="kbDirToggle">🔄 ARR</button>
+                            <button class="kb-key">Z</button><button class="kb-key">X</button><button class="kb-key">C</button><button class="kb-key">V</button><button class="kb-key">B</button><button class="kb-key">N</button><button class="kb-key">M</button>
+                            <button class="kb-key wide-key" id="kbBackspace">⌫</button>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- PWA Install Banner -->
+                <div id="pwaBanner" class="pwa-banner hidden">
+                    <div class="pwa-info">
+                        <span class="pwa-icon">📱</span>
+                        <div>
+                            <strong>Instal KOPI TUBRUK</strong>
+                            <p>Mainkan langsung di layar HP Android (Tanpa Izin & 100% Aman)</p>
+                        </div>
+                    </div>
+                    <div class="pwa-actions">
+                        <button id="installPwaBtn" class="pwa-btn-install">INSTAL</button>
+                        <button id="closePwaBtn" class="pwa-btn-close">✕</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Custom Wrong Answer Alert ("Makanya belajar, biasakan membahas substansi") -->
+    <div id="wrongModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="wrongModalTitle">
+        <div class="modal-card wrong-modal-card">
+            <div class="wrong-header-icon">
+                <span class="coffee-steam">☕</span>
+                <span class="alert-emoji">🤦‍♂️</span>
+            </div>
+            <h2 id="wrongModalTitle" class="wrong-title">JAWABAN MASIH SALAH!</h2>
+            <div class="wrong-quote-box">
+                <p class="quote-text">"Makanya belajar, biasakan membahas substansi."</p>
+            </div>
+            <p class="wrong-subtext">Periksa kembali kotak jawaban atau manfaatkan fitur Petunjuk 💡 jika mulai frustrasi!</p>
+            <button id="closeWrongModalBtn" class="modal-btn primary-btn">
+                Oke, Saya Akan Belajar Lagi! 💪
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: Security & Zero-Permissions Info -->
+    <div id="securityModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="secModalTitle">
+        <div class="modal-card security-modal-card">
+            <div class="security-badge-header">
+                🛡️ 100% AMAN & TANPA IZIN (PERMISSIONS)
+            </div>
+            <h2 id="secModalTitle">Garansi Keamanan KOPI TUBRUK</h2>
+            
+            <ul class="security-list">
+                <li>
+                    <span class="sec-icon">❌</span>
+                    <div>
+                        <strong>Tidak Membutuhkan Izin HP Apapun</strong>
+                        <p>Kamera, Kontak, Lokasi GPS, Microphone, & Storage SEMUA DITOLAK / TIDAK DIMINTA.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="sec-icon">🔰</span>
+                    <div>
+                        <strong>Aman dari Virus, Malware & Spyware</strong>
+                        <p>Kode berjalan murni di sandbox web browser standar secara terisolasi dan transparan.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="sec-icon">📲</span>
+                    <div>
+                        <strong>Web APK & PWA Android Live</strong>
+                        <p>Dapat diakses secara online & diinstal langsung di layar utama smartphone tanpa Google Play Store.</p>
+                    </div>
+                </li>
+            </ul>
+
+            <button id="closeSecurityModalBtn" class="modal-btn secondary-btn">
+                Tutup & Lanjutkan Bermain ☕
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: Victory / Level Complete -->
+    <div id="victoryModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="vicModalTitle">
+        <div class="modal-card victory-modal-card">
+            <div class="victory-header-icon">🎉 ☕ 🏆</div>
+            <h2 id="vicModalTitle">SUBSTANSIAL & HEBAT!</h2>
+            <p class="victory-subtext">Selamat! Kamu telah menyelesaikan TTS KOPI TUBRUK dengan wawasan yang luar biasa.</p>
+            
+            <div class="victory-stats">
+                <div>Waktu: <strong id="vicTime">00:00</strong></div>
+                <div>Skor Total: <strong id="vicScore">0</strong></div>
+            </div>
+
+            <div class="victory-actions">
+                <button id="nextLevelBtn" class="modal-btn primary-btn">
+                    Lanjut Kategori Berikutnya 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Engine -->
+    <script src="js/data/questions.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/tts-engine.js"></script>
+    <script src="js/pwa.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
