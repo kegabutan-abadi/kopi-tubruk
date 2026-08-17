@@ -4,22 +4,21 @@
 
 class AppController {
   constructor() {
-    this.tickerTextEl = document.getElementById('tickerText');
     this.themeBtn = document.getElementById('themeBtn');
     this.soundBtn = document.getElementById('soundBtn');
     this.securityBtn = document.getElementById('securityBtn');
-    this.categorySelect = document.getElementById('categorySelect');
     
     // Modals
     this.wrongModal = document.getElementById('wrongModal');
-    this.securityModal = document.getElementById('securityModal');
+    this.defeatModal = document.getElementById('defeatModal');
     this.victoryModal = document.getElementById('victoryModal');
-    
+    this.securityModal = document.getElementById('securityModal');
+
     this.init();
   }
 
   init() {
-    // Event Listeners for top controls
+    // Top Bar Buttons
     if (this.themeBtn) {
       this.themeBtn.addEventListener('click', () => this.toggleTheme());
     }
@@ -32,85 +31,90 @@ class AppController {
     }
 
     if (this.securityBtn) {
-      this.securityBtn.addEventListener('click', () => this.showSecurityModal());
-    }
-
-    if (this.categorySelect) {
-      this.categorySelect.addEventListener('change', (e) => {
-        window.ttsEngine.loadLevel(e.target.value);
-        this.updateTickerForCategory(e.target.value);
+      this.securityBtn.addEventListener('click', () => {
+        if (this.securityModal) this.securityModal.classList.remove('hidden');
       });
     }
 
-    // Modal Close Listeners
-    document.getElementById('closeWrongModalBtn').addEventListener('click', () => {
-      this.wrongModal.classList.add('hidden');
-    });
-
-    document.getElementById('closeSecurityModalBtn').addEventListener('click', () => {
-      this.securityModal.classList.add('hidden');
-    });
-
-    document.getElementById('nextLevelBtn').addEventListener('click', () => {
-      this.victoryModal.classList.add('hidden');
-      this.loadNextCategory();
-    });
-
-    // Action Buttons
-    document.getElementById('checkWordBtn').addEventListener('click', () => {
-      window.ttsEngine.checkWord();
-    });
-
-    document.getElementById('checkAllBtn').addEventListener('click', () => {
-      window.ttsEngine.checkAll();
-    });
-
-    document.getElementById('hintBtn').addEventListener('click', () => {
-      window.ttsEngine.useHint();
-    });
-
-    // Clue Tabs (Mendatar / Menurun)
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.clues-list').forEach(l => l.classList.remove('active'));
-
-        btn.classList.add('active');
-        const tab = btn.dataset.tab;
-        document.getElementById(`${tab}CluesList`).classList.add('active');
-        window.ttsEngine.direction = tab;
-        window.ttsEngine.updateHighlighting();
+    // Modal Action Buttons
+    const closeWrongBtn = document.getElementById('closeWrongModalBtn');
+    if (closeWrongBtn) {
+      closeWrongBtn.addEventListener('click', () => {
+        if (this.wrongModal) this.wrongModal.classList.add('hidden');
       });
-    });
+    }
 
-    // Virtual Keyboard setup
-    document.querySelectorAll('.virtual-keyboard .kb-key').forEach(key => {
-      key.addEventListener('click', (e) => {
-        const keyVal = key.textContent.trim();
-        if (key.id === 'kbBackspace' || keyVal === '⌫') {
-          window.ttsEngine.backspace();
-        } else if (key.id === 'kbDirToggle') {
-          window.ttsEngine.direction = window.ttsEngine.direction === 'across' ? 'down' : 'across';
-          window.ttsEngine.updateHighlighting();
-        } else if (/^[A-Z]$/i.test(keyVal)) {
-          window.ttsEngine.inputChar(keyVal);
+    const closeSecBtn = document.getElementById('closeSecurityModalBtn');
+    if (closeSecBtn) {
+      closeSecBtn.addEventListener('click', () => {
+        if (this.securityModal) this.securityModal.classList.add('hidden');
+      });
+    }
+
+    const retryDefeatBtn = document.getElementById('retryDefeatBtn');
+    if (retryDefeatBtn) {
+      retryDefeatBtn.addEventListener('click', () => {
+        if (this.defeatModal) this.defeatModal.classList.add('hidden');
+        window.ttsEngine.loadLevel('level1');
+      });
+    }
+
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    if (playAgainBtn) {
+      playAgainBtn.addEventListener('click', () => {
+        if (this.victoryModal) this.victoryModal.classList.add('hidden');
+        window.ttsEngine.loadLevel('level1');
+      });
+    }
+
+    // Action Toolbar
+    const checkBtn = document.getElementById('checkWordBtn');
+    if (checkBtn) {
+      checkBtn.addEventListener('click', () => window.ttsEngine.checkWord());
+    }
+
+    const hintBtn = document.getElementById('hintBtn');
+    if (hintBtn) {
+      hintBtn.addEventListener('click', () => window.ttsEngine.giveHint());
+    }
+
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) {
+      restartBtn.addEventListener('click', () => window.ttsEngine.loadLevel('level1'));
+    }
+
+    const dirToggleBtn = document.getElementById('dirToggleBtn');
+    if (dirToggleBtn) {
+      dirToggleBtn.addEventListener('click', () => window.ttsEngine.toggleDirection());
+    }
+
+    // Virtual Keyboard Binding
+    document.querySelectorAll('.kb-key').forEach(keyEl => {
+      keyEl.addEventListener('click', (e) => {
+        const key = e.currentTarget.dataset.key;
+        if (!key) return;
+
+        if (key === 'BACKSPACE') {
+          window.ttsEngine.backspaceChar();
+        } else if (key === 'DIR') {
+          window.ttsEngine.toggleDirection();
+        } else {
+          window.ttsEngine.inputChar(key);
         }
       });
     });
 
-    // Physical Hardware Keyboard Input
+    // Hardware Keyboard binding
     window.addEventListener('keydown', (e) => {
-      // Don't intercept if typing in an input field or select dropdown
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-
       if (e.key === 'Backspace') {
-        window.ttsEngine.backspace();
-      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        if (e.key === 'ArrowRight') window.ttsEngine.moveNext();
-        if (e.key === 'ArrowLeft') window.ttsEngine.movePrev();
-      } else if (e.key === ' ' || e.key === 'Tab') {
-        e.preventDefault();
-        window.ttsEngine.direction = window.ttsEngine.direction === 'across' ? 'down' : 'across';
+        window.ttsEngine.backspaceChar();
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        // Direction change
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          window.ttsEngine.direction = 'across';
+        } else {
+          window.ttsEngine.direction = 'down';
+        }
         window.ttsEngine.updateHighlighting();
       } else if (/^[a-zA-Z]$/.test(e.key)) {
         window.ttsEngine.inputChar(e.key);
@@ -122,43 +126,13 @@ class AppController {
   }
 
   toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme') || 'dark';
-    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    html.setAttribute('data-theme', nextTheme);
-    this.themeBtn.textContent = nextTheme === 'dark' ? '🌙' : '☀️';
-  }
-
-  updateTickerForCategory(catKey) {
-    const level = TTS_DATA[catKey];
-    if (!level) return;
-    this.tickerTextEl.textContent = `✨ Modus Bermain: ${level.icon} ${level.title}! ☕ Pertajam Substansi Pemikiran Anda! 💡 TTS KOPI TUBRUK Smart Version.`;
-  }
-
-  showWrongModal() {
-    this.wrongModal.classList.remove('hidden');
-  }
-
-  showSecurityModal() {
-    this.securityModal.classList.remove('hidden');
-  }
-
-  showVictoryModal(timeStr, scoreVal) {
-    document.getElementById('vicTime').textContent = timeStr;
-    document.getElementById('vicScore').textContent = scoreVal;
-    this.victoryModal.classList.remove('hidden');
-  }
-
-  loadNextCategory() {
-    const categories = ['level1', 'level2', 'level3', 'level4', 'level5', 'level6', 'level7', 'level8'];
-    const currIdx = categories.indexOf(window.ttsEngine.currentLevelKey);
-    const nextIdx = (currIdx + 1) % categories.length;
-    const nextCatKey = categories[nextIdx];
-
-    this.categorySelect.value = nextCatKey;
-    window.ttsEngine.loadLevel(nextCatKey);
-    this.updateTickerForCategory(nextCatKey);
+    const htmlEl = document.documentElement;
+    const currentTheme = htmlEl.getAttribute('data-theme');
+    const newTheme = (currentTheme === 'light') ? 'dark' : 'light';
+    htmlEl.setAttribute('data-theme', newTheme);
+    if (this.themeBtn) {
+      this.themeBtn.textContent = (newTheme === 'light') ? '☀️' : '🌙';
+    }
   }
 }
 
