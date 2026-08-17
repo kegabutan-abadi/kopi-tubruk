@@ -1,13 +1,5 @@
 /**
  * KOPI TUBRUK - Crossword (TTS) Core Interactive Engine
- * Features:
- * - 60-Second Countdown Timer
- * - 11x11 Auto-fitting Grid for Android
- * - Input validation & checking
- * - Custom notifications & modals:
- *   * Wrong Answer: "Makanya belajar, biasakan membahas substansi."
- *   * Defeat (Time out): "Harus banyak belajar lagi dan biasakan membahas substansi."
- *   * Victory: "SELAMAT! USER ADALAH PEMENANG SUBSTANSIAL!"
  */
 
 class TTSEngine {
@@ -27,23 +19,26 @@ class TTSEngine {
     this.timerLeft = 60;
     this.timerInterval = null;
     this.isGameOver = false;
-
-    // DOM References
-    this.gridContainer = document.getElementById('ttsGrid');
-    this.activeClueBadge = document.getElementById('clueBadge');
-    this.activeClueText = document.getElementById('clueText');
-    this.acrossList = document.getElementById('acrossCluesList');
-    this.downList = document.getElementById('downCluesList');
-    this.scoreDisplay = document.getElementById('scoreDisplay');
-    this.timerDisplay = document.getElementById('timerDisplay');
-    this.hintCountDisplay = document.getElementById('hintCount');
-    this.dirToggleBtn = document.getElementById('dirToggleBtn');
   }
+
+  // Dynamic DOM getters to prevent cached null references
+  get gridContainer() { return document.getElementById('ttsGrid'); }
+  get activeClueBadge() { return document.getElementById('clueBadge'); }
+  get activeClueText() { return document.getElementById('clueText'); }
+  get acrossList() { return document.getElementById('acrossCluesList'); }
+  get downList() { return document.getElementById('downCluesList'); }
+  get scoreDisplay() { return document.getElementById('scoreDisplay'); }
+  get timerDisplay() { return document.getElementById('timerDisplay'); }
+  get hintCountDisplay() { return document.getElementById('hintCount'); }
+  get dirToggleBtn() { return document.getElementById('dirToggleBtn'); }
 
   loadLevel(levelKey = 'level1') {
     this.currentLevelKey = levelKey;
     this.levelData = TTS_DATA[levelKey];
-    if (!this.levelData) return;
+    if (!this.levelData) {
+      console.error("[TTSEngine] Level data not found for:", levelKey);
+      return;
+    }
 
     this.solutionMatrix = this.levelData.solutionClean;
     const rows = this.levelData.rows;
@@ -94,7 +89,6 @@ class TTSEngine {
     const secs = String(Math.max(0, this.timerLeft)).padStart(2, '0');
     this.timerDisplay.textContent = `00:${secs}`;
     
-    // Warning visual pulse when <= 15s
     const container = document.getElementById('timerContainer');
     if (container) {
       if (this.timerLeft <= 15) {
@@ -116,15 +110,18 @@ class TTSEngine {
   }
 
   renderGrid() {
-    if (!this.gridContainer) return;
-    this.gridContainer.innerHTML = '';
+    const container = this.gridContainer;
+    if (!container) {
+      console.error("[TTSEngine] ttsGrid container not found in DOM!");
+      return;
+    }
+    container.innerHTML = '';
     
     const rows = this.levelData.rows;
     const cols = this.levelData.cols;
 
-    // Set grid CSS template
-    this.gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    this.gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+    container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
     // Map cell numbers
     const numberMap = {};
@@ -145,7 +142,6 @@ class TTSEngine {
         if (isBlack) {
           cellEl.classList.add('black-cell');
         } else {
-          // Number badge
           const num = numberMap[`${r}_${c}`];
           if (num) {
             const numEl = document.createElement('span');
@@ -154,17 +150,15 @@ class TTSEngine {
             cellEl.appendChild(numEl);
           }
 
-          // Text element
           const textEl = document.createElement('span');
           textEl.className = 'cell-text';
           textEl.textContent = this.gridMatrix[r][c] || '';
           cellEl.appendChild(textEl);
 
-          // Click & Touch events
           cellEl.addEventListener('click', () => this.handleCellClick(r, c));
         }
 
-        this.gridContainer.appendChild(cellEl);
+        container.appendChild(cellEl);
       }
     }
   }
@@ -185,7 +179,6 @@ class TTSEngine {
     if (this.solutionMatrix[r][c] === null) return;
 
     if (this.selectedRow === r && this.selectedCol === c) {
-      // Toggle direction if clicking same cell
       this.direction = (this.direction === 'across') ? 'down' : 'across';
     } else {
       this.selectedRow = r;
@@ -205,14 +198,16 @@ class TTSEngine {
   toggleDirection() {
     this.direction = (this.direction === 'across') ? 'down' : 'across';
     if (this.dirToggleBtn) {
-      this.dirToggleBtn.textContent = (this.direction === 'across') ? '➡️ MTR' : '⬇️ MNR';
+      this.dirToggleBtn.textContent = (this.direction === 'across') ? '🔄 DTR' : '🔄 MNR';
     }
     this.updateHighlighting();
     this.updateActiveClueDisplay();
   }
 
   updateHighlighting() {
-    const cells = this.gridContainer.querySelectorAll('.grid-cell');
+    const container = this.gridContainer;
+    if (!container) return;
+    const cells = container.querySelectorAll('.grid-cell');
     cells.forEach(cell => {
       cell.classList.remove('selected-cell', 'active-word');
       const r = parseInt(cell.dataset.row);
@@ -278,8 +273,9 @@ class TTSEngine {
   }
 
   renderClues() {
-    if (this.acrossList) {
-      this.acrossList.innerHTML = '';
+    const aList = this.acrossList;
+    if (aList) {
+      aList.innerHTML = '';
       this.levelData.clues.across.forEach(c => {
         const li = document.createElement('li');
         li.dataset.num = c.num;
@@ -289,12 +285,13 @@ class TTSEngine {
           this.direction = 'across';
           this.selectCell(c.row, c.col);
         });
-        this.acrossList.appendChild(li);
+        aList.appendChild(li);
       });
     }
 
-    if (this.downList) {
-      this.downList.innerHTML = '';
+    const dList = this.downList;
+    if (dList) {
+      dList.innerHTML = '';
       this.levelData.clues.down.forEach(c => {
         const li = document.createElement('li');
         li.dataset.num = c.num;
@@ -304,7 +301,7 @@ class TTSEngine {
           this.direction = 'down';
           this.selectCell(c.row, c.col);
         });
-        this.downList.appendChild(li);
+        dList.appendChild(li);
       });
     }
   }
@@ -326,18 +323,13 @@ class TTSEngine {
 
     this.gridMatrix[this.selectedRow][this.selectedCol] = char.toUpperCase();
     
-    // Play keystroke sound
     if (window.soundEngine) window.soundEngine.playKey();
 
-    // Update DOM
     const selector = `.grid-cell[data-row="${this.selectedRow}"][data-col="${this.selectedCol}"] .cell-text`;
     const textEl = document.querySelector(selector);
     if (textEl) textEl.textContent = char.toUpperCase();
 
-    // Move to next cell
     this.moveNextCell();
-
-    // Check full completion automatically
     this.checkAutoCompletion();
   }
 
