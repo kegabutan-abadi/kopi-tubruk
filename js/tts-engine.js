@@ -1,22 +1,34 @@
 /**
- * KOPI TUBRUK - Crossword (TTS) Core Engine
+ * KOPI TUBRUK - Crossword (TTS) Core Interactive Engine
+ * Features:
+ * - 60-Second Countdown Timer
+ * - 11x11 Auto-fitting Grid for Android
+ * - Input validation & checking
+ * - Custom notifications & modals:
+ *   * Wrong Answer: "Makanya belajar, biasakan membahas substansi."
+ *   * Defeat (Time out): "Harus banyak belajar lagi dan biasakan membahas substansi."
+ *   * Victory: "SELAMAT! USER ADALAH PEMENANG SUBSTANSIAL!"
  */
 
 class TTSEngine {
   constructor() {
     this.currentLevelKey = 'level1';
     this.levelData = null;
-    this.gridMatrix = [];     // Stores current user inputs
-    this.solutionMatrix = []; // Stores solution letters
+    this.gridMatrix = [];     // User inputs
+    this.solutionMatrix = []; // Target solution letters
     this.selectedRow = -1;
     this.selectedCol = -1;
     this.direction = 'across'; // 'across' or 'down'
     this.hintsLeft = 3;
     this.score = 0;
-    this.timerSeconds = 0;
+    
+    // 60-Second Countdown Timer
+    this.targetSeconds = 60;
+    this.timerLeft = 60;
     this.timerInterval = null;
+    this.isGameOver = false;
 
-    // DOM Elements
+    // DOM References
     this.gridContainer = document.getElementById('ttsGrid');
     this.activeClueBadge = document.getElementById('clueBadge');
     this.activeClueText = document.getElementById('clueText');
@@ -25,9 +37,10 @@ class TTSEngine {
     this.scoreDisplay = document.getElementById('scoreDisplay');
     this.timerDisplay = document.getElementById('timerDisplay');
     this.hintCountDisplay = document.getElementById('hintCount');
+    this.dirToggleBtn = document.getElementById('dirToggleBtn');
   }
 
-  loadLevel(levelKey) {
+  loadLevel(levelKey = 'level1') {
     this.currentLevelKey = levelKey;
     this.levelData = TTS_DATA[levelKey];
     if (!this.levelData) return;
@@ -36,31 +49,36 @@ class TTSEngine {
     const rows = this.levelData.rows;
     const cols = this.levelData.cols;
 
-    // Initialize user grid matrix
+    // Initialize blank user grid
     this.gridMatrix = Array.from({ length: rows }, () => Array(cols).fill(''));
 
     this.hintsLeft = 3;
+    this.isGameOver = false;
     this.updateScoreDisplay();
-    this.hintCountDisplay.textContent = this.hintsLeft;
-
-    this.resetTimer();
-    this.startTimer();
+    if (this.hintCountDisplay) this.hintCountDisplay.textContent = this.hintsLeft;
 
     this.renderGrid();
     this.renderClues();
-    
-    // Select first interactive cell
     this.selectFirstCell();
+
+    // Start 60-Second Countdown
+    this.start60sTimer();
   }
 
-  startTimer() {
+  start60sTimer() {
     this.stopTimer();
-    this.timerSeconds = 0;
+    this.timerLeft = 60;
+    this.updateTimerDisplay();
+
     this.timerInterval = setInterval(() => {
-      this.timerSeconds++;
-      const mins = String(Math.floor(this.timerSeconds / 60)).padStart(2, '0');
-      const secs = String(this.timerSeconds % 60).padStart(2, '0');
-      this.timerDisplay.textContent = `${mins}:${secs}`;
+      if (this.isGameOver) return;
+      this.timerLeft--;
+      this.updateTimerDisplay();
+
+      if (this.timerLeft <= 0) {
+        this.stopTimer();
+        this.handleTimeOut();
+      }
     }, 1000);
   }
 
@@ -71,38 +89,78 @@ class TTSEngine {
     }
   }
 
-  resetTimer() {
-    this.stopTimer();
-    this.timerDisplay.textContent = '00:00';
+  updateTimerDisplay() {
+    if (!this.timerDisplay) return;
+    const secs = String(Math.max(0, this.timerLeft)).padStart(2, '0');
+    this.timerDisplay.textContent = `00:${secs}`;
+    
+    // Warning visual pulse when <= 15s
+    const container = document.getElementById('timerContainer');
+    if (container) {
+      if (this.timerLeft <= 15) {
+        container.classList.add('timer-warning');
+      } else {
+        container.classList.remove('timer-warning');
+      }
+    }
+  }
+
+  handleTimeOut() {
+    this.isGameOver = true;
+    if (window.soundEngine) window.soundEngine.playWrong();
+    
+    const defeatModal = document.getElementById('defeatModal');
+    if (defeatModal) {
+      defeatModal.classList.remove('hidden');
+    }
   }
 
   renderGrid() {
+    if (!this.gridContainer) return;
     this.gridContainer.innerHTML = '';
+    
     const rows = this.levelData.rows;
     const cols = this.levelData.cols;
 
+    // Set grid CSS template
     this.gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    this.gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+    // Map cell numbers
+    const numberMap = {};
+    if (this.levelData.numbers) {
+      this.levelData.numbers.forEach(item => {
+        numberMap[`${item.row}_${item.col}`] = item.num;
+      });
+    }
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const solLetter = this.solutionMatrix[r][c];
         const cellEl = document.createElement('div');
         cellEl.className = 'grid-cell';
         cellEl.dataset.row = r;
         cellEl.dataset.col = c;
 
-        if (solLetter === null) {
+        const isBlack = (this.solutionMatrix[r][c] === null);
+        if (isBlack) {
           cellEl.classList.add('black-cell');
         } else {
-          // Check if this cell starts a numbered clue
-          const numObj = this.levelData.numbers.find(n => n.row === r && n.col === c);
-          if (numObj) {
-            const numSpan = document.createElement('span');
-            numSpan.className = 'cell-number';
-            numSpan.textContent = numObj.num;
-            cellEl.appendChild(numSpan);
+          // Number badge
+          const num = numberMap[`${r}_${c}`];
+          if (num) {
+            const numEl = document.createElement('span');
+            numEl.className = 'cell-num';
+            numEl.textContent = num;
+            cellEl.appendChild(numEl);
           }
 
+          // Text element
+          const textEl = document.createElement('span');
+          textEl.className = 'cell-text';
+          textEl.textContent = this.gridMatrix[r][c] || '';
+          cellEl.appendChild(textEl);
+
+          // Click & Touch events
           cellEl.addEventListener('click', () => this.handleCellClick(r, c));
         }
 
@@ -111,42 +169,9 @@ class TTSEngine {
     }
   }
 
-  renderClues() {
-    this.acrossList.innerHTML = '';
-    this.downList.innerHTML = '';
-
-    // Across Clues
-    this.levelData.clues.across.forEach(item => {
-      const li = document.createElement('li');
-      li.dataset.num = item.num;
-      li.dataset.dir = 'across';
-      li.innerHTML = `<strong>${item.num}.</strong> ${item.clue} <em>(${item.len} huruf)</em>`;
-      li.addEventListener('click', () => {
-        this.direction = 'across';
-        this.selectCell(item.row, item.col);
-      });
-      this.acrossList.appendChild(li);
-    });
-
-    // Down Clues
-    this.levelData.clues.down.forEach(item => {
-      const li = document.createElement('li');
-      li.dataset.num = item.num;
-      li.dataset.dir = 'down';
-      li.innerHTML = `<strong>${item.num}.</strong> ${item.clue} <em>(${item.len} huruf)</em>`;
-      li.addEventListener('click', () => {
-        this.direction = 'down';
-        this.selectCell(item.row, item.col);
-      });
-      this.downList.appendChild(li);
-    });
-  }
-
   selectFirstCell() {
-    const rows = this.levelData.rows;
-    const cols = this.levelData.cols;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < this.levelData.rows; r++) {
+      for (let c = 0; c < this.levelData.cols; c++) {
         if (this.solutionMatrix[r][c] !== null) {
           this.selectCell(r, c);
           return;
@@ -156,260 +181,304 @@ class TTSEngine {
   }
 
   handleCellClick(r, c) {
+    if (this.isGameOver) return;
     if (this.solutionMatrix[r][c] === null) return;
 
     if (this.selectedRow === r && this.selectedCol === c) {
-      // Toggle direction if clicking the same selected cell
-      this.direction = this.direction === 'across' ? 'down' : 'across';
+      // Toggle direction if clicking same cell
+      this.direction = (this.direction === 'across') ? 'down' : 'across';
     } else {
       this.selectedRow = r;
       this.selectedCol = c;
     }
-
     this.updateHighlighting();
-    window.soundEngine.playKey();
+    this.updateActiveClueDisplay();
   }
 
   selectCell(r, c) {
     this.selectedRow = r;
     this.selectedCol = c;
     this.updateHighlighting();
+    this.updateActiveClueDisplay();
+  }
+
+  toggleDirection() {
+    this.direction = (this.direction === 'across') ? 'down' : 'across';
+    if (this.dirToggleBtn) {
+      this.dirToggleBtn.textContent = (this.direction === 'across') ? '➡️ MTR' : '⬇️ MNR';
+    }
+    this.updateHighlighting();
+    this.updateActiveClueDisplay();
   }
 
   updateHighlighting() {
-    // Clear previous cell classes
-    const allCells = this.gridContainer.querySelectorAll('.grid-cell');
-    allCells.forEach(cell => {
+    const cells = this.gridContainer.querySelectorAll('.grid-cell');
+    cells.forEach(cell => {
       cell.classList.remove('selected-cell', 'active-word');
-    });
+      const r = parseInt(cell.dataset.row);
+      const c = parseInt(cell.dataset.col);
 
-    if (this.selectedRow < 0 || this.selectedCol < 0) return;
-
-    // Find active clue for current cell & direction
-    const activeClue = this.findClueForCell(this.selectedRow, this.selectedCol, this.direction);
-
-    if (activeClue) {
-      // Highlight all cells belonging to this word
-      const len = activeClue.len;
-      for (let i = 0; i < len; i++) {
-        const r = activeClue.dir === 'across' ? activeClue.row : activeClue.row + i;
-        const c = activeClue.dir === 'across' ? activeClue.col + i : activeClue.col;
-        
-        const cellEl = this.getCellEl(r, c);
-        if (cellEl) cellEl.classList.add('active-word');
+      if (r === this.selectedRow && c === this.selectedCol) {
+        cell.classList.add('selected-cell');
+      } else if (this.belongsToActiveWord(r, c)) {
+        cell.classList.add('active-word');
       }
+    });
+  }
 
-      // Update Clue Bar & List highlights
-      const dirText = activeClue.dir === 'across' ? 'MENDATAR' : 'MENURUN';
-      this.activeClueBadge.textContent = `${activeClue.num} ${dirText}`;
-      this.activeClueText.textContent = activeClue.clue;
+  belongsToActiveWord(r, c) {
+    if (this.selectedRow < 0 || this.selectedCol < 0) return false;
+    if (this.solutionMatrix[r][c] === null) return false;
 
-      this.highlightClueItem(activeClue.num, activeClue.dir);
+    if (this.direction === 'across') {
+      if (r !== this.selectedRow) return false;
+      let startC = this.selectedCol;
+      while (startC > 0 && this.solutionMatrix[r][startC - 1] !== null) startC--;
+      let endC = this.selectedCol;
+      while (endC < this.levelData.cols - 1 && this.solutionMatrix[r][endC + 1] !== null) endC++;
+      return c >= startC && c <= endC;
     } else {
-      // Fallback if direction has no clue at cell
-      this.direction = this.direction === 'across' ? 'down' : 'across';
-      const fallbackClue = this.findClueForCell(this.selectedRow, this.selectedCol, this.direction);
-      if (fallbackClue) {
-        this.updateHighlighting();
-        return;
-      }
+      if (c !== this.selectedCol) return false;
+      let startR = this.selectedRow;
+      while (startR > 0 && this.solutionMatrix[startR - 1][c] !== null) startR--;
+      let endR = this.selectedRow;
+      while (endR < this.levelData.rows - 1 && this.solutionMatrix[endR + 1][c] !== null) endR++;
+      return r >= startR && r <= endR;
     }
-
-    // Highlight selected single cell
-    const selectedEl = this.getCellEl(this.selectedRow, this.selectedCol);
-    if (selectedEl) selectedEl.classList.add('selected-cell');
   }
 
-  findClueForCell(r, c, dir) {
-    const cluesList = this.levelData.clues[dir];
-    return cluesList.find(clue => {
-      if (dir === 'across') {
-        return clue.row === r && c >= clue.col && c < clue.col + clue.len;
+  updateActiveClueDisplay() {
+    if (this.selectedRow < 0 || this.selectedCol < 0) return;
+    const clueObj = this.findClueForSelectedCell();
+    
+    if (clueObj) {
+      const dirText = (this.direction === 'across') ? 'MENDATAR' : 'MENURUN';
+      if (this.activeClueBadge) this.activeClueBadge.textContent = `${clueObj.num}-${dirText}`;
+      if (this.activeClueText) this.activeClueText.textContent = clueObj.clue;
+      this.highlightClueInList(clueObj.num, this.direction);
+    }
+  }
+
+  findClueForSelectedCell() {
+    const list = (this.direction === 'across') ? this.levelData.clues.across : this.levelData.clues.down;
+    let found = null;
+    
+    list.forEach(item => {
+      if (this.direction === 'across') {
+        if (item.row === this.selectedRow && this.selectedCol >= item.col && this.selectedCol < item.col + item.len) {
+          found = item;
+        }
       } else {
-        return clue.col === c && r >= clue.row && r < clue.row + clue.len;
+        if (item.col === this.selectedCol && this.selectedRow >= item.row && this.selectedRow < item.row + item.len) {
+          found = item;
+        }
       }
     });
+    return found;
   }
 
-  highlightClueItem(num, dir) {
-    document.querySelectorAll('.clues-list li').forEach(li => li.classList.remove('active-clue-item'));
-    const list = dir === 'across' ? this.acrossList : this.downList;
-    const targetLi = list.querySelector(`li[data-num="${num}"]`);
-    if (targetLi) {
-      targetLi.classList.add('active-clue-item');
-      targetLi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  renderClues() {
+    if (this.acrossList) {
+      this.acrossList.innerHTML = '';
+      this.levelData.clues.across.forEach(c => {
+        const li = document.createElement('li');
+        li.dataset.num = c.num;
+        li.dataset.dir = 'across';
+        li.innerHTML = `<strong>${c.num}.</strong> ${c.clue}`;
+        li.addEventListener('click', () => {
+          this.direction = 'across';
+          this.selectCell(c.row, c.col);
+        });
+        this.acrossList.appendChild(li);
+      });
+    }
+
+    if (this.downList) {
+      this.downList.innerHTML = '';
+      this.levelData.clues.down.forEach(c => {
+        const li = document.createElement('li');
+        li.dataset.num = c.num;
+        li.dataset.dir = 'down';
+        li.innerHTML = `<strong>${c.num}.</strong> ${c.clue}`;
+        li.addEventListener('click', () => {
+          this.direction = 'down';
+          this.selectCell(c.row, c.col);
+        });
+        this.downList.appendChild(li);
+      });
     }
   }
 
-  getCellEl(r, c) {
-    return this.gridContainer.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
+  highlightClueInList(num, dir) {
+    document.querySelectorAll('.clues-list li').forEach(el => el.classList.remove('active-clue-item'));
+    const selector = `.clues-list li[data-num="${num}"][data-dir="${dir}"]`;
+    const activeEl = document.querySelector(selector);
+    if (activeEl) {
+      activeEl.classList.add('active-clue-item');
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
   inputChar(char) {
+    if (this.isGameOver) return;
     if (this.selectedRow < 0 || this.selectedCol < 0) return;
     if (this.solutionMatrix[this.selectedRow][this.selectedCol] === null) return;
 
-    char = char.toUpperCase();
-    this.gridMatrix[this.selectedRow][this.selectedCol] = char;
-
-    const cellEl = this.getCellEl(this.selectedRow, this.selectedCol);
-    if (cellEl) {
-      // Retain cell number span if exists
-      const numSpan = cellEl.querySelector('.cell-number');
-      cellEl.innerHTML = '';
-      if (numSpan) cellEl.appendChild(numSpan);
-      
-      const charNode = document.createTextNode(char);
-      cellEl.appendChild(charNode);
-      cellEl.classList.remove('wrong-cell');
-    }
-
-    window.soundEngine.playKey();
-    this.moveNext();
-  }
-
-  backspace() {
-    if (this.selectedRow < 0 || this.selectedCol < 0) return;
+    this.gridMatrix[this.selectedRow][this.selectedCol] = char.toUpperCase();
     
-    const currentChar = this.gridMatrix[this.selectedRow][this.selectedCol];
-    if (currentChar !== '') {
+    // Play keystroke sound
+    if (window.soundEngine) window.soundEngine.playKey();
+
+    // Update DOM
+    const selector = `.grid-cell[data-row="${this.selectedRow}"][data-col="${this.selectedCol}"] .cell-text`;
+    const textEl = document.querySelector(selector);
+    if (textEl) textEl.textContent = char.toUpperCase();
+
+    // Move to next cell
+    this.moveNextCell();
+
+    // Check full completion automatically
+    this.checkAutoCompletion();
+  }
+
+  backspaceChar() {
+    if (this.isGameOver) return;
+    if (this.selectedRow < 0 || this.selectedCol < 0) return;
+
+    if (this.gridMatrix[this.selectedRow][this.selectedCol]) {
       this.gridMatrix[this.selectedRow][this.selectedCol] = '';
-      const cellEl = this.getCellEl(this.selectedRow, this.selectedCol);
-      if (cellEl) {
-        const numSpan = cellEl.querySelector('.cell-number');
-        cellEl.innerHTML = '';
-        if (numSpan) cellEl.appendChild(numSpan);
-        cellEl.classList.remove('wrong-cell');
-      }
+      const selector = `.grid-cell[data-row="${this.selectedRow}"][data-col="${this.selectedCol}"] .cell-text`;
+      const textEl = document.querySelector(selector);
+      if (textEl) textEl.textContent = '';
     } else {
-      this.movePrev();
+      this.movePrevCell();
+      this.gridMatrix[this.selectedRow][this.selectedCol] = '';
+      const selector = `.grid-cell[data-row="${this.selectedRow}"][data-col="${this.selectedCol}"] .cell-text`;
+      const textEl = document.querySelector(selector);
+      if (textEl) textEl.textContent = '';
     }
-    window.soundEngine.playKey();
   }
 
-  moveNext() {
-    let nextR = this.selectedRow;
-    let nextC = this.selectedCol;
+  moveNextCell() {
+    let r = this.selectedRow;
+    let c = this.selectedCol;
 
     if (this.direction === 'across') {
-      nextC++;
+      c++;
+      while (c < this.levelData.cols && this.solutionMatrix[r][c] === null) c++;
+      if (c < this.levelData.cols) this.selectCell(r, c);
     } else {
-      nextR++;
-    }
-
-    if (nextR < this.levelData.rows && nextC < this.levelData.cols) {
-      if (this.solutionMatrix[nextR][nextC] !== null) {
-        this.selectCell(nextR, nextC);
-      }
+      r++;
+      while (r < this.levelData.rows && this.solutionMatrix[r][c] === null) r++;
+      if (r < this.levelData.rows) this.selectCell(r, c);
     }
   }
 
-  movePrev() {
-    let prevR = this.selectedRow;
-    let prevC = this.selectedCol;
+  movePrevCell() {
+    let r = this.selectedRow;
+    let c = this.selectedCol;
 
     if (this.direction === 'across') {
-      prevC--;
+      c--;
+      while (c >= 0 && this.solutionMatrix[r][c] === null) c--;
+      if (c >= 0) this.selectCell(r, c);
     } else {
-      prevR--;
-    }
-
-    if (prevR >= 0 && prevC >= 0) {
-      if (this.solutionMatrix[prevR][prevC] !== null) {
-        this.selectCell(prevR, prevC);
-      }
+      r--;
+      while (r >= 0 && this.solutionMatrix[r][c] === null) r--;
+      if (r >= 0) this.selectCell(r, c);
     }
   }
 
-  useHint() {
-    if (this.hintsLeft <= 0) return false;
-    if (this.selectedRow < 0 || this.selectedCol < 0) return false;
+  giveHint() {
+    if (this.isGameOver) return;
+    if (this.hintsLeft <= 0) {
+      alert("Kesempatan Bantuan (Hint) Sudah Habis!");
+      return;
+    }
+    if (this.selectedRow < 0 || this.selectedCol < 0) return;
 
     const correctChar = this.solutionMatrix[this.selectedRow][this.selectedCol];
-    if (correctChar === null) return false;
+    if (correctChar !== null) {
+      this.hintsLeft--;
+      if (this.hintCountDisplay) this.hintCountDisplay.textContent = this.hintsLeft;
 
-    this.hintsLeft--;
-    this.hintCountDisplay.textContent = this.hintsLeft;
-    this.inputChar(correctChar);
-    
-    const cellEl = this.getCellEl(this.selectedRow, this.selectedCol);
-    if (cellEl) cellEl.classList.add('correct-cell');
+      this.gridMatrix[this.selectedRow][this.selectedCol] = correctChar;
+      const selector = `.grid-cell[data-row="${this.selectedRow}"][data-col="${this.selectedCol}"] .cell-text`;
+      const textEl = document.querySelector(selector);
+      if (textEl) textEl.textContent = correctChar;
 
-    return true;
+      const cellEl = document.querySelector(`.grid-cell[data-row="${this.selectedRow}"][data-col="${this.selectedCol}"]`);
+      if (cellEl) cellEl.classList.add('correct-cell');
+    }
   }
 
   checkWord() {
-    const activeClue = this.findClueForCell(this.selectedRow, this.selectedCol, this.direction);
-    if (!activeClue) return;
+    if (this.isGameOver) return;
+    let hasMistake = false;
+    let isFullyFilled = true;
 
-    let isWordCorrect = true;
-    for (let i = 0; i < activeClue.len; i++) {
-      const r = activeClue.dir === 'across' ? activeClue.row : activeClue.row + i;
-      const c = activeClue.dir === 'across' ? activeClue.col + i : activeClue.col;
-      
-      const userChar = this.gridMatrix[r][c];
-      const correctChar = this.solutionMatrix[r][c];
-      
-      const cellEl = this.getCellEl(r, c);
-      if (userChar !== correctChar) {
-        isWordCorrect = false;
-        if (cellEl) cellEl.classList.add('wrong-cell');
-      } else {
-        if (cellEl) cellEl.classList.add('correct-cell');
-      }
-    }
-
-    if (!isWordCorrect) {
-      window.soundEngine.playWrong();
-      window.appController.showWrongModal();
-    } else {
-      window.soundEngine.playCorrect();
-      this.score += 50;
-      this.updateScoreDisplay();
-    }
-  }
-
-  checkAll() {
-    let hasError = false;
-    let isComplete = true;
-
-    const rows = this.levelData.rows;
-    const cols = this.levelData.cols;
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (this.solutionMatrix[r][c] !== null) {
-          const userChar = this.gridMatrix[r][c];
-          const correctChar = this.solutionMatrix[r][c];
-          const cellEl = this.getCellEl(r, c);
-
-          if (userChar === '' || userChar !== correctChar) {
-            hasError = true;
-            isComplete = false;
-            if (cellEl && userChar !== '') {
-              cellEl.classList.add('wrong-cell');
-            }
-          } else {
-            if (cellEl) cellEl.classList.add('correct-cell');
+    for (let r = 0; r < this.levelData.rows; r++) {
+      for (let c = 0; c < this.levelData.cols; c++) {
+        const sol = this.solutionMatrix[r][c];
+        if (sol !== null) {
+          const userVal = this.gridMatrix[r][c];
+          if (!userVal) {
+            isFullyFilled = false;
+          } else if (userVal !== sol) {
+            hasMistake = true;
           }
         }
       }
     }
 
-    if (hasError) {
-      window.soundEngine.playWrong();
-      window.appController.showWrongModal();
-    } else if (isComplete) {
-      this.stopTimer();
-      window.soundEngine.playVictory();
-      this.score += 200;
-      this.updateScoreDisplay();
-      window.appController.showVictoryModal(this.timerDisplay.textContent, this.score);
+    if (hasMistake) {
+      if (window.soundEngine) window.soundEngine.playWrong();
+      const wrongModal = document.getElementById('wrongModal');
+      if (wrongModal) wrongModal.classList.remove('hidden');
+    } else if (isFullyFilled) {
+      this.handleVictory();
+    } else {
+      alert("Jawaban sejauh ini sudah BENAR! Lanjutkan mengisi seluruh 15 pertanyaan!");
     }
   }
 
+  checkAutoCompletion() {
+    let isComplete = true;
+    for (let r = 0; r < this.levelData.rows; r++) {
+      for (let c = 0; c < this.levelData.cols; c++) {
+        const sol = this.solutionMatrix[r][c];
+        if (sol !== null && this.gridMatrix[r][c] !== sol) {
+          isComplete = false;
+          break;
+        }
+      }
+    }
+    if (isComplete) {
+      this.handleVictory();
+    }
+  }
+
+  handleVictory() {
+    this.isGameOver = true;
+    this.stopTimer();
+
+    this.score += 1500 + (this.timerLeft * 50);
+    this.updateScoreDisplay();
+
+    if (window.soundEngine) window.soundEngine.playCorrect();
+
+    const victoryModal = document.getElementById('victoryModal');
+    const vicTime = document.getElementById('vicTime');
+    const vicScore = document.getElementById('vicScore');
+
+    if (vicTime) vicTime.textContent = `${this.timerLeft}s`;
+    if (vicScore) vicScore.textContent = `${this.score}`;
+
+    if (victoryModal) victoryModal.classList.remove('hidden');
+  }
+
   updateScoreDisplay() {
-    this.scoreDisplay.textContent = this.score;
+    if (this.scoreDisplay) this.scoreDisplay.textContent = this.score;
   }
 }
 
