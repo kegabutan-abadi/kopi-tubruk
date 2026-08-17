@@ -151,7 +151,7 @@ class AppController {
   }
 
   loadNextCategory() {
-    const categories = ['level1', 'level2', 'level3', 'level4', 'level5'];
+    const categories = ['level1', 'level2', 'level3', 'level4', 'level5', 'level6', 'level7', 'level8'];
     const currIdx = categories.indexOf(window.ttsEngine.currentLevelKey);
     const nextIdx = (currIdx + 1) % categories.length;
     const nextCatKey = categories[nextIdx];
