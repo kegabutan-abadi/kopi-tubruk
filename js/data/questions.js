@@ -17,7 +17,7 @@ const TTS_DATA = {
       ['E', null, 'E', null, 'K', null, 'A', null, 'M', null, null],
       ['K', 'O', 'M', 'P', 'A', 'S', 'R', 'E', 'A', 'L', null],
       [null, null, 'B', null, 'H', null, 'A', null, 'T', null, null],
-      ['B', 'L', 'E', 'S', 'A', 'H', 'H', 'A', 'D', null, null],
+      ['S', 'K', 'E', 'M', 'A', 'H', 'H', 'A', 'D', null, null],
       [null, null, 'R', null, null, 'A', null, 'M', null, null, null],
       ['K', 'A', 'P', 'A', 'L', 'K', null, 'A', null, null, null],
       [null, null, null, null, null, 'I', null, 'L', null, null, null],
@@ -45,7 +45,7 @@ const TTS_DATA = {
         { num: 6, row: 2, col: 4, len: 4, clue: "Hanya atau cuma" },
         { num: 7, row: 4, col: 0, len: 6, clue: "Alat penunjuk arah mata angin" },
         { num: 8, row: 4, col: 6, len: 4, clue: "Nyata, murni, atau fakta sebenarnya" },
-        { num: 9, row: 6, col: 0, len: 5, clue: "Berkah, karunia, atau doa keselamatan" },
+        { num: 9, row: 6, col: 0, len: 5, clue: "Bagan atau rancangan garis besar susunan rencana" },
         { num: 10, row: 6, col: 4, len: 5, clue: "Hari pertama dalam pekan / Hari Minggu (Tunggal)" },
         { num: 11, row: 8, col: 0, len: 5, clue: "Kendaraan laut besar pengangkut barang & penumpang" }
       ],
