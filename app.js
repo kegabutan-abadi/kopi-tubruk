@@ -1459,13 +1459,13 @@
     }).join('');
   }
 
-  // --- Dual Chart Renderers (Side-by-Side Canvas) ---
+  // --- Dual Chart Renderers (Side-by-Side Canvas - Institutional Grade) ---
   function renderDualCharts() {
     renderCandleChart();
     renderTickChart();
   }
 
-  // Chart 1: 15s Aggregated Candlestick & EMA Chart
+  // Chart 1: 15s Aggregated Candlestick & Volume & Indicator Chart (Pro Level)
   function renderCandleChart() {
     const canvas = dom.candleCanvas;
     if (!canvas || !dom.candleCanvasContainer) return;
@@ -1489,6 +1489,11 @@
     ctx.fillStyle = isDark ? '#0b0f19' : '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
+    const axisWidth = 72;
+    const chartW = w - axisWidth;
+    const bottomH = 20;
+    const chartH = h - bottomH;
+
     const allCandles = [...state.candles15s];
     if (state.currentCandle) allCandles.push(state.currentCandle);
 
@@ -1499,42 +1504,105 @@
 
     const highs = allCandles.map(c => c.high);
     const lows = allCandles.map(c => c.low);
+    const volumes = allCandles.map(c => c.volume || 1);
     if (state.strikePrice) { highs.push(state.strikePrice); lows.push(state.strikePrice); }
 
     const minP = Math.min(...lows);
     const maxP = Math.max(...highs);
+    const maxVol = Math.max(...volumes, 5);
+    const precision = state.selectedCoin.precision;
+
     const pad = Math.max((maxP - minP) * 0.15, state.currentPrice ? state.currentPrice * 0.0006 : 1);
     const yMin = minP - pad;
     const yMax = maxP + pad;
     const yRange = yMax - yMin;
 
-    const getY = (val) => h - ((val - yMin) / yRange) * (h - 36) - 18;
-    const numCandles = allCandles.length;
-    const candleWidth = Math.max(4, Math.min(18, (w - 30) / numCandles - 4));
-    const stepX = (w - 30) / numCandles;
+    const mainPlotH = chartH * 0.78;
+    const volPlotH = chartH * 0.20;
+    const volTopY = chartH * 0.80;
 
-    // Grid lines
-    ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+    const getY = (val) => mainPlotH - ((val - yMin) / yRange) * (mainPlotH - 24) - 8;
+    const numCandles = allCandles.length;
+    const candleWidth = Math.max(4, Math.min(16, (chartW - 20) / numCandles - 4));
+    const stepX = (chartW - 20) / numCandles;
+
+    // Right Y-Axis Divider Line
+    ctx.strokeStyle = isDark ? '#1f293d' : '#e2e8f0';
     ctx.lineWidth = 1;
-    for (let i = 1; i <= 3; i++) {
-      const gy = (h / 4) * i;
-      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(chartW, 0);
+    ctx.lineTo(chartW, h);
+    ctx.stroke();
+
+    // Horizontal Price Grid Lines & Axis Labels
+    const gridSteps = 4;
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i <= gridSteps; i++) {
+      const priceVal = yMin + (yRange / gridSteps) * i;
+      const gy = getY(priceVal);
+
+      // Grid line
+      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(chartW, gy);
+      ctx.stroke();
+
+      // Axis Label
+      ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+      ctx.fillText(formatPrice(priceVal, precision), chartW + 6, gy);
     }
 
-    // Strike baseline
+    // Volume Separator Line
+    ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath();
+    ctx.moveTo(0, volTopY);
+    ctx.lineTo(chartW, volTopY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw Volume Bars
+    allCandles.forEach((c, idx) => {
+      const cx = 10 + idx * stepX + stepX / 2;
+      const isGreen = c.close >= c.open;
+      const volHeight = Math.max(2, (c.volume / maxVol) * volPlotH);
+      const vY = chartH - volHeight;
+
+      ctx.fillStyle = isGreen 
+        ? (isDark ? 'rgba(16, 185, 129, 0.25)' : 'rgba(5, 150, 105, 0.25)') 
+        : (isDark ? 'rgba(244, 63, 94, 0.25)' : 'rgba(220, 38, 38, 0.25)');
+      ctx.fillRect(cx - candleWidth / 2, vY, candleWidth, volHeight);
+    });
+
+    // Strike Baseline (Golden Amber)
     if (state.strikePrice) {
       const sy = getY(state.strikePrice);
       ctx.save();
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.4;
       ctx.setLineDash([4, 4]);
-      ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(w, sy); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, sy);
+      ctx.lineTo(chartW, sy);
+      ctx.stroke();
       ctx.restore();
+
+      // Strike Ribbon on Y-Axis
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(chartW, sy - 8, axisWidth, 16);
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText(`K:${formatPrice(state.strikePrice, precision).replace('$', '')}`, chartW + 4, sy);
     }
 
-    // Draw Candlesticks
+    // Draw Candlesticks with Enhanced Lighting
     allCandles.forEach((c, idx) => {
-      const cx = 15 + idx * stepX + stepX / 2;
+      const cx = 10 + idx * stepX + stepX / 2;
       const isGreen = c.close >= c.open;
       const candleColor = isGreen ? '#10b981' : '#f43f5e';
 
@@ -1545,27 +1613,32 @@
 
       // Wick
       ctx.strokeStyle = candleColor;
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
       ctx.moveTo(cx, highY);
       ctx.lineTo(cx, lowY);
       ctx.stroke();
 
-      // Body
+      // Body with crisp fill & subtle border
       ctx.fillStyle = candleColor;
       const bodyTop = Math.min(openY, closeY);
-      const bodyHeight = Math.max(2, Math.abs(closeY - openY));
+      const bodyHeight = Math.max(2.5, Math.abs(closeY - openY));
       ctx.fillRect(cx - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+
+      // Optional candle top/bottom rounding
+      ctx.strokeStyle = isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(cx - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
     });
 
-    // Draw EMA 7 (Cyan)
+    // Draw EMA 7 Line (Cyan)
     ctx.save();
     ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     allCandles.forEach((c, idx) => {
       if (c.ema7) {
-        const cx = 15 + idx * stepX + stepX / 2;
+        const cx = 10 + idx * stepX + stepX / 2;
         const cy = getY(c.ema7);
         if (idx === 0) ctx.moveTo(cx, cy);
         else ctx.lineTo(cx, cy);
@@ -1573,13 +1646,13 @@
     });
     ctx.stroke();
 
-    // Draw EMA 21 (Purple)
+    // Draw EMA 21 Line (Purple)
     ctx.strokeStyle = '#a78bfa';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     allCandles.forEach((c, idx) => {
       if (c.ema21) {
-        const cx = 15 + idx * stepX + stepX / 2;
+        const cx = 10 + idx * stepX + stepX / 2;
         const cy = getY(c.ema21);
         if (idx === 0) ctx.moveTo(cx, cy);
         else ctx.lineTo(cx, cy);
@@ -1588,10 +1661,35 @@
     ctx.stroke();
     ctx.restore();
 
+    // Current Price Indicator on Right Y-Axis
+    if (state.currentPrice) {
+      const cy = getY(state.currentPrice);
+      const isAbove = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
+      const badgeBg = isAbove ? '#10b981' : '#f43f5e';
+
+      // Horizontal guideline to last candle
+      ctx.save();
+      ctx.strokeStyle = badgeBg;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(0, cy);
+      ctx.lineTo(chartW, cy);
+      ctx.stroke();
+      ctx.restore();
+
+      // Right Axis Price Tag
+      ctx.fillStyle = badgeBg;
+      ctx.fillRect(chartW, cy - 9, axisWidth, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.fillText(formatPrice(state.currentPrice, precision), chartW + 4, cy);
+    }
+
     ctx.restore();
   }
 
-  // Chart 2: Real-Time High-Frequency Tick Stream & Strike Baseline
+  // Chart 2: Real-Time High-Frequency Tick Stream & Strike Baseline (Pro Curve)
   function renderTickChart() {
     const canvas = dom.tickCanvas;
     if (!canvas || !dom.canvasContainer) return;
@@ -1615,6 +1713,10 @@
     ctx.fillStyle = isDark ? '#0b0f19' : '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
+    const axisWidth = 72;
+    const chartW = w - axisWidth;
+    const chartH = h - 18;
+
     if (state.tickHistory.length < 2) {
       ctx.restore();
       return;
@@ -1636,26 +1738,59 @@
     const yMax = maxP + pad;
     const yRange = yMax - yMin;
 
-    const getY = (val) => h - ((val - yMin) / yRange) * (h - 36) - 18;
-    const getX = (idx) => (idx / (state.tickHistory.length - 1)) * (w - 20) + 10;
+    const getY = (val) => chartH - ((val - yMin) / yRange) * (chartH - 24) - 8;
+    const getX = (idx) => (idx / (state.tickHistory.length - 1)) * (chartW - 20) + 10;
 
-    // Grid lines
-    ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+    // Right Y-Axis Divider Line
+    ctx.strokeStyle = isDark ? '#1f293d' : '#e2e8f0';
     ctx.lineWidth = 1;
-    for (let i = 1; i <= 3; i++) {
-      const gy = (h / 4) * i;
-      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(chartW, 0);
+    ctx.lineTo(chartW, h);
+    ctx.stroke();
+
+    // Horizontal Price Grid Lines & Axis Labels
+    const gridSteps = 4;
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i <= gridSteps; i++) {
+      const priceVal = yMin + (yRange / gridSteps) * i;
+      const gy = getY(priceVal);
+
+      // Grid line
+      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(chartW, gy);
+      ctx.stroke();
+
+      // Axis Label
+      ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+      ctx.fillText(formatPrice(priceVal, precision), chartW + 6, gy);
     }
 
-    // Strike Line
+    // Strike Line (Golden Amber)
     if (state.strikePrice) {
       const sy = getY(state.strikePrice);
       ctx.save();
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 1.4;
       ctx.setLineDash([4, 4]);
-      ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(w, sy); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, sy);
+      ctx.lineTo(chartW, sy);
+      ctx.stroke();
       ctx.restore();
+
+      // Strike Ribbon on Y-Axis
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(chartW, sy - 8, axisWidth, 16);
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillText(`K:${formatPrice(state.strikePrice, precision).replace('$', '')}`, chartW + 4, sy);
     }
 
     // Dynamic Gradient Fill Under Price Path
@@ -1663,23 +1798,25 @@
     const isAbove = state.strikePrice ? lastPrice >= state.strikePrice : true;
     const themeColor = isAbove ? '#10b981' : '#f43f5e';
 
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, isAbove ? 'rgba(16, 185, 129, 0.22)' : 'rgba(244, 63, 94, 0.22)');
+    const grad = ctx.createLinearGradient(0, 0, 0, chartH);
+    grad.addColorStop(0, isAbove ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
     ctx.beginPath();
-    ctx.moveTo(getX(0), h);
+    ctx.moveTo(getX(0), chartH);
     for (let i = 0; i < state.tickHistory.length; i++) {
       ctx.lineTo(getX(i), getY(state.tickHistory[i].price));
     }
-    ctx.lineTo(getX(state.tickHistory.length - 1), h);
+    ctx.lineTo(getX(state.tickHistory.length - 1), chartH);
     ctx.closePath();
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Price Line
+    // Smooth Curved High-Frequency Polyline
     ctx.strokeStyle = themeColor;
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
     ctx.beginPath();
     for (let i = 0; i < state.tickHistory.length; i++) {
       const x = getX(i);
@@ -1689,20 +1826,81 @@
     }
     ctx.stroke();
 
-    // Pulsing Head Dot
+    // High & Low Watermark Badges
+    let maxIdx = 0, minIdx = 0;
+    let highestP = -Infinity, lowestP = Infinity;
+    state.tickHistory.forEach((t, idx) => {
+      if (t.price > highestP) { highestP = t.price; maxIdx = idx; }
+      if (t.price < lowestP) { lowestP = t.price; minIdx = idx; }
+    });
+
+    if (state.tickHistory.length > 5) {
+      // High Pin
+      const hx = getX(maxIdx);
+      const hy = getY(highestP);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.fillRect(Math.min(chartW - 60, Math.max(10, hx - 24)), hy - 16, 52, 13);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 8px "JetBrains Mono", monospace';
+      ctx.fillText(`▲ MAX`, Math.min(chartW - 56, Math.max(14, hx - 20)), hy - 8);
+
+      // Low Pin
+      const lx = getX(minIdx);
+      const ly = getY(lowestP);
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+      ctx.fillRect(Math.min(chartW - 60, Math.max(10, lx - 24)), ly + 4, 52, 13);
+      ctx.fillStyle = '#f43f5e';
+      ctx.font = 'bold 8px "JetBrains Mono", monospace';
+      ctx.fillText(`▼ MIN`, Math.min(chartW - 56, Math.max(14, lx - 20)), ly + 12);
+    }
+
+    // Pulsing Head Dot with Multi-Ring Ripple on Latest Tick
     if (state.tickHistory.length > 0) {
       const lastX = getX(state.tickHistory.length - 1);
       const lastY = getY(state.tickHistory[state.tickHistory.length - 1].price);
 
+      // Outer Glow Halo
       ctx.beginPath();
-      ctx.arc(lastX, lastY, 7, 0, Math.PI * 2);
-      ctx.fillStyle = isAbove ? 'rgba(16, 185, 129, 0.35)' : 'rgba(244, 63, 94, 0.35)';
+      ctx.arc(lastX, lastY, 9, 0, Math.PI * 2);
+      ctx.fillStyle = isAbove ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)';
       ctx.fill();
 
+      // Middle Ring
       ctx.beginPath();
-      ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+      ctx.arc(lastX, lastY, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = themeColor;
+      ctx.fill();
+
+      // Inner White Core
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
+    }
+
+    // Current Price Indicator Tag on Right Y-Axis
+    if (state.currentPrice) {
+      const cy = getY(state.currentPrice);
+      const isAbove = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
+      const badgeBg = isAbove ? '#10b981' : '#f43f5e';
+
+      // Guideline
+      ctx.save();
+      ctx.strokeStyle = badgeBg;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(0, cy);
+      ctx.lineTo(chartW, cy);
+      ctx.stroke();
+      ctx.restore();
+
+      // Ribbon Tag
+      ctx.fillStyle = badgeBg;
+      ctx.fillRect(chartW, cy - 9, axisWidth, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.fillText(formatPrice(state.currentPrice, precision), chartW + 4, cy);
     }
 
     ctx.restore();
