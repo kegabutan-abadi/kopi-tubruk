@@ -122,7 +122,7 @@
 
             <div class="bar-right">
               <button class="ctrl-btn" id="btnFitPolyChart" title="Auto-Fit Skala">⛶ Auto</button>
-              <div class="live-dot-wrap"><span class="dot-purple"></span> POLYMARKET RESOLUTION</div>
+              <div class="live-dot-wrap"><span class="dot-purple"></span> POLYMARKET LIVE FEED</div>
             </div>
           </div>
           <div class="chart-canvas-box" id="polyChartContainer"></div>
@@ -193,7 +193,20 @@
           </div>
         </div>
 
-        <!-- 2. AI Consensus & Sentiment Card -->
+        <!-- 2. Live Polymarket Official Active Markets -->
+        <div class="card live-poly-events-panel">
+          <div class="card-bar">
+            <span class="card-heading">PASAR AKTIF RESMI POLYMARKET</span>
+            <span class="tag-official-api">GAMMA API LIVE</span>
+          </div>
+          <div class="poly-events-list" id="polyEventsList">
+            <div class="poly-event-item loading">
+              <span class="ev-q">Memuat pasar prediksi Polymarket live...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. AI Consensus & Sentiment Card -->
         <div class="card consensus-panel">
           <div class="card-bar">
             <span class="card-heading">KONSENSUS ARBITER AI</span>
@@ -218,7 +231,7 @@
           </div>
         </div>
 
-        <!-- 3. Active Position & Fast-Flip Reversal Card -->
+        <!-- 4. Active Position & Fast-Flip Reversal Card -->
         <div class="card position-panel">
           <div class="card-bar">
             <span class="card-heading">POSISI TRADING AKTIF</span>
@@ -265,7 +278,7 @@
           </div>
         </div>
 
-        <!-- 4. Capital & Account Summary -->
+        <!-- 5. Capital & Account Summary -->
         <div class="card capital-panel">
           <div class="card-bar">
             <span class="card-heading">PORTOFOLIO SIMULATOR</span>
@@ -303,7 +316,7 @@
 
     <!-- TERMINAL FOOTER -->
     <footer class="bottom-footer">
-      <span>KOPI TUBRUK • Dual-Chart Terminal (Binance Spot & Polymarket Probability) • Resizable Layout</span>
+      <span>KOPI TUBRUK • Dual-Chart Terminal (Binance Spot & Polymarket Probability) • Real-Time Polymarket API</span>
       <span id="footerClock">00:00:00 WIB</span>
     </footer>
 
