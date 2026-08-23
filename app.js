@@ -2,7 +2,7 @@
  * KOPI TUBRUK - Dual-Chart Prediction & Trading Terminal
  * Chart 1: Binance Spot Candlestick (1m / 5m) with TradingView LightweightCharts
  * Chart 2: Polymarket Implied Probability (1m / 5m) with TradingView LightweightCharts
- * Resizable Draggable Layout + Active Autonomous AI Fast-Flip Execution Engine
+ * Real-Time Official Polymarket Gamma API Feed + Resizable Layout + Active AI Fast-Flip Engine
  */
 
 (function () {
@@ -10,11 +10,11 @@
 
   // --- 1. COIN REGISTRY ---
   const COINS = [
-    { symbol: 'BTC', name: 'Bitcoin', precision: 2, binancePair: 'BTCUSDT' },
-    { symbol: 'ETH', name: 'Ethereum', precision: 2, binancePair: 'ETHUSDT' },
-    { symbol: 'SOL', name: 'Solana', precision: 3, binancePair: 'SOLUSDT' },
-    { symbol: 'XRP', name: 'Ripple', precision: 4, binancePair: 'XRPUSDT' },
-    { symbol: 'DOGE', name: 'Dogecoin', precision: 5, binancePair: 'DOGEUSDT' }
+    { symbol: 'BTC', name: 'Bitcoin', searchTerms: ['bitcoin', 'btc'], precision: 2, binancePair: 'BTCUSDT' },
+    { symbol: 'ETH', name: 'Ethereum', searchTerms: ['ethereum', 'eth'], precision: 2, binancePair: 'ETHUSDT' },
+    { symbol: 'SOL', name: 'Solana', searchTerms: ['solana', 'sol'], precision: 3, binancePair: 'SOLUSDT' },
+    { symbol: 'XRP', name: 'Ripple', searchTerms: ['xrp', 'ripple'], precision: 4, binancePair: 'XRPUSDT' },
+    { symbol: 'DOGE', name: 'Dogecoin', searchTerms: ['dogecoin', 'doge'], precision: 5, binancePair: 'DOGEUSDT' }
   ];
 
   // --- 2. GLOBAL STATE ---
@@ -36,6 +36,9 @@
     // Candlestick & Probability Buffers
     candlesBinance: [], // [{time (unix sec), open, high, low, close, volume}]
     polyOddsHistory: [], // [{time, yes, no}]
+
+    // Live Official Polymarket Markets
+    livePolyEvents: [],
 
     // Live Odds
     marketOddsYes: 0.50,
@@ -103,6 +106,9 @@
     oddsNoCents: document.getElementById('oddsNoCents'),
     oddsNoTarget: document.getElementById('oddsNoTarget'),
     oddsBarFill: document.getElementById('oddsBarFill'),
+
+    // Official Polymarket Feed
+    polyEventsList: document.getElementById('polyEventsList'),
 
     consensusStatusPill: document.getElementById('consensusStatusPill'),
     bullScoreText: document.getElementById('bullScoreText'),
@@ -344,7 +350,79 @@
     return res;
   }
 
-  // --- 6. REAL BINANCE DATA FETCHING & KLINE STREAM ---
+  // --- 6. REAL POLYMARKET OFFICIAL GAMMA API INGESTION ---
+  async function fetchLivePolymarketEvents() {
+    try {
+      const res = await fetch('https://gamma-api.polymarket.com/events?limit=80&active=true&closed=false&tag_slug=crypto');
+      if (!res.ok) return;
+      const events = await res.json();
+      const coinTerms = state.selectedCoin.searchTerms;
+
+      const matchedMarkets = [];
+      for (const ev of events) {
+        const evTitle = ev.title || '';
+        const isCoinRelated = coinTerms.some(term => evTitle.toLowerCase().includes(term));
+        
+        for (const m of (ev.markets || [])) {
+          const q = m.question || '';
+          if (isCoinRelated || coinTerms.some(term => q.toLowerCase().includes(term))) {
+            let prices = m.outcomePrices;
+            if (typeof prices === 'string') {
+              try { prices = JSON.parse(prices); } catch (e) { prices = null; }
+            }
+            if (prices && prices.length >= 2) {
+              const yesP = parseFloat(prices[0]);
+              const noP = parseFloat(prices[1]);
+              const vol = parseFloat(m.volume || 0);
+              matchedMarkets.push({
+                question: q,
+                eventTitle: evTitle,
+                yesPrice: yesP,
+                noPrice: noP,
+                volume: vol
+              });
+            }
+          }
+        }
+      }
+
+      matchedMarkets.sort((a, b) => b.volume - a.volume);
+      state.livePolyEvents = matchedMarkets;
+      renderPolymarketEventsList();
+    } catch (e) {
+      console.warn('Polymarket API error:', e);
+    }
+  }
+
+  function renderPolymarketEventsList() {
+    if (!dom.polyEventsList) return;
+    if (state.livePolyEvents.length === 0) {
+      dom.polyEventsList.innerHTML = `
+        <div class="poly-event-item">
+          <span class="ev-q">Prediksi Pasar Biner 5M (${state.selectedCoin.symbol})</span>
+          <div class="ev-prices">
+            <span class="ev-yes">YES: ${(state.marketOddsYes * 100).toFixed(0)}¢</span>
+            <span class="ev-no">NO: ${(state.marketOddsNo * 100).toFixed(0)}¢</span>
+            <span class="ev-vol">Live Resolution</span>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    dom.polyEventsList.innerHTML = state.livePolyEvents.slice(0, 4).map(item => `
+      <div class="poly-event-item">
+        <span class="ev-q" title="${item.question}">${item.question}</span>
+        <div class="ev-prices">
+          <span class="ev-yes">YES: ${(item.yesPrice * 100).toFixed(1)}¢</span>
+          <span class="ev-no">NO: ${(item.noPrice * 100).toFixed(1)}¢</span>
+          <span class="ev-vol">$${Math.round(item.volume).toLocaleString('en-US')}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // --- 7. REAL BINANCE DATA FETCHING & KLINE STREAM ---
   let wsBinance = null;
 
   async function fetchImmediateSpotPrice() {
@@ -389,7 +467,6 @@
             state.strikeLockedAt = Date.now();
           }
 
-          // Render Chart 1 (Binance)
           if (candleSeries) candleSeries.setData(state.candlesBinance);
           if (volumeSeries) {
             volumeSeries.setData(state.candlesBinance.map(c => ({
@@ -410,7 +487,6 @@
           updateStrikePriceLineOnChart();
           if (tvChartBinance) tvChartBinance.timeScale().fitContent();
 
-          // Initialize Chart 2 (Polymarket Probability History)
           seedPolymarketOddsHistory();
         }
       }
@@ -422,8 +498,7 @@
   function seedPolymarketOddsHistory() {
     if (!state.strikePrice || state.candlesBinance.length === 0) return;
     
-    // Generate historical probability stream based on candlestick closes vs strike
-    state.polyOddsHistory = state.candlesBinance.map((c, idx) => {
+    state.polyOddsHistory = state.candlesBinance.map(c => {
       const zScore = (c.close - state.strikePrice) / (state.strikePrice * 0.0012 + 0.0001);
       let probYes = normalCDF(zScore);
       probYes = Math.max(0.04, Math.min(0.96, probYes));
@@ -445,7 +520,7 @@
     if (wsBinance) { try { wsBinance.close(); } catch (e) {} }
 
     const pairLower = state.selectedCoin.binancePair.toLowerCase();
-    const interval = state.binanceTimeframe; // '1m' or '5m'
+    const interval = state.binanceTimeframe;
     const url = `https://stream.binance.com:9443/ws/${pairLower}@kline_${interval}/${pairLower}@ticker`;
 
     try {
@@ -476,7 +551,6 @@
               updateStrikePriceLineOnChart();
             }
 
-            // Real-time update to Chart 1 (Binance Candlestick)
             if (candleSeries) candleSeries.update(candle);
             if (volumeSeries) {
               volumeSeries.update({
@@ -486,7 +560,6 @@
               });
             }
 
-            // Update in-memory candle array
             const lastIdx = state.candlesBinance.length - 1;
             if (lastIdx >= 0 && state.candlesBinance[lastIdx].time === candle.time) {
               state.candlesBinance[lastIdx] = candle;
@@ -495,7 +568,6 @@
               if (state.candlesBinance.length > 70) state.candlesBinance.shift();
             }
 
-            // Real-time MA updates
             const ma7Data = calculateSMAData(state.candlesBinance, 7);
             const ma25Data = calculateSMAData(state.candlesBinance, 25);
             if (ma7Series && ma7Data.length > 0) {
@@ -507,7 +579,6 @@
               dom.valMa25.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
             }
 
-            // Real-time update to Chart 2 (Polymarket Probability)
             const remainingMs = Math.max(0, state.roundEndTime - Date.now());
             const { yesOdds, noOdds } = calculateBinaryMarketOdds(candle.close, state.strikePrice, remainingMs);
             if (polyYesSeries && polyNoSeries) {
@@ -525,7 +596,7 @@
     }
   }
 
-  // --- 7. ROUND BOUNDARIES & TIMER ENGINE ---
+  // --- 8. ROUND BOUNDARIES & TIMER ENGINE ---
   function calculateCurrentRoundBoundaries() {
     const now = Date.now();
     const duration = state.roundDurationMinutes;
@@ -549,7 +620,6 @@
       state.roundStartTime = startTime;
       state.roundEndTime = endTime;
 
-      // Lock strike to real current spot price at the start of new round
       state.strikePrice = state.currentPrice;
       state.strikeLockedAt = startTime;
       updateStrikePriceLineOnChart();
@@ -580,12 +650,11 @@
     if (dom.footerClock) dom.footerClock.textContent = `${formatTime(now, true)} WIB`;
   }
 
-  // --- 8. REAL-TIME DOM METRICS & AI ENGINE LOOP (100ms) ---
+  // --- 9. REAL-TIME DOM METRICS & AI ENGINE LOOP (100ms) ---
   function updateThrottledMetrics() {
     if (!state.currentPrice) return;
     const precision = state.selectedCoin.precision;
 
-    // Header Price & 24h Change
     if (dom.navSpotPrice) {
       dom.navSpotPrice.textContent = formatPrice(state.currentPrice, precision);
       const isAboveStrike = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
@@ -603,7 +672,7 @@
     updateSimulatorMarkToMarket();
   }
 
-  // --- 9. ACTIVE AUTONOMOUS AI TRADING & FAST-FLIP REVERSAL ENGINE ---
+  // --- 10. ACTIVE AUTONOMOUS AI TRADING & FAST-FLIP REVERSAL ENGINE ---
   function evaluateAITradingEngine() {
     if (!state.currentPrice || !state.strikePrice) return;
     const now = Date.now();
@@ -611,7 +680,6 @@
     const totalRoundMs = state.roundDurationMinutes * 60 * 1000;
     const elapsedSecs = Math.floor((totalRoundMs - remainingMs) / 1000);
 
-    // Exact Polymarket Implied Odds
     const { yesOdds, noOdds } = calculateBinaryMarketOdds(state.currentPrice, state.strikePrice, remainingMs);
     state.marketOddsYes = yesOdds;
     state.marketOddsNo = noOdds;
@@ -622,7 +690,6 @@
     if (dom.polyLegendYes) dom.polyLegendYes.textContent = `${(yesOdds * 100).toFixed(0)}¢`;
     if (dom.polyLegendNo) dom.polyLegendNo.textContent = `${(noOdds * 100).toFixed(0)}¢`;
 
-    // Directional Factors
     const deltaStrike = state.currentPrice - state.strikePrice;
     const deltaStrikePct = (deltaStrike / state.strikePrice) * 100;
     
@@ -666,13 +733,10 @@
     if (dom.verdictTitle) dom.verdictTitle.textContent = verdict;
     if (dom.verdictDesc) dom.verdictDesc.textContent = rationale;
 
-    // ACTIVE TRADING EXECUTION:
-    // AI analyzes initial 10s, then actively executes a trade after 10s
+    // Active Trading Execution
     if (elapsedSecs >= 10 && remainingMs >= 25000) {
-      // 1. Check if an existing trade needs to be reversed (Fast Cut-Loss & Flip)
       checkAndExecuteReversalProtection(bullScore, bearScore, yesOdds, noOdds, remainingMs);
 
-      // 2. If no position yet in this round, execute initial trade!
       if (!state.portfolio.activePosition && state.portfolio.cashBalance >= 1.00) {
         const sideToBuy = bullScore >= bearScore ? 'YES' : 'NO';
         const priceToBuy = sideToBuy === 'YES' ? yesOdds : noOdds;
@@ -971,7 +1035,7 @@
     }).join('');
   }
 
-  // --- 10. DRAGGABLE RESIZABLE LAYOUT ENGINE ---
+  // --- 11. DRAGGABLE RESIZABLE LAYOUT ENGINE ---
   function setupResizableDivider() {
     const handle = dom.resizerHandle;
     const wrapper = dom.workspaceWrapper;
@@ -1006,7 +1070,6 @@
       }
     });
 
-    // Touch support for mobile/tablets
     handle.addEventListener('touchstart', (e) => {
       isDragging = true;
       handle.classList.add('dragging');
@@ -1030,7 +1093,7 @@
     });
   }
 
-  // --- 11. THEME & EVENT HANDLERS ---
+  // --- 12. THEME & EVENT HANDLERS ---
   function applyTheme(themeName) {
     state.currentTheme = themeName;
     document.body.className = themeName;
@@ -1061,7 +1124,6 @@
   function setupEventListeners() {
     if (dom.themeToggle) dom.themeToggle.addEventListener('click', toggleTheme);
 
-    // Auto fit buttons
     if (dom.btnFitBinanceChart) dom.btnFitBinanceChart.addEventListener('click', () => {
       if (tvChartBinance) tvChartBinance.timeScale().fitContent();
     });
@@ -1069,7 +1131,6 @@
       if (tvChartPoly) tvChartPoly.timeScale().fitContent();
     });
 
-    // Timeframe switchers for Chart 1 (Binance Spot)
     dom.binanceTfButtons.forEach(btn => {
       btn.addEventListener('click', async function () {
         const tf = this.dataset.tf;
@@ -1083,7 +1144,6 @@
       });
     });
 
-    // Timeframe switchers for Chart 2 (Polymarket)
     dom.polyTfButtons.forEach(btn => {
       btn.addEventListener('click', function () {
         const tf = this.dataset.tf;
@@ -1098,7 +1158,6 @@
       });
     });
 
-    // Coin Switching
     dom.coinTabs.forEach(tab => {
       tab.addEventListener('click', async function () {
         const symbol = this.dataset.coin;
@@ -1112,6 +1171,7 @@
           state.strikePrice = null;
           state.candlesBinance = [];
           state.polyOddsHistory = [];
+          state.livePolyEvents = [];
 
           if (dom.binanceChartTitle) dom.binanceChartTitle.textContent = `GRAFIK 1: ${selected.symbol}/USDT SPOT BINANCE`;
 
@@ -1119,6 +1179,7 @@
           await loadBinanceKlines();
           connectBinanceStream();
           syncRoundState();
+          await fetchLivePolymarketEvents();
         }
       });
     });
@@ -1169,7 +1230,7 @@
     window.addEventListener('resize', resizeCharts);
   }
 
-  // --- 12. INITIALIZATION ---
+  // --- 13. INITIALIZATION ---
   async function init() {
     initTradingViewCharts();
     
@@ -1185,9 +1246,11 @@
 
     await loadBinanceKlines();
     connectBinanceStream();
+    await fetchLivePolymarketEvents();
 
     setInterval(updateTimerCountdown, 100);
     setInterval(updateThrottledMetrics, 100);
+    setInterval(fetchLivePolymarketEvents, 30000); // refresh Polymarket API events every 30s
   }
 
   if (document.readyState === 'loading') {
