@@ -3,218 +3,261 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KOPI TUBRUK - Binance 5M AI Prediction Terminal</title>
-  <meta name="description" content="KOPI TUBRUK: Simple & Professional Binance 5M Candlestick AI Prediction Terminal with Autonomous Fast-Flip Reversal Strategy.">
+  <title>KOPI TUBRUK - AI Crypto Prediction & Trading Terminal</title>
+  <meta name="description" content="KOPI TUBRUK: Professional Binance 5M Candlestick Prediction Terminal with TradingView Charting and Autonomous AI Fast-Flip Engine.">
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <!-- Local TradingView Lightweight Charts Library -->
+  <script src="lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="theme-dark">
-  <div class="terminal-container">
+  <div class="app-layout">
     
-    <!-- TOP HEADER -->
-    <header class="terminal-header">
-      <div class="header-left">
+    <!-- TOP NAVIGATION BAR -->
+    <header class="navbar">
+      <div class="nav-left">
         <div class="brand">
-          <span class="brand-icon">☕</span>
-          <div class="brand-text">
-            <span class="brand-name">KOPI <span class="accent-gold">TUBRUK</span></span>
-            <span class="brand-sub">BINANCE 5M AI TERMINAL</span>
+          <span class="brand-emoji">☕</span>
+          <div class="brand-meta">
+            <span class="brand-title">KOPI <span class="gold">TUBRUK</span></span>
+            <span class="brand-badge">PREDICTION TERMINAL</span>
           </div>
         </div>
 
-        <!-- Coin Selector -->
-        <div class="coin-nav" id="coinNav">
-          <button class="coin-tab active" data-coin="BTC" data-pair="BTCUSDT">BTC/USDT</button>
-          <button class="coin-tab" data-coin="ETH" data-pair="ETHUSDT">ETH/USDT</button>
-          <button class="coin-tab" data-coin="SOL" data-pair="SOLUSDT">SOL/USDT</button>
-          <button class="coin-tab" data-coin="XRP" data-pair="XRPUSDT">XRP/USDT</button>
-          <button class="coin-tab" data-coin="DOGE" data-pair="DOGEUSDT">DOGE/USDT</button>
-        </div>
+        <nav class="coin-tabs" id="coinTabs">
+          <button class="coin-btn active" data-coin="BTC" data-pair="BTCUSDT">BTC/USDT</button>
+          <button class="coin-btn" data-coin="ETH" data-pair="ETHUSDT">ETH/USDT</button>
+          <button class="coin-btn" data-coin="SOL" data-pair="SOLUSDT">SOL/USDT</button>
+          <button class="coin-btn" data-coin="XRP" data-pair="XRPUSDT">XRP/USDT</button>
+          <button class="coin-btn" data-coin="DOGE" data-pair="DOGEUSDT">DOGE/USDT</button>
+        </nav>
       </div>
 
-      <!-- Quick Metrics in Header -->
-      <div class="header-right">
-        <div class="header-stat">
-          <span class="stat-lbl">HARGA LIVE:</span>
-          <span class="stat-val live-price" id="headerLivePrice">$0.00</span>
-          <span class="stat-change" id="headerPriceChange">+0.00%</span>
+      <div class="nav-right">
+        <!-- Live Ticker -->
+        <div class="nav-stat">
+          <span class="lbl">SPOT:</span>
+          <span class="val price-up" id="topLivePrice">$0.00</span>
+          <span class="badge-change" id="topPriceChange">+0.00%</span>
         </div>
 
-        <div class="header-stat">
-          <span class="stat-lbl">STRIKE 5M:</span>
-          <span class="stat-val text-gold" id="headerStrikePrice">$0.00</span>
+        <!-- Strike Price -->
+        <div class="nav-stat">
+          <span class="lbl">STRIKE 5M:</span>
+          <span class="val text-gold" id="topStrikePrice">$0.00</span>
         </div>
 
-        <div class="header-stat timer-box" id="headerTimerBox">
-          <span class="stat-lbl">SISA 5M:</span>
-          <span class="stat-val timer-digits" id="headerTimerVal">05:00.0</span>
+        <!-- Countdown Timer -->
+        <div class="timer-pill" id="timerContainer">
+          <span class="timer-icon">⏳</span>
+          <span class="timer-text" id="topTimer">05:00.0</span>
         </div>
 
-        <button class="theme-btn" id="themeToggle" title="Ganti Tema">
+        <!-- Theme Toggle -->
+        <button class="theme-btn" id="themeToggle" title="Ganti Tema (Terang / Gelap)">
           <span id="themeIcon">🌙</span>
         </button>
       </div>
     </header>
 
-    <!-- MAIN CANDLESTICK CHART (PERSIS BINANCE 5M) -->
-    <main class="chart-section">
-      <div class="chart-header-bar">
-        <div class="chart-legend-row">
-          <span class="pair-title" id="chartPairTitle">BTC/USDT • 5m • Binance</span>
-          <div class="candle-ohlc-info" id="candleOhlcInfo">
-            <span>O: <strong id="ohlcOpen">--</strong></span>
-            <span>H: <strong id="ohlcHigh">--</strong></span>
-            <span>L: <strong id="ohlcLow">--</strong></span>
-            <span>C: <strong id="ohlcClose">--</strong></span>
-            <span>Vol: <strong id="ohlcVol">--</strong></span>
-          </div>
-          <div class="ma-legend">
-            <span class="ma-7">MA(7): <strong id="valMa7">--</strong></span>
-            <span class="ma-25">MA(25): <strong id="valMa25">--</strong></span>
-            <span class="ma-99">MA(99): <strong id="valMa99">--</strong></span>
-          </div>
-        </div>
-        <div class="chart-actions">
-          <span class="odds-pill" id="polymarketOddsPill">Polymarket: YES 50¢ | NO 50¢</span>
-        </div>
-      </div>
-
-      <div class="chart-canvas-container" id="chartContainer">
-        <canvas id="binanceCandleCanvas"></canvas>
-      </div>
-    </main>
-
-    <!-- AI TRADING AGENT & POSITION ENGINE -->
-    <section class="trading-section">
+    <!-- MAIN TWO-COLUMN WORKSPACE -->
+    <main class="workspace-grid">
       
-      <!-- Card 1: Agent Execution & Active Position -->
-      <div class="panel-card agent-execution-card">
-        <div class="card-top">
-          <div class="status-indicator-group">
-            <div class="pos-badge idle" id="agentStatusBadge">
-              ⏳ MENGANALISIS PASAR (MENUNGGU KONFIRMASI TREND)
+      <!-- LEFT COLUMN: TRADINGVIEW BINANCE 5M CHART & LEDGER -->
+      <section class="left-workspace">
+        
+        <!-- Chart Box -->
+        <div class="card chart-card">
+          <div class="card-header chart-header">
+            <div class="chart-info-group">
+              <span class="chart-pair-name" id="chartPairName">BTC/USDT • 5m</span>
+              <div class="ohlc-legend" id="ohlcLegend">
+                <span>O: <strong id="valO">--</strong></span>
+                <span>H: <strong id="valH">--</strong></span>
+                <span>L: <strong id="valL">--</strong></span>
+                <span>C: <strong id="valC">--</strong></span>
+              </div>
+              <div class="ma-badges">
+                <span class="ma-tag ma7">MA7: <strong id="ma7Val">--</strong></span>
+                <span class="ma-tag ma25">MA25: <strong id="ma25Val">--</strong></span>
+              </div>
+            </div>
+            <div class="chart-status-tag">
+              <span class="pulse-dot"></span>
+              <span>BINANCE LIVE 5M</span>
             </div>
           </div>
-          <div class="round-id-tag" id="currentRoundIdTag">RONDE #5M-0</div>
+
+          <div class="chart-body" id="tvChartContainer"></div>
         </div>
 
-        <!-- Position Details Row -->
-        <div class="position-stats-grid">
-          <div class="pos-stat">
-            <span class="p-lbl">Posisi Aktif</span>
-            <span class="p-val" id="posSideText">--</span>
+        <!-- Trade History Ledger -->
+        <div class="card ledger-card">
+          <div class="card-header">
+            <span class="card-title">BUKU AUDIT TRANSAKSI & RIWAYAT RONDE</span>
+            <button class="btn-sm" id="btnClearHistory">BERSIHKAN</button>
           </div>
-          <div class="pos-stat">
-            <span class="p-lbl">Harga Beli</span>
-            <span class="p-val" id="posEntryText">--</span>
-          </div>
-          <div class="pos-stat">
-            <span class="p-lbl">Jumlah Lembar</span>
-            <span class="p-val" id="posSharesText">--</span>
-          </div>
-          <div class="pos-stat">
-            <span class="p-lbl">Modal Terpakai</span>
-            <span class="p-val" id="posCostText">--</span>
-          </div>
-          <div class="pos-stat">
-            <span class="p-lbl">Nilai Saat Ini</span>
-            <span class="p-val" id="posCurrentValText">--</span>
-          </div>
-          <div class="pos-stat">
-            <span class="p-lbl">Floating PnL</span>
-            <span class="p-val" id="posPnlText">--</span>
+          <div class="table-container">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Koin & Ronde</th>
+                  <th>Strike Baseline</th>
+                  <th>Harga Resolusi</th>
+                  <th>Posisi Diambil</th>
+                  <th>Modal</th>
+                  <th>Hasil</th>
+                  <th>Net PnL</th>
+                  <th>Saldo Akhir</th>
+                </tr>
+              </thead>
+              <tbody id="tradeHistoryBody">
+                <tr class="empty-row">
+                  <td colspan="9">Belum ada trade yang selesai. AI akan otomatis mengeksekusi order dan mencatat audit di sini...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Strategy Reasoning Strip -->
-        <div class="strategy-strip">
-          <span class="strategy-icon">🧠</span>
-          <span class="strategy-text" id="strategyReasoningText">
-            AI sedang menganalisis formasi candle Binance 5m, MA divergence, dan spread likuiditas sebelum membuka order...
-          </span>
-        </div>
-      </div>
+      </section>
 
-      <!-- Card 2: Portfolio Capital & Stats -->
-      <div class="panel-card portfolio-card">
-        <div class="card-top">
-          <span class="card-heading">SALDO & REKAP SIMULASI</span>
-          <div class="capital-ctrl">
-            <label>Modal:</label>
+      <!-- RIGHT COLUMN: AI PREDICTION & ORDER EXECUTION -->
+      <aside class="right-workspace">
+        
+        <!-- 1. Polymarket Implied Odds Card -->
+        <div class="card odds-card">
+          <div class="card-header">
+            <span class="card-title">PELUANG PASAR (POLYMARKET)</span>
+            <span class="round-tag" id="currentRoundTag">RONDE #5M-0</span>
+          </div>
+
+          <div class="odds-dual-box">
+            <div class="odds-btn-mock yes-box">
+              <div class="odds-side">YES (NAIK)</div>
+              <div class="odds-cents" id="oddsYesCents">50¢</div>
+              <div class="odds-target" id="oddsYesTarget">≥ $0.00</div>
+            </div>
+            <div class="odds-btn-mock no-box">
+              <div class="odds-side">NO (TURUN)</div>
+              <div class="odds-cents" id="oddsNoCents">50¢</div>
+              <div class="odds-target" id="oddsNoTarget">&lt; $0.00</div>
+            </div>
+          </div>
+
+          <div class="odds-bar-track">
+            <div class="odds-bar-fill" id="oddsBarFill" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- 2. AI Consensus & Reasoning Card -->
+        <div class="card consensus-card">
+          <div class="card-header">
+            <span class="card-title">KONSENSUS & SINYAL ARBITER AI</span>
+            <span class="consensus-pill" id="consensusPill">DELIBERASI</span>
+          </div>
+
+          <div class="sentiment-meter">
+            <div class="sentiment-row">
+              <span class="text-green">BULL: <strong id="bullScoreText">50%</strong></span>
+              <span class="text-red">BEAR: <strong id="bearScoreText">50%</strong></span>
+            </div>
+            <div class="sentiment-track">
+              <div class="sentiment-fill" id="sentimentFill" style="width: 50%;"></div>
+            </div>
+          </div>
+
+          <div class="action-recommendation" id="actionBox">
+            <div class="action-title" id="actionVerdict">STANDBY (MENGANALISIS)</div>
+            <div class="action-desc" id="actionRationale">
+              AI sedang menganalisis formasi candle Binance 5m, moving average, dan deviasi harga terhadap strike.
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Active Position & Reversal Engine -->
+        <div class="card position-card">
+          <div class="card-header">
+            <span class="card-title">STATUS POSISI TRADING AI</span>
+            <span class="shield-badge" id="reversalShieldBadge">⚡ FAST-FLIP AKTIF</span>
+          </div>
+
+          <div class="position-status-pill idle" id="posStatusPill">
+            BELUM ADA POSISI (MENUNGGU SINYAL KONSENSUS)
+          </div>
+
+          <div class="pos-metrics-grid">
+            <div class="pos-box">
+              <span class="p-lbl">POSISI</span>
+              <span class="p-val" id="valPosSide">--</span>
+            </div>
+            <div class="pos-box">
+              <span class="p-lbl">HARGA MASUK</span>
+              <span class="p-val" id="valPosEntry">--</span>
+            </div>
+            <div class="pos-box">
+              <span class="p-lbl">LEMBAR (SHARES)</span>
+              <span class="p-val" id="valPosShares">--</span>
+            </div>
+            <div class="pos-box">
+              <span class="p-lbl">MODAL DIGUNAKAN</span>
+              <span class="p-val" id="valPosCost">--</span>
+            </div>
+            <div class="pos-box">
+              <span class="p-lbl">NILAI SAAT INI</span>
+              <span class="p-val" id="valPosCurrent">--</span>
+            </div>
+            <div class="pos-box">
+              <span class="p-lbl">FLOATING PNL</span>
+              <span class="p-val" id="valPosPnl">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Capital & Simulation Account -->
+        <div class="card capital-card">
+          <div class="card-header">
+            <span class="card-title">SALDO PORTOFOLIO SIMULATOR</span>
+            <button class="btn-sm" id="btnResetPort">RESET</button>
+          </div>
+
+          <div class="capital-row">
+            <div class="cap-box">
+              <span class="c-lbl">TOTAL EKUITAS</span>
+              <span class="c-val" id="valTotalEquity">$20.00</span>
+            </div>
+            <div class="cap-box">
+              <span class="c-lbl">KAS TERSEDIA</span>
+              <span class="c-val" id="valCashBalance">$20.00</span>
+            </div>
+            <div class="cap-box">
+              <span class="c-lbl">NET PROFIT</span>
+              <span class="c-val text-green" id="valNetPnl">+$0.00 (+0.0%)</span>
+            </div>
+            <div class="cap-box">
+              <span class="c-lbl">WIN RATE</span>
+              <span class="c-val" id="valWinRate">0% (0W / 0L)</span>
+            </div>
+          </div>
+
+          <div class="input-capital-group">
+            <label for="inputCapital">Ubah Modal Awal ($):</label>
             <input type="number" id="inputCapital" value="20.00" min="1" step="1">
-            <button id="btnResetPort" title="Reset Portofolio">RESET</button>
           </div>
         </div>
 
-        <div class="portfolio-grid">
-          <div class="port-box">
-            <span class="port-lbl">TOTAL EKUITAS</span>
-            <span class="port-num" id="portTotalEquity">$20.00</span>
-          </div>
-          <div class="port-box">
-            <span class="port-lbl">KAS TERSEDIA</span>
-            <span class="port-num" id="portCashBalance">$20.00</span>
-          </div>
-          <div class="port-box">
-            <span class="port-lbl">NET PROFIT / LOSS</span>
-            <span class="port-num text-green" id="portNetPnl">+$0.00 (+0.0%)</span>
-          </div>
-          <div class="port-box">
-            <span class="port-lbl">WIN RATE</span>
-            <span class="port-num" id="portWinRate">0% (0W / 0L)</span>
-          </div>
-        </div>
+      </aside>
 
-        <div class="agent-bias-bar">
-          <div class="bias-label">
-            <span>BULL: <strong id="biasBullPct">50%</strong></span>
-            <span>BEAR: <strong id="biasBearPct">50%</strong></span>
-          </div>
-          <div class="bias-track">
-            <div class="bias-fill" id="biasFillBar" style="width: 50%;"></div>
-          </div>
-        </div>
-      </div>
+    </main>
 
-    </section>
-
-    <!-- TRADE HISTORY & AUDIT LEDGER -->
-    <section class="ledger-section">
-      <div class="ledger-header">
-        <span class="ledger-title">RIWAYAT TRANSAKSI & HASIL RONDE 5M</span>
-        <button class="clear-btn" id="btnClearHistory">BERSIHKAN</button>
-      </div>
-      <div class="table-wrap">
-        <table class="ledger-table">
-          <thead>
-            <tr>
-              <th>Waktu</th>
-              <th>Koin & Ronde</th>
-              <th>Strike</th>
-              <th>Close</th>
-              <th>Posisi Diambil</th>
-              <th>Modal</th>
-              <th>Hasil</th>
-              <th>Net PnL</th>
-              <th>Saldo Akhir</th>
-            </tr>
-          </thead>
-          <tbody id="tradeHistoryBody">
-            <tr class="empty-row">
-              <td colspan="9">Belum ada trade yang selesai. AI akan otomatis membuka posisi dan mencatat hasil di sini...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="terminal-footer">
-      <span>KOPI TUBRUK • Binance 5M Candle Engine & Fast-Flip Protection</span>
-      <span id="localClock">Waktu: 00:00:00 WIB</span>
+    <!-- MINIMAL FOOTER -->
+    <footer class="footer">
+      <span>KOPI TUBRUK • TradingView 5M Candle Engine & Fast-Flip Protection</span>
+      <span id="footerClock">00:00:00 WIB</span>
     </footer>
 
   </div>
