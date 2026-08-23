@@ -1,63 +1,63 @@
 /* ==========================================================================
-   KOPI TUBRUK - Executive Trading & Prediction Terminal
-   TradingView 5M Candlestick + Polymarket Prediction Layout
+   KOPI TUBRUK - Dual-Chart Resizable Prediction Terminal
+   GitHub Dark / TradingView Deep Slate Ergonomic Palette (Zero Eye Strain)
    ========================================================================== */
 
 :root {
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* TradingView / Binance Exact Colors */
-  --c-green: #0ecb81;
-  --c-green-bg: rgba(14, 203, 129, 0.12);
-  --c-green-border: rgba(14, 203, 129, 0.3);
+  /* Standard Calm Accents (Anti-Sakit Mata) */
+  --c-green: #2ea043;
+  --c-green-bg: rgba(46, 160, 67, 0.15);
+  --c-green-border: rgba(46, 160, 67, 0.35);
 
-  --c-red: #f6465d;
-  --c-red-bg: rgba(246, 70, 93, 0.12);
-  --c-red-border: rgba(246, 70, 93, 0.3);
+  --c-red: #f85149;
+  --c-red-bg: rgba(248, 81, 73, 0.15);
+  --c-red-border: rgba(248, 81, 73, 0.35);
 
-  --c-gold: #f0b90b;
-  --c-gold-bg: rgba(240, 185, 11, 0.12);
-  --c-gold-border: rgba(240, 185, 11, 0.3);
+  --c-gold: #d29922;
+  --c-gold-bg: rgba(210, 153, 34, 0.15);
+  --c-gold-border: rgba(210, 153, 34, 0.35);
 
-  --c-cyan: #38bdf8;
-  --c-purple: #9353d3;
-  --c-purple-bg: rgba(147, 83, 211, 0.12);
-  --c-purple-border: rgba(147, 83, 211, 0.3);
+  --c-cyan: #58a6ff;
+  --c-purple: #a371f7;
+  --c-purple-bg: rgba(163, 113, 247, 0.15);
+  --c-purple-border: rgba(163, 113, 247, 0.35);
 }
 
-/* 🌙 ERGONOMIC OBSIDIAN DARK THEME */
+/* 🌙 DEEP CHARCOAL OBSIDIAN (DEFAULT DARK) */
 body.theme-dark {
-  --bg-app: #0b0e14;
-  --bg-surface: #121722;
-  --bg-surface-subtle: #171e2c;
-  --border-color: #1f293d;
-  --border-subtle: #162030;
+  --bg-app: #0d1117;
+  --bg-surface: #161b22;
+  --bg-surface-subtle: #21262d;
+  --border-color: #30363d;
+  --border-subtle: #21262d;
 
-  --text-main: #f0f3f6;
-  --text-muted: #8c9ba5;
-  --text-dim: #5a6672;
+  --text-main: #c9d1d9;
+  --text-muted: #8b949e;
+  --text-dim: #6e7681;
 
-  --tv-bg: #0b0e14;
+  --tv-bg: #0d1117;
   --tv-grid: rgba(255, 255, 255, 0.04);
-  --tv-text: #8c9ba5;
+  --tv-text: #8b949e;
 }
 
 /* ☀️ CLEAN FINANCIAL LIGHT THEME */
 body.theme-light {
-  --bg-app: #f5f7fa;
+  --bg-app: #f6f8fa;
   --bg-surface: #ffffff;
-  --bg-surface-subtle: #f0f3f6;
-  --border-color: #e2e8f0;
-  --border-subtle: #edf2f7;
+  --bg-surface-subtle: #f6f8fa;
+  --border-color: #d0d7de;
+  --border-subtle: #eaeef2;
 
-  --text-main: #111827;
-  --text-muted: #4b5563;
-  --text-dim: #9ca3af;
+  --text-main: #1f2328;
+  --text-muted: #656d76;
+  --text-dim: #8c959f;
 
   --tv-bg: #ffffff;
   --tv-grid: rgba(0, 0, 0, 0.04);
-  --tv-text: #4b5563;
+  --tv-text: #656d76;
 }
 
 /* RESET */
@@ -74,18 +74,18 @@ html, body {
   color: var(--text-main);
   font-family: var(--font-sans);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-.app-layout {
+.terminal-app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 10px 14px;
-  gap: 10px;
-  max-width: 1700px;
+  padding: 8px 12px;
+  gap: 8px;
+  max-width: 1800px;
   margin: 0 auto;
 }
 
@@ -93,55 +93,50 @@ html, body {
    TOP NAVIGATION
    ========================================================================== */
 
-.navbar {
+.top-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 8px 14px;
-  gap: 12px;
+  border-radius: 8px;
+  padding: 6px 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.nav-left {
+.nav-brand-section {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.brand-emoji {
+.brand-icon {
   font-size: 20px;
 }
 
-.brand-meta {
+.brand-info {
   display: flex;
   flex-direction: column;
 }
 
-.brand-title {
-  font-size: 15px;
+.brand-text {
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
 
-.gold { color: var(--c-gold); }
+.brand-accent { color: var(--c-gold); }
 
-.brand-badge {
+.brand-tagline {
   font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.8px;
   color: var(--text-dim);
 }
 
-.coin-tabs {
+/* Coin Tabs */
+.coin-selector-group {
   display: flex;
   align-items: center;
   background: var(--bg-surface-subtle);
@@ -151,11 +146,11 @@ html, body {
   gap: 2px;
 }
 
-.coin-btn {
+.coin-tab-btn {
   background: transparent;
   border: none;
   border-radius: 4px;
-  padding: 5px 10px;
+  padding: 4px 8px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -164,141 +159,206 @@ html, body {
   transition: all 0.15s ease;
 }
 
-.coin-btn:hover {
+.coin-tab-btn:hover {
   color: var(--text-main);
 }
 
-.coin-btn.active {
+.coin-tab-btn.active {
   background: var(--bg-surface);
   color: var(--c-gold);
   border: 1px solid var(--border-color);
 }
 
-.nav-right {
+/* Nav Right Metrics */
+.nav-metrics-section {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.nav-stat {
+.metric-item {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 5px;
   font-family: var(--font-mono);
 }
 
-.nav-stat .lbl {
+.metric-label {
   font-size: 10px;
   font-weight: 700;
   color: var(--text-dim);
 }
 
-.nav-stat .val {
-  font-size: 14px;
+.metric-value {
+  font-size: 13px;
   font-weight: 800;
 }
 
-.price-up { color: var(--c-green); }
-.price-down { color: var(--c-red); }
-.text-gold { color: var(--c-gold); }
 .text-green { color: var(--c-green) !important; }
 .text-red { color: var(--c-red) !important; }
+.text-gold { color: var(--c-gold) !important; }
+.text-purple { color: var(--c-purple) !important; }
+.text-cyan { color: var(--c-cyan) !important; }
 
-.badge-change {
+.change-tag {
   font-size: 11px;
   font-weight: 700;
-  color: var(--c-green);
 }
 
-.timer-pill {
+.timer-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 4px 10px;
+  border-radius: 5px;
+  padding: 3px 8px;
 }
 
 .timer-icon {
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.timer-text {
+.timer-val {
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 800;
   color: var(--c-cyan);
 }
 
-.theme-btn {
+.theme-toggle-btn {
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  width: 30px;
-  height: 30px;
+  border-radius: 5px;
+  width: 28px;
+  height: 28px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* ==========================================================================
-   TWO-COLUMN WORKSPACE GRID
+   RESIZABLE WORKSPACE (LEFT CHARTS & RIGHT ORDER PANEL)
    ========================================================================== */
 
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 1fr 370px;
-  gap: 10px;
-  align-items: start;
+.workspace-wrapper {
+  display: flex;
+  width: 100%;
+  gap: 0;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
 }
 
-@media (max-width: 1100px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
+/* Left Pane (Charts & Ledger) */
+.pane-charts {
+  flex: 1 1 auto;
+  min-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Draggable Splitter Divider */
+.resizer-divider {
+  width: 10px;
+  cursor: col-resize;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  touch-action: none;
+  z-index: 10;
+  transition: background 0.15s ease;
+}
+
+.resizer-divider:hover, .resizer-divider.dragging {
+  background: var(--bg-surface-subtle);
+}
+
+.resizer-dots {
+  width: 3px;
+  height: 28px;
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.resizer-divider:hover .resizer-dots, .resizer-divider.dragging .resizer-dots {
+  background: var(--c-gold);
+}
+
+/* Right Pane (Order & AI) */
+.pane-order {
+  width: 360px;
+  min-width: 280px;
+  max-width: 600px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .workspace-wrapper {
+    flex-direction: column;
+  }
+  .resizer-divider {
+    display: none;
+  }
+  .pane-charts, .pane-order {
+    width: 100% !important;
+    min-width: 100%;
+    max-width: 100%;
   }
 }
 
-.left-workspace, .right-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+/* ==========================================================================
+   CARD COMMON STYLES
+   ========================================================================== */
 
-/* CARD COMMON */
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.card-header {
+.card-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 6px;
 }
 
-.card-title {
+.bar-left, .bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-heading, .chart-label {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--text-dim);
 }
 
-.btn-sm {
+.ctrl-btn {
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  padding: 3px 8px;
+  padding: 2px 7px;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
@@ -306,150 +366,156 @@ html, body {
   cursor: pointer;
 }
 
-/* ==========================================================================
-   LEFT COLUMN: TRADINGVIEW CHART & LEDGER
-   ========================================================================== */
-
-.chart-card {
-  padding: 10px 12px;
-}
-
-.chart-header {
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 8px;
-}
-
-.chart-info-group {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.chart-pair-name {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text-main);
-}
-
-.ohlc-legend {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.ohlc-legend strong {
-  color: var(--text-main);
-}
-
-.ma-badges {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ma-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-}
-
-.ma7 { color: var(--c-gold); }
-.ma25 { color: var(--c-purple); }
-
-.chart-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chart-btn {
-  background: var(--bg-surface-subtle);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 3px 8px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.chart-btn:hover {
+.ctrl-btn:hover {
   color: var(--text-main);
   border-color: var(--c-gold);
 }
 
-.chart-status-tag {
+/* Timeframe buttons */
+.tf-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface-subtle);
+  border-radius: 4px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.tf-btn {
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tf-btn.active {
+  background: var(--c-gold);
+  color: #000000;
+}
+
+/* ==========================================================================
+   LEFT PANE: CHARTS & LEDGER
+   ========================================================================== */
+
+/* Chart 1: Binance Spot (350px) */
+#binanceChartContainer {
+  width: 100%;
+  height: 350px;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Chart 2: Polymarket Odds (240px) */
+#polyChartContainer {
+  width: 100%;
+  height: 240px;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Legends */
+.legend-inline, .poly-legend-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.legend-inline strong, .poly-legend-inline strong {
+  color: var(--text-main);
+}
+
+.ma-inline {
   display: flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
-  color: var(--c-green);
 }
 
-.pulse-dot {
+.tag-ma7 { color: var(--c-gold); }
+.tag-ma25 { color: var(--c-purple); }
+
+.tag-yes { color: var(--c-green); }
+.tag-no { color: var(--c-red); }
+.tag-baseline { color: var(--c-cyan); }
+
+.live-dot-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.dot-green {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--c-green);
-  box-shadow: 0 0 6px var(--c-green);
 }
 
-.chart-body {
-  width: 100%;
-  height: 460px;
-  position: relative;
-  border-radius: 6px;
-  overflow: hidden;
+.dot-purple {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-purple);
 }
 
 /* Ledger Table */
-.table-container {
+.table-scroll {
   width: 100%;
   overflow-x: auto;
+  max-height: 160px;
 }
 
-.ledger-table {
+.audit-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
   font-family: var(--font-mono);
 }
 
-.ledger-table th {
+.audit-table th {
   background: var(--bg-surface-subtle);
-  padding: 6px 10px;
+  padding: 5px 8px;
   text-align: left;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--text-dim);
   border-bottom: 1px solid var(--border-color);
 }
 
-.ledger-table td {
-  padding: 6px 10px;
+.audit-table td {
+  padding: 5px 8px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-muted);
 }
 
 .empty-row td {
   text-align: center;
-  padding: 16px;
+  padding: 14px;
   font-style: italic;
   font-family: var(--font-sans);
 }
 
 .tag {
   display: inline-block;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 3px;
   font-weight: 700;
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .tag.win { background: var(--c-green-bg); color: var(--c-green); }
@@ -459,27 +525,27 @@ html, body {
 .tag.reversed { background: var(--c-purple-bg); color: var(--c-purple); }
 
 /* ==========================================================================
-   RIGHT COLUMN: AI PREDICTION & ORDER EXECUTION
+   RIGHT PANE: ORDER & AI EXECUTION
    ========================================================================== */
 
-.round-tag {
+.round-id-pill {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--c-gold);
 }
 
-/* Polymarket Odds Dual Box */
-.odds-dual-box {
+/* Polymarket Odds Dual Grid */
+.odds-dual-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
-.odds-btn-mock {
+.odds-block {
   background: var(--bg-surface-subtle);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 6px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -487,41 +553,41 @@ html, body {
   border: 1px solid transparent;
 }
 
-.yes-box {
+.yes-block {
   border-color: var(--c-green-border);
   background: var(--c-green-bg);
 }
 
-.no-box {
+.no-block {
   border-color: var(--c-red-border);
   background: var(--c-red-bg);
 }
 
-.odds-side {
-  font-size: 10px;
+.side-lbl {
+  font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
 
-.yes-box .odds-side { color: var(--c-green); }
-.no-box .odds-side { color: var(--c-red); }
+.yes-block .side-lbl { color: var(--c-green); }
+.no-block .side-lbl { color: var(--c-red); }
 
-.odds-cents {
+.cents-val {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-main);
 }
 
-.odds-target {
+.target-lbl {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--text-muted);
 }
 
 .odds-bar-track {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background: var(--c-red);
   border-radius: 3px;
   overflow: hidden;
@@ -534,36 +600,36 @@ html, body {
 }
 
 /* Consensus Card */
-.consensus-pill {
+.consensus-status-pill {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--c-purple-bg);
   color: var(--c-purple);
   border: 1px solid var(--c-purple-border);
 }
 
-.sentiment-meter {
+.sentiment-box {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-.sentiment-row {
+.sentiment-lbls {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
 }
 
 .sentiment-track {
   width: 100%;
-  height: 5px;
+  height: 4px;
   background: var(--c-red);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
@@ -573,36 +639,36 @@ html, body {
   transition: width 0.3s ease;
 }
 
-.action-recommendation {
+.verdict-banner {
   background: var(--bg-surface-subtle);
   border-left: 3px solid var(--c-cyan);
-  border-radius: 6px;
-  padding: 10px;
+  border-radius: 5px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-.action-title {
+.verdict-title {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--c-cyan);
 }
 
-.action-desc {
-  font-size: 11px;
+.verdict-desc {
+  font-size: 10.5px;
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 /* Active Position Card */
-.shield-badge {
+.reversal-pill {
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
   background: var(--c-gold-bg);
   color: var(--c-gold);
   border: 1px solid var(--c-gold-border);
@@ -610,10 +676,10 @@ html, body {
 
 .position-status-pill {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 5px 8px;
+  border-radius: 5px;
   text-align: center;
 }
 
@@ -641,102 +707,101 @@ html, body {
   border: 1px solid var(--c-purple-border);
 }
 
-.pos-metrics-grid {
+.pos-details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 5px;
 }
 
-.pos-box {
+.pos-data-cell {
   background: var(--bg-surface-subtle);
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-radius: 5px;
+  padding: 5px 7px;
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
 
-.p-lbl {
-  font-size: 8.5px;
+.d-lbl {
+  font-size: 8px;
   font-weight: 700;
   color: var(--text-dim);
 }
 
-.p-val {
+.d-val {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--text-main);
 }
 
-.ai-log-box {
+.ai-activity-log {
   background: var(--bg-surface-subtle);
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 5px;
+  padding: 5px 8px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   border: 1px solid var(--border-subtle);
 }
 
-.ai-log-title {
-  font-size: 9px;
+.log-title {
+  font-size: 8.5px;
   font-weight: 800;
   color: var(--text-dim);
-  letter-spacing: 0.5px;
 }
 
-.ai-log-text {
+.log-content {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--c-cyan);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Capital Card */
-.capital-row {
+/* Capital Summary Card */
+.capital-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 5px;
 }
 
-.cap-box {
+.cap-cell {
   background: var(--bg-surface-subtle);
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: 5px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .c-lbl {
-  font-size: 8.5px;
+  font-size: 8px;
   font-weight: 700;
   color: var(--text-dim);
 }
 
-.c-val {
+.c-num {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.input-capital-group {
+.capital-input-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
 }
 
-.input-capital-group input {
-  width: 70px;
+.capital-input-row input {
+  width: 65px;
   background: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  padding: 3px 6px;
+  padding: 2px 5px;
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--text-main);
@@ -744,15 +809,15 @@ html, body {
 }
 
 /* FOOTER */
-.footer {
+.bottom-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: 5px 10px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--text-dim);
   font-family: var(--font-mono);
 }
