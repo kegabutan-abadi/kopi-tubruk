@@ -1,7 +1,8 @@
 /**
- * KOPI TUBRUK - Professional TradingView 5M Candlestick AI Prediction Terminal
- * Real-Time Binance WebSocket Stream + Live Polymarket Resolution Engine
- * Active Autonomous AI Trading (Visible Order Execution & Fast-Flip Reversal Protection)
+ * KOPI TUBRUK - Dual-Chart Prediction & Trading Terminal
+ * Chart 1: Binance Spot Candlestick (1m / 5m) with TradingView LightweightCharts
+ * Chart 2: Polymarket Implied Probability (1m / 5m) with TradingView LightweightCharts
+ * Resizable Draggable Layout + Active Autonomous AI Fast-Flip Execution Engine
  */
 
 (function () {
@@ -19,6 +20,8 @@
   // --- 2. GLOBAL STATE ---
   const state = {
     selectedCoin: COINS[0],
+    binanceTimeframe: '5m', // '1m' or '5m'
+    polyTimeframe: '5m',    // '1m' or '5m'
     roundDurationMinutes: 5,
     currentPrice: null,
     previousPrice: null,
@@ -30,16 +33,17 @@
     roundEndTime: null,
     currentTheme: 'theme-dark',
 
-    // Raw Candlestick Buffer
-    candles5m: [], // [{time (unix sec), open, high, low, close, volume}]
-    
-    // Implied Polymarket Odds
+    // Candlestick & Probability Buffers
+    candlesBinance: [], // [{time (unix sec), open, high, low, close, volume}]
+    polyOddsHistory: [], // [{time, yes, no}]
+
+    // Live Odds
     marketOddsYes: 0.50,
     marketOddsNo: 0.50,
     bullScore: 50,
     bearScore: 50,
 
-    // Autonomous Portfolio Simulator
+    // Portfolio Simulator
     portfolio: {
       startingCapital: 20.00,
       cashBalance: 20.00,
@@ -54,37 +58,58 @@
 
   // --- 3. DOM ELEMENTS CACHE ---
   const dom = {
-    coinTabs: document.querySelectorAll('.coin-btn'),
-    topLivePrice: document.getElementById('topLivePrice'),
-    topPriceChange: document.getElementById('topPriceChange'),
-    topStrikePrice: document.getElementById('topStrikePrice'),
-    topTimer: document.getElementById('topTimer'),
+    coinTabs: document.querySelectorAll('.coin-tab-btn'),
+    navSpotPrice: document.getElementById('navSpotPrice'),
+    navSpotChange: document.getElementById('navSpotChange'),
+    navStrikePrice: document.getElementById('navStrikePrice'),
+    navTimerVal: document.getElementById('navTimerVal'),
     themeToggle: document.getElementById('themeToggle'),
-    themeIcon: document.getElementById('themeIcon'),
+    themeToggleIcon: document.getElementById('themeToggleIcon'),
 
-    chartPairName: document.getElementById('chartPairName'),
+    // Resizer
+    workspaceWrapper: document.getElementById('workspaceWrapper'),
+    paneCharts: document.getElementById('paneCharts'),
+    resizerHandle: document.getElementById('resizerHandle'),
+    paneOrder: document.getElementById('paneOrder'),
+
+    // Chart 1 (Binance)
+    binanceChartTitle: document.getElementById('binanceChartTitle'),
+    binanceTfButtons: document.querySelectorAll('#binanceTfGroup .tf-btn'),
     valO: document.getElementById('valO'),
     valH: document.getElementById('valH'),
     valL: document.getElementById('valL'),
     valC: document.getElementById('valC'),
-    ma7Val: document.getElementById('ma7Val'),
-    ma25Val: document.getElementById('ma25Val'),
-    btnFitChart: document.getElementById('btnFitChart'),
-    tvChartContainer: document.getElementById('tvChartContainer'),
+    valMa7: document.getElementById('valMa7'),
+    valMa25: document.getElementById('valMa25'),
+    btnFitBinanceChart: document.getElementById('btnFitBinanceChart'),
+    binanceChartContainer: document.getElementById('binanceChartContainer'),
 
-    currentRoundTag: document.getElementById('currentRoundTag'),
+    // Chart 2 (Polymarket)
+    polyChartTitle: document.getElementById('polyChartTitle'),
+    polyTfButtons: document.querySelectorAll('#polyTfGroup .tf-btn'),
+    polyLegendYes: document.getElementById('polyLegendYes'),
+    polyLegendNo: document.getElementById('polyLegendNo'),
+    btnFitPolyChart: document.getElementById('btnFitPolyChart'),
+    polyChartContainer: document.getElementById('polyChartContainer'),
+
+    // Ledger
+    btnClearHistory: document.getElementById('btnClearHistory'),
+    tradeHistoryBody: document.getElementById('tradeHistoryBody'),
+
+    // Order & Execution Panel
+    currentRoundPill: document.getElementById('currentRoundPill'),
     oddsYesCents: document.getElementById('oddsYesCents'),
     oddsYesTarget: document.getElementById('oddsYesTarget'),
     oddsNoCents: document.getElementById('oddsNoCents'),
     oddsNoTarget: document.getElementById('oddsNoTarget'),
     oddsBarFill: document.getElementById('oddsBarFill'),
 
-    consensusPill: document.getElementById('consensusPill'),
+    consensusStatusPill: document.getElementById('consensusStatusPill'),
     bullScoreText: document.getElementById('bullScoreText'),
     bearScoreText: document.getElementById('bearScoreText'),
     sentimentFill: document.getElementById('sentimentFill'),
-    actionVerdict: document.getElementById('actionVerdict'),
-    actionRationale: document.getElementById('actionRationale'),
+    verdictTitle: document.getElementById('verdictTitle'),
+    verdictDesc: document.getElementById('verdictDesc'),
 
     posStatusPill: document.getElementById('posStatusPill'),
     valPosSide: document.getElementById('valPosSide'),
@@ -101,13 +126,10 @@
     valWinRate: document.getElementById('valWinRate'),
     inputCapital: document.getElementById('inputCapital'),
     btnResetPort: document.getElementById('btnResetPort'),
-
-    btnClearHistory: document.getElementById('btnClearHistory'),
-    tradeHistoryBody: document.getElementById('tradeHistoryBody'),
     footerClock: document.getElementById('footerClock')
   };
 
-  // --- 4. FORMATTING UTILITIES ---
+  // --- 4. FORMATTING & MATH UTILITIES ---
   function formatPrice(val, precision = 2) {
     if (val === null || isNaN(val)) return '$--';
     return '$' + Number(val).toLocaleString('en-US', {
@@ -133,12 +155,12 @@
     return p;
   }
 
-  // Exact Polymarket Implied Probability Resolution Model
   function calculateBinaryMarketOdds(spot, strike, remainingMs) {
     if (!spot || !strike || strike <= 0) return { yesOdds: 0.50, noOdds: 0.50 };
-    const remainingMins = Math.max(0.05, remainingMs / 60000);
-    const sigma = spot * 0.0011 * Math.sqrt(5);
-    const zScore = (spot - strike) / (sigma * Math.sqrt(remainingMins / 5) + 0.0001);
+    const remainingMins = Math.max(0.04, remainingMs / 60000);
+    const duration = state.roundDurationMinutes;
+    const sigma = spot * 0.0011 * Math.sqrt(duration);
+    const zScore = (spot - strike) / (sigma * Math.sqrt(remainingMins / duration) + 0.0001);
     let probYes = normalCDF(zScore);
     probYes = Math.max(0.02, Math.min(0.98, probYes));
     return {
@@ -147,100 +169,153 @@
     };
   }
 
-  // --- 5. TRADINGVIEW LIGHTWEIGHT CHARTS ENGINE ---
-  let tvChart = null;
+  // --- 5. TRADINGVIEW DUAL CHARTS INITIALIZATION ---
+  let tvChartBinance = null;
   let candleSeries = null;
   let volumeSeries = null;
   let ma7Series = null;
   let ma25Series = null;
   let strikePriceLine = null;
 
-  function initTradingViewChart() {
-    if (!dom.tvChartContainer || !window.LightweightCharts) return;
+  let tvChartPoly = null;
+  let polyYesSeries = null;
+  let polyNoSeries = null;
 
-    if (tvChart) {
-      try { tvChart.remove(); } catch (e) {}
-    }
+  function initTradingViewCharts() {
+    if (!window.LightweightCharts) return;
 
     const isDark = document.body.classList.contains('theme-dark');
-    const bg = isDark ? '#0b0e14' : '#ffffff';
-    const textColor = isDark ? '#8c9ba5' : '#4b5563';
+    const bg = isDark ? '#0d1117' : '#ffffff';
+    const textColor = isDark ? '#8b949e' : '#656d76';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+    const borderColor = isDark ? '#30363d' : '#d0d7de';
 
-    tvChart = LightweightCharts.createChart(dom.tvChartContainer, {
-      layout: {
-        background: { color: bg },
-        textColor: textColor,
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 11
-      },
-      grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor }
-      },
-      crosshair: {
-        mode: LightweightCharts.CrosshairMode.Normal,
-        vertLine: { width: 1, color: '#f0b90b', style: LightweightCharts.LineStyle.Dashed },
-        horzLine: { width: 1, color: '#f0b90b', style: LightweightCharts.LineStyle.Dashed }
-      },
-      rightPriceScale: {
-        borderColor: isDark ? '#1f293d' : '#e2e8f0',
-        scaleMargins: { top: 0.1, bottom: 0.2 }
-      },
-      timeScale: {
-        borderColor: isDark ? '#1f293d' : '#e2e8f0',
-        timeVisible: true,
-        secondsVisible: false
-      }
-    });
+    // === CHART 1: BINANCE SPOT CANDLESTICK ===
+    if (dom.binanceChartContainer) {
+      if (tvChartBinance) { try { tvChartBinance.remove(); } catch (e) {} }
+      
+      tvChartBinance = LightweightCharts.createChart(dom.binanceChartContainer, {
+        layout: { background: { color: bg }, textColor: textColor, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 },
+        grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: '#d29922', style: LightweightCharts.LineStyle.Dashed },
+          horzLine: { color: '#d29922', style: LightweightCharts.LineStyle.Dashed }
+        },
+        rightPriceScale: { borderColor: borderColor, scaleMargins: { top: 0.08, bottom: 0.22 } },
+        timeScale: { borderColor: borderColor, timeVisible: true, secondsVisible: false }
+      });
 
-    candleSeries = tvChart.addCandlestickSeries({
-      upColor: '#0ecb81',
-      downColor: '#f6465d',
-      borderVisible: false,
-      wickUpColor: '#0ecb81',
-      wickDownColor: '#f6465d'
-    });
+      candleSeries = tvChartBinance.addCandlestickSeries({
+        upColor: '#2ea043',
+        downColor: '#f85149',
+        borderVisible: false,
+        wickUpColor: '#2ea043',
+        wickDownColor: '#f85149'
+      });
 
-    volumeSeries = tvChart.addHistogramSeries({
-      color: '#26a69a',
-      priceFormat: { type: 'volume' },
-      priceScaleId: ''
-    });
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.82, bottom: 0 }
-    });
+      volumeSeries = tvChartBinance.addHistogramSeries({ color: '#26a69a', priceFormat: { type: 'volume' }, priceScaleId: '' });
+      volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
 
-    ma7Series = tvChart.addLineSeries({ color: '#f0b90b', lineWidth: 1.5, priceLineVisible: false });
-    ma25Series = tvChart.addLineSeries({ color: '#9353d3', lineWidth: 1.5, priceLineVisible: false });
+      ma7Series = tvChartBinance.addLineSeries({ color: '#d29922', lineWidth: 1.5, priceLineVisible: false });
+      ma25Series = tvChartBinance.addLineSeries({ color: '#a371f7', lineWidth: 1.5, priceLineVisible: false });
 
-    tvChart.subscribeCrosshairMove(param => {
-      const precision = state.selectedCoin.precision;
-      if (!param || !param.time || !param.seriesData) {
-        if (state.candles5m.length > 0) {
-          const latest = state.candles5m[state.candles5m.length - 1];
-          if (dom.valO) dom.valO.textContent = formatPrice(latest.open, precision);
-          if (dom.valH) dom.valH.textContent = formatPrice(latest.high, precision);
-          if (dom.valL) dom.valL.textContent = formatPrice(latest.low, precision);
-          if (dom.valC) dom.valC.textContent = formatPrice(latest.close, precision);
+      tvChartBinance.subscribeCrosshairMove(param => {
+        const precision = state.selectedCoin.precision;
+        if (!param || !param.time || !param.seriesData) {
+          if (state.candlesBinance.length > 0) {
+            const latest = state.candlesBinance[state.candlesBinance.length - 1];
+            if (dom.valO) dom.valO.textContent = formatPrice(latest.open, precision);
+            if (dom.valH) dom.valH.textContent = formatPrice(latest.high, precision);
+            if (dom.valL) dom.valL.textContent = formatPrice(latest.low, precision);
+            if (dom.valC) dom.valC.textContent = formatPrice(latest.close, precision);
+          }
+          return;
         }
-        return;
-      }
-      const data = param.seriesData.get(candleSeries);
-      if (data) {
-        if (dom.valO) dom.valO.textContent = formatPrice(data.open, precision);
-        if (dom.valH) dom.valH.textContent = formatPrice(data.high, precision);
-        if (dom.valL) dom.valL.textContent = formatPrice(data.low, precision);
-        if (dom.valC) dom.valC.textContent = formatPrice(data.close, precision);
-      }
-    });
+        const data = param.seriesData.get(candleSeries);
+        if (data) {
+          if (dom.valO) dom.valO.textContent = formatPrice(data.open, precision);
+          if (dom.valH) dom.valH.textContent = formatPrice(data.high, precision);
+          if (dom.valL) dom.valL.textContent = formatPrice(data.low, precision);
+          if (dom.valC) dom.valC.textContent = formatPrice(data.close, precision);
+        }
+      });
+    }
 
-    window.addEventListener('resize', () => {
-      if (tvChart && dom.tvChartContainer) {
-        const rect = dom.tvChartContainer.getBoundingClientRect();
-        tvChart.applyOptions({ width: rect.width, height: rect.height });
-      }
-    });
+    // === CHART 2: POLYMARKET PROBABILITY & ODDS (0¢ - 100¢) ===
+    if (dom.polyChartContainer) {
+      if (tvChartPoly) { try { tvChartPoly.remove(); } catch (e) {} }
+
+      tvChartPoly = LightweightCharts.createChart(dom.polyChartContainer, {
+        layout: { background: { color: bg }, textColor: textColor, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 },
+        grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: '#58a6ff', style: LightweightCharts.LineStyle.Dashed },
+          horzLine: { color: '#58a6ff', style: LightweightCharts.LineStyle.Dashed }
+        },
+        rightPriceScale: {
+          borderColor: borderColor,
+          scaleMargins: { top: 0.1, bottom: 0.1 }
+        },
+        timeScale: { borderColor: borderColor, timeVisible: true, secondsVisible: false }
+      });
+
+      // YES Probability Area (Green Gradient)
+      polyYesSeries = tvChartPoly.addAreaSeries({
+        topColor: 'rgba(46, 160, 67, 0.35)',
+        bottomColor: 'rgba(46, 160, 67, 0.02)',
+        lineColor: '#2ea043',
+        lineWidth: 2,
+        title: 'YES (¢)',
+        priceFormat: {
+          type: 'custom',
+          formatter: price => `${(price * 100).toFixed(0)}¢`
+        }
+      });
+
+      // NO Probability Line (Red Line)
+      polyNoSeries = tvChartPoly.addLineSeries({
+        color: '#f85149',
+        lineWidth: 2,
+        title: 'NO (¢)',
+        priceFormat: {
+          type: 'custom',
+          formatter: price => `${(price * 100).toFixed(0)}¢`
+        }
+      });
+
+      // 50¢ Baseline Line
+      polyYesSeries.createPriceLine({
+        price: 0.50,
+        color: '#58a6ff',
+        lineWidth: 1.2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '50¢ (PAR)'
+      });
+
+      tvChartPoly.subscribeCrosshairMove(param => {
+        if (!param || !param.time || !param.seriesData) return;
+        const yesVal = param.seriesData.get(polyYesSeries);
+        const noVal = param.seriesData.get(polyNoSeries);
+        if (yesVal && dom.polyLegendYes) dom.polyLegendYes.textContent = `${(yesVal.value * 100).toFixed(0)}¢`;
+        if (noVal && dom.polyLegendNo) dom.polyLegendNo.textContent = `${(noVal.value * 100).toFixed(0)}¢`;
+      });
+    }
+
+    resizeCharts();
+  }
+
+  function resizeCharts() {
+    if (tvChartBinance && dom.binanceChartContainer) {
+      const rect = dom.binanceChartContainer.getBoundingClientRect();
+      tvChartBinance.applyOptions({ width: rect.width, height: rect.height });
+    }
+    if (tvChartPoly && dom.polyChartContainer) {
+      const rect = dom.polyChartContainer.getBoundingClientRect();
+      tvChartPoly.applyOptions({ width: rect.width, height: rect.height });
+    }
   }
 
   function updateStrikePriceLineOnChart() {
@@ -250,11 +325,11 @@
     }
     strikePriceLine = candleSeries.createPriceLine({
       price: state.strikePrice,
-      color: '#f0b90b',
+      color: '#d29922',
       lineWidth: 1.5,
       lineStyle: LightweightCharts.LineStyle.Dashed,
       axisLabelVisible: true,
-      title: 'STRIKE 5M'
+      title: 'STRIKE'
     });
   }
 
@@ -269,10 +344,10 @@
     return res;
   }
 
-  // --- 6. REAL BINANCE LIVE PRICES & KLINE STREAM ---
+  // --- 6. REAL BINANCE DATA FETCHING & KLINE STREAM ---
   let wsBinance = null;
 
-  async function fetchImmediateLivePrice() {
+  async function fetchImmediateSpotPrice() {
     const pair = state.selectedCoin.binancePair;
     try {
       const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`);
@@ -290,13 +365,14 @@
     } catch (e) {}
   }
 
-  async function loadHistoricalBinanceKlines() {
+  async function loadBinanceKlines() {
     const pair = state.selectedCoin.binancePair;
+    const interval = state.binanceTimeframe; // '1m' or '5m'
     try {
-      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=5m&limit=60`);
+      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=${interval}&limit=60`);
       if (res.ok) {
         const raw = await res.json();
-        state.candles5m = raw.map(k => ({
+        state.candlesBinance = raw.map(k => ({
           time: Math.floor(k[0] / 1000),
           open: parseFloat(k[1]),
           high: parseFloat(k[2]),
@@ -305,35 +381,63 @@
           volume: parseFloat(k[5])
         }));
 
-        if (state.candles5m.length > 0) {
-          const latest = state.candles5m[state.candles5m.length - 1];
+        if (state.candlesBinance.length > 0) {
+          const latest = state.candlesBinance[state.candlesBinance.length - 1];
           state.currentPrice = latest.close;
           if (state.strikePrice === null) {
             state.strikePrice = latest.close;
             state.strikeLockedAt = Date.now();
           }
 
-          candleSeries.setData(state.candles5m);
-          volumeSeries.setData(state.candles5m.map(c => ({
-            time: c.time,
-            value: c.volume,
-            color: c.close >= c.open ? 'rgba(14, 203, 129, 0.4)' : 'rgba(246, 70, 93, 0.4)'
-          })));
+          // Render Chart 1 (Binance)
+          if (candleSeries) candleSeries.setData(state.candlesBinance);
+          if (volumeSeries) {
+            volumeSeries.setData(state.candlesBinance.map(c => ({
+              time: c.time,
+              value: c.volume,
+              color: c.close >= c.open ? 'rgba(46, 160, 67, 0.4)' : 'rgba(248, 81, 73, 0.4)'
+            })));
+          }
 
-          const ma7Data = calculateSMAData(state.candles5m, 7);
-          const ma25Data = calculateSMAData(state.candles5m, 25);
-          ma7Series.setData(ma7Data);
-          ma25Series.setData(ma25Data);
+          const ma7Data = calculateSMAData(state.candlesBinance, 7);
+          const ma25Data = calculateSMAData(state.candlesBinance, 25);
+          if (ma7Series) ma7Series.setData(ma7Data);
+          if (ma25Series) ma25Series.setData(ma25Data);
 
-          if (ma7Data.length > 0) dom.ma7Val.textContent = formatPrice(ma7Data[ma7Data.length - 1].value, state.selectedCoin.precision);
-          if (ma25Data.length > 0) dom.ma25Val.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
+          if (ma7Data.length > 0) dom.valMa7.textContent = formatPrice(ma7Data[ma7Data.length - 1].value, state.selectedCoin.precision);
+          if (ma25Data.length > 0) dom.valMa25.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
 
           updateStrikePriceLineOnChart();
-          tvChart.timeScale().fitContent();
+          if (tvChartBinance) tvChartBinance.timeScale().fitContent();
+
+          // Initialize Chart 2 (Polymarket Probability History)
+          seedPolymarketOddsHistory();
         }
       }
     } catch (e) {
-      console.warn('Kline fetch error:', e);
+      console.warn('Kline load error:', e);
+    }
+  }
+
+  function seedPolymarketOddsHistory() {
+    if (!state.strikePrice || state.candlesBinance.length === 0) return;
+    
+    // Generate historical probability stream based on candlestick closes vs strike
+    state.polyOddsHistory = state.candlesBinance.map((c, idx) => {
+      const zScore = (c.close - state.strikePrice) / (state.strikePrice * 0.0012 + 0.0001);
+      let probYes = normalCDF(zScore);
+      probYes = Math.max(0.04, Math.min(0.96, probYes));
+      return {
+        time: c.time,
+        value: parseFloat(probYes.toFixed(2)),
+        noValue: parseFloat((1 - probYes).toFixed(2))
+      };
+    });
+
+    if (polyYesSeries && polyNoSeries) {
+      polyYesSeries.setData(state.polyOddsHistory.map(p => ({ time: p.time, value: p.value })));
+      polyNoSeries.setData(state.polyOddsHistory.map(p => ({ time: p.time, value: p.noValue })));
+      if (tvChartPoly) tvChartPoly.timeScale().fitContent();
     }
   }
 
@@ -341,7 +445,8 @@
     if (wsBinance) { try { wsBinance.close(); } catch (e) {} }
 
     const pairLower = state.selectedCoin.binancePair.toLowerCase();
-    const url = `https://stream.binance.com:9443/ws/${pairLower}@kline_5m/${pairLower}@ticker`;
+    const interval = state.binanceTimeframe; // '1m' or '5m'
+    const url = `https://stream.binance.com:9443/ws/${pairLower}@kline_${interval}/${pairLower}@ticker`;
 
     try {
       wsBinance = new WebSocket(url);
@@ -371,30 +476,43 @@
               updateStrikePriceLineOnChart();
             }
 
-            candleSeries.update(candle);
-            volumeSeries.update({
-              time: candle.time,
-              value: candle.volume,
-              color: candle.close >= candle.open ? 'rgba(14, 203, 129, 0.4)' : 'rgba(246, 70, 93, 0.4)'
-            });
+            // Real-time update to Chart 1 (Binance Candlestick)
+            if (candleSeries) candleSeries.update(candle);
+            if (volumeSeries) {
+              volumeSeries.update({
+                time: candle.time,
+                value: candle.volume,
+                color: candle.close >= candle.open ? 'rgba(46, 160, 67, 0.4)' : 'rgba(248, 81, 73, 0.4)'
+              });
+            }
 
-            const lastIdx = state.candles5m.length - 1;
-            if (lastIdx >= 0 && state.candles5m[lastIdx].time === candle.time) {
-              state.candles5m[lastIdx] = candle;
+            // Update in-memory candle array
+            const lastIdx = state.candlesBinance.length - 1;
+            if (lastIdx >= 0 && state.candlesBinance[lastIdx].time === candle.time) {
+              state.candlesBinance[lastIdx] = candle;
             } else {
-              state.candles5m.push(candle);
-              if (state.candles5m.length > 70) state.candles5m.shift();
+              state.candlesBinance.push(candle);
+              if (state.candlesBinance.length > 70) state.candlesBinance.shift();
             }
 
-            const ma7Data = calculateSMAData(state.candles5m, 7);
-            const ma25Data = calculateSMAData(state.candles5m, 25);
-            if (ma7Data.length > 0) {
+            // Real-time MA updates
+            const ma7Data = calculateSMAData(state.candlesBinance, 7);
+            const ma25Data = calculateSMAData(state.candlesBinance, 25);
+            if (ma7Series && ma7Data.length > 0) {
               ma7Series.update(ma7Data[ma7Data.length - 1]);
-              dom.ma7Val.textContent = formatPrice(ma7Data[ma7Data.length - 1].value, state.selectedCoin.precision);
+              dom.valMa7.textContent = formatPrice(ma7Data[ma7Data.length - 1].value, state.selectedCoin.precision);
             }
-            if (ma25Data.length > 0) {
+            if (ma25Series && ma25Data.length > 0) {
               ma25Series.update(ma25Data[ma25Data.length - 1]);
-              dom.ma25Val.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
+              dom.valMa25.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
+            }
+
+            // Real-time update to Chart 2 (Polymarket Probability)
+            const remainingMs = Math.max(0, state.roundEndTime - Date.now());
+            const { yesOdds, noOdds } = calculateBinaryMarketOdds(candle.close, state.strikePrice, remainingMs);
+            if (polyYesSeries && polyNoSeries) {
+              polyYesSeries.update({ time: candle.time, value: yesOdds });
+              polyNoSeries.update({ time: candle.time, value: noOdds });
             }
           }
         } catch (err) {}
@@ -407,15 +525,16 @@
     }
   }
 
-  // --- 7. ROUND BOUNDARIES & 5M TIMER ENGINE ---
+  // --- 7. ROUND BOUNDARIES & TIMER ENGINE ---
   function calculateCurrentRoundBoundaries() {
     const now = Date.now();
-    const intervalMs = 5 * 60 * 1000;
+    const duration = state.roundDurationMinutes;
+    const intervalMs = duration * 60 * 1000;
     const start = Math.floor(now / intervalMs) * intervalMs;
     const end = start + intervalMs;
     const roundNumber = Math.floor(start / intervalMs) % 10000;
 
-    return { startTime: start, endTime: end, roundId: `5M-${roundNumber}` };
+    return { startTime: start, endTime: end, roundId: `${duration}M-${roundNumber}` };
   }
 
   function syncRoundState() {
@@ -440,8 +559,8 @@
       }
     }
 
-    if (dom.currentRoundTag) dom.currentRoundTag.textContent = `RONDE #${roundId}`;
-    if (dom.topStrikePrice) dom.topStrikePrice.textContent = formatPrice(state.strikePrice, state.selectedCoin.precision);
+    if (dom.currentRoundPill) dom.currentRoundPill.textContent = `RONDE #${roundId}`;
+    if (dom.navStrikePrice) dom.navStrikePrice.textContent = formatPrice(state.strikePrice, state.selectedCoin.precision);
     if (dom.oddsYesTarget) dom.oddsYesTarget.textContent = `≥ ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
     if (dom.oddsNoTarget) dom.oddsNoTarget.textContent = `< ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
   }
@@ -456,7 +575,7 @@
     const tenths = Math.floor((remainingMs % 1000) / 100);
 
     const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
-    if (dom.topTimer) dom.topTimer.textContent = timeStr;
+    if (dom.navTimerVal) dom.navTimerVal.textContent = timeStr;
 
     if (dom.footerClock) dom.footerClock.textContent = `${formatTime(now, true)} WIB`;
   }
@@ -467,20 +586,19 @@
     const precision = state.selectedCoin.precision;
 
     // Header Price & 24h Change
-    if (dom.topLivePrice) {
-      dom.topLivePrice.textContent = formatPrice(state.currentPrice, precision);
+    if (dom.navSpotPrice) {
+      dom.navSpotPrice.textContent = formatPrice(state.currentPrice, precision);
       const isAboveStrike = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
-      dom.topLivePrice.className = `val ${isAboveStrike ? 'price-up' : 'price-down'}`;
+      dom.navSpotPrice.className = `metric-value ${isAboveStrike ? 'text-green' : 'text-red'}`;
     }
 
-    if (dom.topPriceChange) {
+    if (dom.navSpotChange) {
       const change = state.price24hChange;
       const isUp = change >= 0;
-      dom.topPriceChange.textContent = `${isUp ? '+' : ''}${change.toFixed(2)}%`;
-      dom.topPriceChange.className = `badge-change ${isUp ? 'text-green' : 'text-red'}`;
+      dom.navSpotChange.textContent = `${isUp ? '+' : ''}${change.toFixed(2)}%`;
+      dom.navSpotChange.className = `change-tag ${isUp ? 'text-green' : 'text-red'}`;
     }
 
-    // AI Evaluation & Mark to Market
     evaluateAITradingEngine();
     updateSimulatorMarkToMarket();
   }
@@ -490,7 +608,7 @@
     if (!state.currentPrice || !state.strikePrice) return;
     const now = Date.now();
     const remainingMs = Math.max(0, state.roundEndTime - now);
-    const totalRoundMs = 5 * 60 * 1000;
+    const totalRoundMs = state.roundDurationMinutes * 60 * 1000;
     const elapsedSecs = Math.floor((totalRoundMs - remainingMs) / 1000);
 
     // Exact Polymarket Implied Odds
@@ -501,8 +619,10 @@
     if (dom.oddsYesCents) dom.oddsYesCents.textContent = `${(yesOdds * 100).toFixed(0)}¢`;
     if (dom.oddsNoCents) dom.oddsNoCents.textContent = `${(noOdds * 100).toFixed(0)}¢`;
     if (dom.oddsBarFill) dom.oddsBarFill.style.width = `${yesOdds * 100}%`;
+    if (dom.polyLegendYes) dom.polyLegendYes.textContent = `${(yesOdds * 100).toFixed(0)}¢`;
+    if (dom.polyLegendNo) dom.polyLegendNo.textContent = `${(noOdds * 100).toFixed(0)}¢`;
 
-    // Directional Factors on Binance 5M Candle
+    // Directional Factors
     const deltaStrike = state.currentPrice - state.strikePrice;
     const deltaStrikePct = (deltaStrike / state.strikePrice) * 100;
     
@@ -510,9 +630,9 @@
     if (deltaStrikePct > 0) bullScore += Math.min(30, deltaStrikePct * 150);
     else bullScore -= Math.min(30, Math.abs(deltaStrikePct) * 150);
 
-    const latestCandle = state.candles5m[state.candles5m.length - 1];
+    const latestCandle = state.candlesBinance[state.candlesBinance.length - 1];
     if (latestCandle) {
-      const ma7 = parseFloat(dom.ma7Val.textContent.replace(/[^0-9.]/g, ''));
+      const ma7 = parseFloat(dom.valMa7.textContent.replace(/[^0-9.]/g, ''));
       if (!isNaN(ma7) && state.currentPrice > ma7) bullScore += 10;
       else if (!isNaN(ma7) && state.currentPrice < ma7) bullScore -= 10;
     }
@@ -532,19 +652,19 @@
     if (bullScore >= 55) {
       verdict = 'BUY YES (UP)';
       rationale = `KONSENSUS BULL: Harga berada +${deltaStrikePct.toFixed(3)}% di atas strike ($${state.strikePrice.toFixed(2)}) didukung momentum MA(7). Posisi YES memiliki keunggulan statistik (+EV).`;
-      if (dom.consensusPill) { dom.consensusPill.textContent = 'KONSENSUS BULL'; dom.consensusPill.className = 'consensus-pill text-green'; }
+      if (dom.consensusStatusPill) { dom.consensusStatusPill.textContent = 'KONSENSUS BULL'; dom.consensusStatusPill.className = 'consensus-status-pill text-green'; }
     } else if (bearScore >= 55) {
       verdict = 'BUY NO (DOWN)';
       rationale = `KONSENSUS BEAR: Tekanan jual menahan harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike baseline. Posisi NO memiliki probabilitas keunggulan tinggi.`;
-      if (dom.consensusPill) { dom.consensusPill.textContent = 'KONSENSUS BEAR'; dom.consensusPill.className = 'consensus-pill text-red'; }
+      if (dom.consensusStatusPill) { dom.consensusStatusPill.textContent = 'KONSENSUS BEAR'; dom.consensusStatusPill.className = 'consensus-status-pill text-red'; }
     } else {
       verdict = 'STANDBY (MENGANALISIS)';
       rationale = `DELIBERASI ARBITER: Belum ada asimetri statistik yang cukup antara Bull (${bullScore}%) dan Bear (${bearScore}%). Menunggu konfirmasi breakout.`;
-      if (dom.consensusPill) { dom.consensusPill.textContent = 'DELIBERASI'; dom.consensusPill.className = 'consensus-pill'; }
+      if (dom.consensusStatusPill) { dom.consensusStatusPill.textContent = 'MENGANALISIS'; dom.consensusStatusPill.className = 'consensus-status-pill'; }
     }
 
-    if (dom.actionVerdict) dom.actionVerdict.textContent = verdict;
-    if (dom.actionRationale) dom.actionRationale.textContent = rationale;
+    if (dom.verdictTitle) dom.verdictTitle.textContent = verdict;
+    if (dom.verdictDesc) dom.verdictDesc.textContent = rationale;
 
     // ACTIVE TRADING EXECUTION:
     // AI analyzes initial 10s, then actively executes a trade after 10s
@@ -724,7 +844,7 @@
 
     const pnlSign = totalRoundPnl >= 0 ? '+' : '-';
     if (dom.valPosPnl) {
-      dom.valPosPnl.className = `p-val ${totalRoundPnl >= 0 ? 'text-green' : 'text-red'}`;
+      dom.valPosPnl.className = `d-val ${totalRoundPnl >= 0 ? 'text-green' : 'text-red'}`;
       dom.valPosPnl.textContent = `${pnlSign}$${Math.abs(totalRoundPnl).toFixed(2)} (${pnlSign}${Math.abs((totalRoundPnl / pos.cost) * 100).toFixed(1)}%)`;
     }
 
@@ -737,7 +857,7 @@
     
     const netSign = netPnl >= 0 ? '+' : '-';
     if (dom.valNetPnl) {
-      dom.valNetPnl.className = `c-val ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
+      dom.valNetPnl.className = `c-num ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
       dom.valNetPnl.textContent = `${netSign}$${Math.abs(netPnl).toFixed(2)} (${netSign}${Math.abs(netPnlPct).toFixed(1)}%)`;
     }
   }
@@ -796,7 +916,7 @@
 
     const netSign = netPnl >= 0 ? '+' : '-';
     if (dom.valNetPnl) {
-      dom.valNetPnl.className = `c-val ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
+      dom.valNetPnl.className = `c-num ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
       dom.valNetPnl.textContent = `${netSign}$${Math.abs(netPnl).toFixed(2)} (${netSign}${Math.abs(netPnlPct).toFixed(1)}%)`;
     }
 
@@ -814,7 +934,7 @@
       if (dom.valPosCost) dom.valPosCost.textContent = '--';
       if (dom.valPosCurrent) dom.valPosCurrent.textContent = '--';
       if (dom.valPosPnl) {
-        dom.valPosPnl.className = 'p-val';
+        dom.valPosPnl.className = 'd-val';
         dom.valPosPnl.textContent = '--';
       }
     }
@@ -851,28 +971,87 @@
     }).join('');
   }
 
-  // --- 10. THEME & EVENT HANDLERS ---
+  // --- 10. DRAGGABLE RESIZABLE LAYOUT ENGINE ---
+  function setupResizableDivider() {
+    const handle = dom.resizerHandle;
+    const wrapper = dom.workspaceWrapper;
+    const paneOrder = dom.paneOrder;
+    if (!handle || !wrapper || !paneOrder) return;
+
+    let isDragging = false;
+
+    handle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const newOrderWidth = wrapperRect.right - e.clientX;
+      const clampedWidth = Math.max(280, Math.min(600, newOrderWidth));
+      paneOrder.style.width = `${clampedWidth}px`;
+      resizeCharts();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        handle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        resizeCharts();
+      }
+    });
+
+    // Touch support for mobile/tablets
+    handle.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      handle.classList.add('dragging');
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging || !e.touches[0]) return;
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const newOrderWidth = wrapperRect.right - e.touches[0].clientX;
+      const clampedWidth = Math.max(280, Math.min(600, newOrderWidth));
+      paneOrder.style.width = `${clampedWidth}px`;
+      resizeCharts();
+    });
+
+    window.addEventListener('touchend', () => {
+      if (isDragging) {
+        isDragging = false;
+        handle.classList.remove('dragging');
+        resizeCharts();
+      }
+    });
+  }
+
+  // --- 11. THEME & EVENT HANDLERS ---
   function applyTheme(themeName) {
     state.currentTheme = themeName;
     document.body.className = themeName;
     localStorage.setItem('kopi_tubruk_theme', themeName);
-    if (dom.themeIcon) dom.themeIcon.textContent = themeName === 'theme-dark' ? '🌙' : '☀️';
+    if (dom.themeToggleIcon) dom.themeToggleIcon.textContent = themeName === 'theme-dark' ? '🌙' : '☀️';
 
-    if (tvChart) {
-      const isDark = themeName === 'theme-dark';
-      tvChart.applyOptions({
-        layout: {
-          background: { color: isDark ? '#0b0e14' : '#ffffff' },
-          textColor: isDark ? '#8c9ba5' : '#4b5563'
-        },
-        grid: {
-          vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
-          horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' }
-        },
-        rightPriceScale: { borderColor: isDark ? '#1f293d' : '#e2e8f0' },
-        timeScale: { borderColor: isDark ? '#1f293d' : '#e2e8f0' }
-      });
-    }
+    const isDark = themeName === 'theme-dark';
+    const bg = isDark ? '#0d1117' : '#ffffff';
+    const textColor = isDark ? '#8b949e' : '#656d76';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+    const borderColor = isDark ? '#30363d' : '#d0d7de';
+
+    const themeOpts = {
+      layout: { background: { color: bg }, textColor: textColor },
+      grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
+      rightPriceScale: { borderColor: borderColor },
+      timeScale: { borderColor: borderColor }
+    };
+
+    if (tvChartBinance) tvChartBinance.applyOptions(themeOpts);
+    if (tvChartPoly) tvChartPoly.applyOptions(themeOpts);
   }
 
   function toggleTheme() {
@@ -882,11 +1061,42 @@
   function setupEventListeners() {
     if (dom.themeToggle) dom.themeToggle.addEventListener('click', toggleTheme);
 
-    if (dom.btnFitChart) {
-      dom.btnFitChart.addEventListener('click', () => {
-        if (tvChart) tvChart.timeScale().fitContent();
+    // Auto fit buttons
+    if (dom.btnFitBinanceChart) dom.btnFitBinanceChart.addEventListener('click', () => {
+      if (tvChartBinance) tvChartBinance.timeScale().fitContent();
+    });
+    if (dom.btnFitPolyChart) dom.btnFitPolyChart.addEventListener('click', () => {
+      if (tvChartPoly) tvChartPoly.timeScale().fitContent();
+    });
+
+    // Timeframe switchers for Chart 1 (Binance Spot)
+    dom.binanceTfButtons.forEach(btn => {
+      btn.addEventListener('click', async function () {
+        const tf = this.dataset.tf;
+        if (tf && tf !== state.binanceTimeframe) {
+          dom.binanceTfButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          state.binanceTimeframe = tf;
+          await loadBinanceKlines();
+          connectBinanceStream();
+        }
       });
-    }
+    });
+
+    // Timeframe switchers for Chart 2 (Polymarket)
+    dom.polyTfButtons.forEach(btn => {
+      btn.addEventListener('click', function () {
+        const tf = this.dataset.tf;
+        if (tf && tf !== state.polyTimeframe) {
+          dom.polyTfButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          state.polyTimeframe = tf;
+          state.roundDurationMinutes = tf === '1m' ? 1 : 5;
+          syncRoundState();
+          seedPolymarketOddsHistory();
+        }
+      });
+    });
 
     // Coin Switching
     dom.coinTabs.forEach(tab => {
@@ -900,12 +1110,13 @@
           state.selectedCoin = selected;
           state.currentPrice = null;
           state.strikePrice = null;
-          state.candles5m = [];
+          state.candlesBinance = [];
+          state.polyOddsHistory = [];
 
-          if (dom.chartPairName) dom.chartPairName.textContent = `${selected.symbol}/USDT • 5m Binance`;
+          if (dom.binanceChartTitle) dom.binanceChartTitle.textContent = `GRAFIK 1: ${selected.symbol}/USDT SPOT BINANCE`;
 
-          await fetchImmediateLivePrice();
-          await loadHistoricalBinanceKlines();
+          await fetchImmediateSpotPrice();
+          await loadBinanceKlines();
           connectBinanceStream();
           syncRoundState();
         }
@@ -953,11 +1164,14 @@
         renderTradeHistoryTable();
       });
     }
+
+    setupResizableDivider();
+    window.addEventListener('resize', resizeCharts);
   }
 
-  // --- 11. INITIALIZATION ---
+  // --- 12. INITIALIZATION ---
   async function init() {
-    initTradingViewChart();
+    initTradingViewCharts();
     
     const savedTheme = localStorage.getItem('kopi_tubruk_theme') || 'theme-dark';
     applyTheme(savedTheme);
@@ -966,12 +1180,10 @@
     updateSimulatorUI();
     renderTradeHistoryTable();
 
-    // 1. Fetch real immediate spot price & 24h ticker
-    await fetchImmediateLivePrice();
+    await fetchImmediateSpotPrice();
     syncRoundState();
 
-    // 2. Load authentic Binance 5m klines & start real-time WS stream
-    await loadHistoricalBinanceKlines();
+    await loadBinanceKlines();
     connectBinanceStream();
 
     setInterval(updateTimerCountdown, 100);
