@@ -1,8 +1,8 @@
 /**
- * KOPI TUBRUK - Dual-Chart Prediction & Trading Terminal
+ * KOPI TUBRUK - Dedicated Polymarket 5M UP/DOWN Prediction Terminal
  * Chart 1: Binance Spot Candlestick (1m / 5m) with TradingView LightweightCharts
- * Chart 2: Polymarket Implied Probability (1m / 5m) with TradingView LightweightCharts
- * Real-Time Official Polymarket Gamma API Feed + Resizable Layout + Active AI Fast-Flip Engine
+ * Chart 2: Polymarket 5M UP/DOWN Probability (1m / 5m) with TradingView LightweightCharts
+ * Global UI Zoom Scaling (A- / A+) + Chart Zoom + Resizable Layout + AI Fast-Flip Engine
  */
 
 (function () {
@@ -10,11 +10,11 @@
 
   // --- 1. COIN REGISTRY ---
   const COINS = [
-    { symbol: 'BTC', name: 'Bitcoin', searchTerms: ['bitcoin', 'btc'], precision: 2, binancePair: 'BTCUSDT' },
-    { symbol: 'ETH', name: 'Ethereum', searchTerms: ['ethereum', 'eth'], precision: 2, binancePair: 'ETHUSDT' },
-    { symbol: 'SOL', name: 'Solana', searchTerms: ['solana', 'sol'], precision: 3, binancePair: 'SOLUSDT' },
-    { symbol: 'XRP', name: 'Ripple', searchTerms: ['xrp', 'ripple'], precision: 4, binancePair: 'XRPUSDT' },
-    { symbol: 'DOGE', name: 'Dogecoin', searchTerms: ['dogecoin', 'doge'], precision: 5, binancePair: 'DOGEUSDT' }
+    { symbol: 'BTC', name: 'Bitcoin', precision: 2, binancePair: 'BTCUSDT' },
+    { symbol: 'ETH', name: 'Ethereum', precision: 2, binancePair: 'ETHUSDT' },
+    { symbol: 'SOL', name: 'Solana', precision: 3, binancePair: 'SOLUSDT' },
+    { symbol: 'XRP', name: 'Ripple', precision: 4, binancePair: 'XRPUSDT' },
+    { symbol: 'DOGE', name: 'Dogecoin', precision: 5, binancePair: 'DOGEUSDT' }
   ];
 
   // --- 2. GLOBAL STATE ---
@@ -32,13 +32,11 @@
     roundStartTime: null,
     roundEndTime: null,
     currentTheme: 'theme-dark',
+    uiZoomLevel: 1.05, // comfortable large default zoom
 
     // Candlestick & Probability Buffers
     candlesBinance: [], // [{time (unix sec), open, high, low, close, volume}]
     polyOddsHistory: [], // [{time, yes, no}]
-
-    // Live Official Polymarket Markets
-    livePolyEvents: [],
 
     // Live Odds
     marketOddsYes: 0.50,
@@ -69,6 +67,12 @@
     themeToggle: document.getElementById('themeToggle'),
     themeToggleIcon: document.getElementById('themeToggleIcon'),
 
+    // Global Zoom Controls
+    btnZoomOut: document.getElementById('btnZoomOut'),
+    btnZoomIn: document.getElementById('btnZoomIn'),
+    btnZoomReset: document.getElementById('btnZoomReset'),
+    zoomLevelLabel: document.getElementById('zoomLevelLabel'),
+
     // Resizer
     workspaceWrapper: document.getElementById('workspaceWrapper'),
     paneCharts: document.getElementById('paneCharts'),
@@ -84,6 +88,8 @@
     valC: document.getElementById('valC'),
     valMa7: document.getElementById('valMa7'),
     valMa25: document.getElementById('valMa25'),
+    btnBinanceZoomIn: document.getElementById('btnBinanceZoomIn'),
+    btnBinanceZoomOut: document.getElementById('btnBinanceZoomOut'),
     btnFitBinanceChart: document.getElementById('btnFitBinanceChart'),
     binanceChartContainer: document.getElementById('binanceChartContainer'),
 
@@ -92,6 +98,8 @@
     polyTfButtons: document.querySelectorAll('#polyTfGroup .tf-btn'),
     polyLegendYes: document.getElementById('polyLegendYes'),
     polyLegendNo: document.getElementById('polyLegendNo'),
+    btnPolyZoomIn: document.getElementById('btnPolyZoomIn'),
+    btnPolyZoomOut: document.getElementById('btnPolyZoomOut'),
     btnFitPolyChart: document.getElementById('btnFitPolyChart'),
     polyChartContainer: document.getElementById('polyChartContainer'),
 
@@ -100,15 +108,14 @@
     tradeHistoryBody: document.getElementById('tradeHistoryBody'),
 
     // Order & Execution Panel
+    polyContractHeading: document.getElementById('polyContractHeading'),
     currentRoundPill: document.getElementById('currentRoundPill'),
+    marketQuestionTitle: document.getElementById('marketQuestionTitle'),
     oddsYesCents: document.getElementById('oddsYesCents'),
     oddsYesTarget: document.getElementById('oddsYesTarget'),
     oddsNoCents: document.getElementById('oddsNoCents'),
     oddsNoTarget: document.getElementById('oddsNoTarget'),
     oddsBarFill: document.getElementById('oddsBarFill'),
-
-    // Official Polymarket Feed
-    polyEventsList: document.getElementById('polyEventsList'),
 
     consensusStatusPill: document.getElementById('consensusStatusPill'),
     bullScoreText: document.getElementById('bullScoreText'),
@@ -201,30 +208,30 @@
       if (tvChartBinance) { try { tvChartBinance.remove(); } catch (e) {} }
       
       tvChartBinance = LightweightCharts.createChart(dom.binanceChartContainer, {
-        layout: { background: { color: bg }, textColor: textColor, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 },
+        layout: { background: { color: bg }, textColor: textColor, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
         grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
         crosshair: {
           mode: LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: '#d29922', style: LightweightCharts.LineStyle.Dashed },
-          horzLine: { color: '#d29922', style: LightweightCharts.LineStyle.Dashed }
+          vertLine: { color: '#e3b341', style: LightweightCharts.LineStyle.Dashed },
+          horzLine: { color: '#e3b341', style: LightweightCharts.LineStyle.Dashed }
         },
         rightPriceScale: { borderColor: borderColor, scaleMargins: { top: 0.08, bottom: 0.22 } },
         timeScale: { borderColor: borderColor, timeVisible: true, secondsVisible: false }
       });
 
       candleSeries = tvChartBinance.addCandlestickSeries({
-        upColor: '#2ea043',
+        upColor: '#3fb950',
         downColor: '#f85149',
         borderVisible: false,
-        wickUpColor: '#2ea043',
+        wickUpColor: '#3fb950',
         wickDownColor: '#f85149'
       });
 
       volumeSeries = tvChartBinance.addHistogramSeries({ color: '#26a69a', priceFormat: { type: 'volume' }, priceScaleId: '' });
       volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
 
-      ma7Series = tvChartBinance.addLineSeries({ color: '#d29922', lineWidth: 1.5, priceLineVisible: false });
-      ma25Series = tvChartBinance.addLineSeries({ color: '#a371f7', lineWidth: 1.5, priceLineVisible: false });
+      ma7Series = tvChartBinance.addLineSeries({ color: '#e3b341', lineWidth: 1.5, priceLineVisible: false });
+      ma25Series = tvChartBinance.addLineSeries({ color: '#bc8cff', lineWidth: 1.5, priceLineVisible: false });
 
       tvChartBinance.subscribeCrosshairMove(param => {
         const precision = state.selectedCoin.precision;
@@ -248,12 +255,12 @@
       });
     }
 
-    // === CHART 2: POLYMARKET PROBABILITY & ODDS (0¢ - 100¢) ===
+    // === CHART 2: POLYMARKET 5M UP/DOWN PROBABILITY (0¢ - 100¢) ===
     if (dom.polyChartContainer) {
       if (tvChartPoly) { try { tvChartPoly.remove(); } catch (e) {} }
 
       tvChartPoly = LightweightCharts.createChart(dom.polyChartContainer, {
-        layout: { background: { color: bg }, textColor: textColor, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 },
+        layout: { background: { color: bg }, textColor: textColor, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
         grid: { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
         crosshair: {
           mode: LightweightCharts.CrosshairMode.Normal,
@@ -267,38 +274,35 @@
         timeScale: { borderColor: borderColor, timeVisible: true, secondsVisible: false }
       });
 
-      // YES Probability Area (Green Gradient)
       polyYesSeries = tvChartPoly.addAreaSeries({
-        topColor: 'rgba(46, 160, 67, 0.35)',
-        bottomColor: 'rgba(46, 160, 67, 0.02)',
-        lineColor: '#2ea043',
+        topColor: 'rgba(63, 185, 80, 0.35)',
+        bottomColor: 'rgba(63, 185, 80, 0.02)',
+        lineColor: '#3fb950',
         lineWidth: 2,
-        title: 'YES (¢)',
+        title: 'UP (¢)',
         priceFormat: {
           type: 'custom',
           formatter: price => `${(price * 100).toFixed(0)}¢`
         }
       });
 
-      // NO Probability Line (Red Line)
       polyNoSeries = tvChartPoly.addLineSeries({
         color: '#f85149',
         lineWidth: 2,
-        title: 'NO (¢)',
+        title: 'DOWN (¢)',
         priceFormat: {
           type: 'custom',
           formatter: price => `${(price * 100).toFixed(0)}¢`
         }
       });
 
-      // 50¢ Baseline Line
       polyYesSeries.createPriceLine({
         price: 0.50,
         color: '#58a6ff',
         lineWidth: 1.2,
         lineStyle: LightweightCharts.LineStyle.Dashed,
         axisLabelVisible: true,
-        title: '50¢ (PAR)'
+        title: 'PAR (50¢)'
       });
 
       tvChartPoly.subscribeCrosshairMove(param => {
@@ -331,11 +335,11 @@
     }
     strikePriceLine = candleSeries.createPriceLine({
       price: state.strikePrice,
-      color: '#d29922',
+      color: '#e3b341',
       lineWidth: 1.5,
       lineStyle: LightweightCharts.LineStyle.Dashed,
       axisLabelVisible: true,
-      title: 'STRIKE'
+      title: 'STRIKE 5M'
     });
   }
 
@@ -350,79 +354,7 @@
     return res;
   }
 
-  // --- 6. REAL POLYMARKET OFFICIAL GAMMA API INGESTION ---
-  async function fetchLivePolymarketEvents() {
-    try {
-      const res = await fetch('https://gamma-api.polymarket.com/events?limit=80&active=true&closed=false&tag_slug=crypto');
-      if (!res.ok) return;
-      const events = await res.json();
-      const coinTerms = state.selectedCoin.searchTerms;
-
-      const matchedMarkets = [];
-      for (const ev of events) {
-        const evTitle = ev.title || '';
-        const isCoinRelated = coinTerms.some(term => evTitle.toLowerCase().includes(term));
-        
-        for (const m of (ev.markets || [])) {
-          const q = m.question || '';
-          if (isCoinRelated || coinTerms.some(term => q.toLowerCase().includes(term))) {
-            let prices = m.outcomePrices;
-            if (typeof prices === 'string') {
-              try { prices = JSON.parse(prices); } catch (e) { prices = null; }
-            }
-            if (prices && prices.length >= 2) {
-              const yesP = parseFloat(prices[0]);
-              const noP = parseFloat(prices[1]);
-              const vol = parseFloat(m.volume || 0);
-              matchedMarkets.push({
-                question: q,
-                eventTitle: evTitle,
-                yesPrice: yesP,
-                noPrice: noP,
-                volume: vol
-              });
-            }
-          }
-        }
-      }
-
-      matchedMarkets.sort((a, b) => b.volume - a.volume);
-      state.livePolyEvents = matchedMarkets;
-      renderPolymarketEventsList();
-    } catch (e) {
-      console.warn('Polymarket API error:', e);
-    }
-  }
-
-  function renderPolymarketEventsList() {
-    if (!dom.polyEventsList) return;
-    if (state.livePolyEvents.length === 0) {
-      dom.polyEventsList.innerHTML = `
-        <div class="poly-event-item">
-          <span class="ev-q">Prediksi Pasar Biner 5M (${state.selectedCoin.symbol})</span>
-          <div class="ev-prices">
-            <span class="ev-yes">YES: ${(state.marketOddsYes * 100).toFixed(0)}¢</span>
-            <span class="ev-no">NO: ${(state.marketOddsNo * 100).toFixed(0)}¢</span>
-            <span class="ev-vol">Live Resolution</span>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    dom.polyEventsList.innerHTML = state.livePolyEvents.slice(0, 4).map(item => `
-      <div class="poly-event-item">
-        <span class="ev-q" title="${item.question}">${item.question}</span>
-        <div class="ev-prices">
-          <span class="ev-yes">YES: ${(item.yesPrice * 100).toFixed(1)}¢</span>
-          <span class="ev-no">NO: ${(item.noPrice * 100).toFixed(1)}¢</span>
-          <span class="ev-vol">$${Math.round(item.volume).toLocaleString('en-US')}</span>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // --- 7. REAL BINANCE DATA FETCHING & KLINE STREAM ---
+  // --- 6. REAL BINANCE DATA FETCHING & KLINE STREAM ---
   let wsBinance = null;
 
   async function fetchImmediateSpotPrice() {
@@ -472,7 +404,7 @@
             volumeSeries.setData(state.candlesBinance.map(c => ({
               time: c.time,
               value: c.volume,
-              color: c.close >= c.open ? 'rgba(46, 160, 67, 0.4)' : 'rgba(248, 81, 73, 0.4)'
+              color: c.close >= c.open ? 'rgba(63, 185, 80, 0.4)' : 'rgba(248, 81, 73, 0.4)'
             })));
           }
 
@@ -556,7 +488,7 @@
               volumeSeries.update({
                 time: candle.time,
                 value: candle.volume,
-                color: candle.close >= candle.open ? 'rgba(46, 160, 67, 0.4)' : 'rgba(248, 81, 73, 0.4)'
+                color: candle.close >= candle.open ? 'rgba(63, 185, 80, 0.4)' : 'rgba(248, 81, 73, 0.4)'
               });
             }
 
@@ -596,7 +528,7 @@
     }
   }
 
-  // --- 8. ROUND BOUNDARIES & TIMER ENGINE ---
+  // --- 7. ROUND BOUNDARIES & TIMER ENGINE ---
   function calculateCurrentRoundBoundaries() {
     const now = Date.now();
     const duration = state.roundDurationMinutes;
@@ -630,6 +562,8 @@
     }
 
     if (dom.currentRoundPill) dom.currentRoundPill.textContent = `RONDE #${roundId}`;
+    if (dom.polyContractHeading) dom.polyContractHeading.textContent = `POLYMARKET ${state.roundDurationMinutes}M UP/DOWN: ${state.selectedCoin.symbol}`;
+    if (dom.marketQuestionTitle) dom.marketQuestionTitle.textContent = `Pasar: Apakah harga ${state.selectedCoin.name} (${state.selectedCoin.symbol}) berada di atas Strike saat ronde berakhir?`;
     if (dom.navStrikePrice) dom.navStrikePrice.textContent = formatPrice(state.strikePrice, state.selectedCoin.precision);
     if (dom.oddsYesTarget) dom.oddsYesTarget.textContent = `≥ ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
     if (dom.oddsNoTarget) dom.oddsNoTarget.textContent = `< ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
@@ -650,7 +584,7 @@
     if (dom.footerClock) dom.footerClock.textContent = `${formatTime(now, true)} WIB`;
   }
 
-  // --- 9. REAL-TIME DOM METRICS & AI ENGINE LOOP (100ms) ---
+  // --- 8. REAL-TIME DOM METRICS & AI ENGINE LOOP (100ms) ---
   function updateThrottledMetrics() {
     if (!state.currentPrice) return;
     const precision = state.selectedCoin.precision;
@@ -672,7 +606,7 @@
     updateSimulatorMarkToMarket();
   }
 
-  // --- 10. ACTIVE AUTONOMOUS AI TRADING & FAST-FLIP REVERSAL ENGINE ---
+  // --- 9. ACTIVE AUTONOMOUS AI TRADING & FAST-FLIP REVERSAL ENGINE ---
   function evaluateAITradingEngine() {
     if (!state.currentPrice || !state.strikePrice) return;
     const now = Date.now();
@@ -717,12 +651,12 @@
     let rationale = '';
 
     if (bullScore >= 55) {
-      verdict = 'BUY YES (UP)';
-      rationale = `KONSENSUS BULL: Harga berada +${deltaStrikePct.toFixed(3)}% di atas strike ($${state.strikePrice.toFixed(2)}) didukung momentum MA(7). Posisi YES memiliki keunggulan statistik (+EV).`;
+      verdict = 'BUY UP (YES)';
+      rationale = `KONSENSUS BULL: Harga berada +${deltaStrikePct.toFixed(3)}% di atas strike ($${state.strikePrice.toFixed(2)}) didukung momentum MA(7). Posisi UP memiliki keunggulan statistik (+EV).`;
       if (dom.consensusStatusPill) { dom.consensusStatusPill.textContent = 'KONSENSUS BULL'; dom.consensusStatusPill.className = 'consensus-status-pill text-green'; }
     } else if (bearScore >= 55) {
-      verdict = 'BUY NO (DOWN)';
-      rationale = `KONSENSUS BEAR: Tekanan jual menahan harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike baseline. Posisi NO memiliki probabilitas keunggulan tinggi.`;
+      verdict = 'BUY DOWN (NO)';
+      rationale = `KONSENSUS BEAR: Tekanan jual menahan harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike baseline. Posisi DOWN memiliki probabilitas keunggulan tinggi.`;
       if (dom.consensusStatusPill) { dom.consensusStatusPill.textContent = 'KONSENSUS BEAR'; dom.consensusStatusPill.className = 'consensus-status-pill text-red'; }
     } else {
       verdict = 'STANDBY (MENGANALISIS)';
@@ -767,8 +701,9 @@
       lossIncurred: 0.00
     };
 
+    const sideName = side === 'YES' ? 'UP' : 'DOWN';
     if (dom.aiActionLogText) {
-      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] ⚡ EKSEKUSI ORDER: Beli ${shares} Lembar ${side} @ ${(sharePrice * 100).toFixed(0)}¢ (Modal: $${alloc.toFixed(2)})`;
+      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] ⚡ EKSEKUSI ORDER: Beli ${shares} Lembar ${sideName} @ ${(sharePrice * 100).toFixed(0)}¢ (Modal: $${alloc.toFixed(2)})`;
     }
 
     updateSimulatorUI();
@@ -809,12 +744,10 @@
 
     if (!shouldReverse) return;
 
-    // Step 1: Jual Cepat (Fast Cut-Loss)
     const salvagedCash = parseFloat(currentVal.toFixed(2));
     const realizedLossOnFirstLeg = parseFloat((pos.cost - salvagedCash).toFixed(2));
     p.cashBalance = parseFloat((p.cashBalance + salvagedCash).toFixed(2));
 
-    // Step 2: Hitung Lembar Sisi Lawan untuk Target Net Profit Positif
     const flipContractPrice = Math.max(0.08, Math.min(0.92, targetOppositeOdds));
     const desiredSurplus = Math.max(0.50, realizedLossOnFirstLeg * 0.25);
     const targetNetProfit = realizedLossOnFirstLeg + desiredSurplus;
@@ -827,6 +760,9 @@
       requiredShares = requiredFlipCost / flipContractPrice;
     }
 
+    const sideName = pos.side === 'YES' ? 'UP' : 'DOWN';
+    const targetSideName = targetOppositeSide === 'YES' ? 'UP' : 'DOWN';
+
     if (requiredFlipCost < 0.50) {
       p.tradeHistory.unshift({
         time: formatTime(Date.now(), true),
@@ -834,7 +770,7 @@
         coin: pos.coin,
         strike: state.strikePrice,
         close: state.currentPrice,
-        side: `${pos.side} (CUT-LOSS)`,
+        side: `${sideName} (CUT-LOSS)`,
         cost: pos.cost,
         won: false,
         netPnl: -realizedLossOnFirstLeg,
@@ -851,7 +787,6 @@
     const finalCost = parseFloat(requiredFlipCost.toFixed(2));
     const projectedNetRoundProfit = (finalShares * 1.00) - finalCost - realizedLossOnFirstLeg;
 
-    // Mutate position into REVERSED position
     p.activePosition = {
       id: `FLIP-${Date.now().toString().slice(-4)}`,
       roundId: state.currentRoundId,
@@ -868,7 +803,7 @@
     };
 
     if (dom.aiActionLogText) {
-      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] 🔄 REVERSAL FLIP: Jual ${pos.side} (selamatkan $${salvagedCash.toFixed(2)}), Beli ${finalShares} Lembar ${targetOppositeSide} @ ${(flipContractPrice * 100).toFixed(0)}¢ (Target Profit: +$${projectedNetRoundProfit.toFixed(2)})`;
+      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] 🔄 REVERSAL FLIP: Jual ${sideName} (selamatkan $${salvagedCash.toFixed(2)}), Beli ${finalShares} Lembar ${targetSideName} @ ${(flipContractPrice * 100).toFixed(0)}¢ (Target Profit: +$${projectedNetRoundProfit.toFixed(2)})`;
     }
 
     updateSimulatorUI();
@@ -889,18 +824,19 @@
     const currentVal = pos.shares * currentContractPrice;
     const currentLegPnl = currentVal - pos.cost;
     const totalRoundPnl = pos.isReversed ? (currentLegPnl - pos.lossIncurred) : currentLegPnl;
+    const sideName = pos.side === 'YES' ? 'UP' : 'DOWN';
 
     if (dom.posStatusPill) {
       if (pos.isReversed) {
         dom.posStatusPill.className = 'position-status-pill reversed';
-        dom.posStatusPill.textContent = `🔄 FLIP KE ${pos.side} (${pos.shares} Lembar | Target Profit: +$${pos.projectedNetProfit || '0.00'})`;
+        dom.posStatusPill.textContent = `🔄 FLIP KE ${sideName} (${pos.shares} Lembar | Target Profit: +$${pos.projectedNetProfit || '0.00'})`;
       } else {
         dom.posStatusPill.className = `position-status-pill ${pos.side === 'YES' ? 'buy-yes' : 'buy-no'}`;
-        dom.posStatusPill.textContent = `⚡ POSISI AKTIF: BUY ${pos.side} (${pos.shares} Lembar @ ${(pos.entryPrice * 100).toFixed(0)}¢)`;
+        dom.posStatusPill.textContent = `⚡ POSISI AKTIF: BUY ${sideName} (${pos.shares} Lembar @ ${(pos.entryPrice * 100).toFixed(0)}¢)`;
       }
     }
 
-    if (dom.valPosSide) dom.valPosSide.textContent = pos.isReversed ? `${pos.side} (FLIP)` : pos.side;
+    if (dom.valPosSide) dom.valPosSide.textContent = pos.isReversed ? `${sideName} (FLIP)` : sideName;
     if (dom.valPosEntry) dom.valPosEntry.textContent = `${(pos.entryPrice * 100).toFixed(0)}¢`;
     if (dom.valPosShares) dom.valPosShares.textContent = `${pos.shares} sh`;
     if (dom.valPosCost) dom.valPosCost.textContent = `$${pos.cost.toFixed(2)}`;
@@ -945,13 +881,14 @@
     if (netPnl >= 0) p.wins++;
     else p.losses++;
 
+    const sideName = pos.side === 'YES' ? 'UP' : 'DOWN';
     p.tradeHistory.unshift({
       time: formatTime(Date.now(), true),
       roundId: pos.roundId,
       coin: pos.coin,
       strike: roundStrikePrice,
       close: roundClosePrice,
-      side: pos.isReversed ? `${pos.side} (FLIP)` : pos.side,
+      side: pos.isReversed ? `${sideName} (FLIP)` : sideName,
       cost: pos.cost,
       won: won,
       netPnl: netPnl,
@@ -1017,7 +954,7 @@
       const pnlSign = t.netPnl >= 0 ? '+' : '-';
       const pnlClass = t.netPnl >= 0 ? 'text-green' : 'text-red';
       const tagClass = t.won ? 'win' : 'loss';
-      const sideTagClass = t.side.includes('YES') ? 'yes' : (t.side.includes('NO') ? 'no' : 'reversed');
+      const sideTagClass = t.side.includes('UP') || t.side.includes('YES') ? 'yes' : ((t.side.includes('DOWN') || t.side.includes('NO')) ? 'no' : 'reversed');
 
       return `
         <tr>
@@ -1033,6 +970,57 @@
         </tr>
       `;
     }).join('');
+  }
+
+  // --- 10. GLOBAL UI ZOOM SCALING CONTROLS ---
+  function applyUiZoom(newZoom) {
+    state.uiZoomLevel = Math.max(0.75, Math.min(1.60, parseFloat(newZoom.toFixed(2))));
+    document.documentElement.style.setProperty('--ui-zoom', state.uiZoomLevel);
+    localStorage.setItem('kopi_tubruk_zoom', state.uiZoomLevel);
+    if (dom.zoomLevelLabel) dom.zoomLevelLabel.textContent = `${Math.round(state.uiZoomLevel * 100)}%`;
+    resizeCharts();
+  }
+
+  function setupZoomControls() {
+    const savedZoom = parseFloat(localStorage.getItem('kopi_tubruk_zoom')) || 1.05;
+    applyUiZoom(savedZoom);
+
+    if (dom.btnZoomIn) {
+      dom.btnZoomIn.addEventListener('click', () => applyUiZoom(state.uiZoomLevel + 0.10));
+    }
+    if (dom.btnZoomOut) {
+      dom.btnZoomOut.addEventListener('click', () => applyUiZoom(state.uiZoomLevel - 0.10));
+    }
+    if (dom.btnZoomReset) {
+      dom.btnZoomReset.addEventListener('click', () => applyUiZoom(1.00));
+    }
+
+    // Chart-specific zoom buttons
+    if (dom.btnBinanceZoomIn && tvChartBinance) {
+      dom.btnBinanceZoomIn.addEventListener('click', () => {
+        const range = tvChartBinance.timeScale().getVisibleLogicalRange();
+        if (range) tvChartBinance.timeScale().setVisibleLogicalRange({ from: range.from + 4, to: range.to - 4 });
+      });
+    }
+    if (dom.btnBinanceZoomOut && tvChartBinance) {
+      dom.btnBinanceZoomOut.addEventListener('click', () => {
+        const range = tvChartBinance.timeScale().getVisibleLogicalRange();
+        if (range) tvChartBinance.timeScale().setVisibleLogicalRange({ from: range.from - 6, to: range.to + 6 });
+      });
+    }
+
+    if (dom.btnPolyZoomIn && tvChartPoly) {
+      dom.btnPolyZoomIn.addEventListener('click', () => {
+        const range = tvChartPoly.timeScale().getVisibleLogicalRange();
+        if (range) tvChartPoly.timeScale().setVisibleLogicalRange({ from: range.from + 4, to: range.to - 4 });
+      });
+    }
+    if (dom.btnPolyZoomOut && tvChartPoly) {
+      dom.btnPolyZoomOut.addEventListener('click', () => {
+        const range = tvChartPoly.timeScale().getVisibleLogicalRange();
+        if (range) tvChartPoly.timeScale().setVisibleLogicalRange({ from: range.from - 6, to: range.to + 6 });
+      });
+    }
   }
 
   // --- 11. DRAGGABLE RESIZABLE LAYOUT ENGINE ---
@@ -1055,7 +1043,7 @@
       if (!isDragging) return;
       const wrapperRect = wrapper.getBoundingClientRect();
       const newOrderWidth = wrapperRect.right - e.clientX;
-      const clampedWidth = Math.max(280, Math.min(600, newOrderWidth));
+      const clampedWidth = Math.max(300, Math.min(680, newOrderWidth));
       paneOrder.style.width = `${clampedWidth}px`;
       resizeCharts();
     });
@@ -1079,7 +1067,7 @@
       if (!isDragging || !e.touches[0]) return;
       const wrapperRect = wrapper.getBoundingClientRect();
       const newOrderWidth = wrapperRect.right - e.touches[0].clientX;
-      const clampedWidth = Math.max(280, Math.min(600, newOrderWidth));
+      const clampedWidth = Math.max(300, Math.min(680, newOrderWidth));
       paneOrder.style.width = `${clampedWidth}px`;
       resizeCharts();
     });
@@ -1171,7 +1159,6 @@
           state.strikePrice = null;
           state.candlesBinance = [];
           state.polyOddsHistory = [];
-          state.livePolyEvents = [];
 
           if (dom.binanceChartTitle) dom.binanceChartTitle.textContent = `GRAFIK 1: ${selected.symbol}/USDT SPOT BINANCE`;
 
@@ -1179,7 +1166,6 @@
           await loadBinanceKlines();
           connectBinanceStream();
           syncRoundState();
-          await fetchLivePolymarketEvents();
         }
       });
     });
@@ -1226,6 +1212,7 @@
       });
     }
 
+    setupZoomControls();
     setupResizableDivider();
     window.addEventListener('resize', resizeCharts);
   }
@@ -1246,11 +1233,9 @@
 
     await loadBinanceKlines();
     connectBinanceStream();
-    await fetchLivePolymarketEvents();
 
     setInterval(updateTimerCountdown, 100);
     setInterval(updateThrottledMetrics, 100);
-    setInterval(fetchLivePolymarketEvents, 30000); // refresh Polymarket API events every 30s
   }
 
   if (document.readyState === 'loading') {
