@@ -1,7 +1,7 @@
 /**
- * KOPI TUBRUK - Minimalist Binance 5M Candlestick AI Prediction Terminal
- * Real Binance 5m Kline API + WebSocket Stream + MA(7, 25, 99) Indicators
- * Autonomous Prediction Trading Engine with Fast-Flip Reversal Strategy
+ * KOPI TUBRUK - Professional TradingView 5M Candlestick AI Prediction Terminal
+ * Powered by LightweightCharts (TradingView Library) + Live Binance WebSocket
+ * Autonomous Prediction Trading Engine with Fast-Flip Reversal Protection
  */
 
 (function () {
@@ -29,12 +29,10 @@
     roundStartTime: null,
     roundEndTime: null,
     currentTheme: 'theme-dark',
-    
-    // Binance 5m Candlestick Buffer
-    candles5m: [], // [{time, open, high, low, close, volume, isClosed, ma7, ma25, ma99}]
-    activeKline: null,
-    hoveredCandle: null,
 
+    // Raw Candlestick Buffer
+    candles5m: [], // [{time (unix sec), open, high, low, close, volume}]
+    
     // Implied Polymarket Odds
     marketOddsYes: 0.50,
     marketOddsNo: 0.50,
@@ -51,64 +49,63 @@
       wins: 0,
       losses: 0,
       cumulativePnl: 0.00
-    },
-
-    // Rendering optimization
-    needsRender: true,
-    canvasDims: { w: 900, h: 420, dpr: 1 }
+    }
   };
 
   // --- 3. DOM ELEMENTS CACHE ---
   const dom = {
-    coinTabs: document.querySelectorAll('.coin-tab'),
-    headerLivePrice: document.getElementById('headerLivePrice'),
-    headerPriceChange: document.getElementById('headerPriceChange'),
-    headerStrikePrice: document.getElementById('headerStrikePrice'),
-    headerTimerBox: document.getElementById('headerTimerBox'),
-    headerTimerVal: document.getElementById('headerTimerVal'),
+    coinTabs: document.querySelectorAll('.coin-btn'),
+    topLivePrice: document.getElementById('topLivePrice'),
+    topPriceChange: document.getElementById('topPriceChange'),
+    topStrikePrice: document.getElementById('topStrikePrice'),
+    topTimer: document.getElementById('topTimer'),
     themeToggle: document.getElementById('themeToggle'),
     themeIcon: document.getElementById('themeIcon'),
 
-    chartPairTitle: document.getElementById('chartPairTitle'),
-    ohlcOpen: document.getElementById('ohlcOpen'),
-    ohlcHigh: document.getElementById('ohlcHigh'),
-    ohlcLow: document.getElementById('ohlcLow'),
-    ohlcClose: document.getElementById('ohlcClose'),
-    ohlcVol: document.getElementById('ohlcVol'),
-    valMa7: document.getElementById('valMa7'),
-    valMa25: document.getElementById('valMa25'),
-    valMa99: document.getElementById('valMa99'),
-    polymarketOddsPill: document.getElementById('polymarketOddsPill'),
+    chartPairName: document.getElementById('chartPairName'),
+    valO: document.getElementById('valO'),
+    valH: document.getElementById('valH'),
+    valL: document.getElementById('valL'),
+    valC: document.getElementById('valC'),
+    ma7Val: document.getElementById('ma7Val'),
+    ma25Val: document.getElementById('ma25Val'),
+    tvChartContainer: document.getElementById('tvChartContainer'),
 
-    chartContainer: document.getElementById('chartContainer'),
-    binanceCandleCanvas: document.getElementById('binanceCandleCanvas'),
+    currentRoundTag: document.getElementById('currentRoundTag'),
+    oddsYesCents: document.getElementById('oddsYesCents'),
+    oddsYesTarget: document.getElementById('oddsYesTarget'),
+    oddsNoCents: document.getElementById('oddsNoCents'),
+    oddsNoTarget: document.getElementById('oddsNoTarget'),
+    oddsBarFill: document.getElementById('oddsBarFill'),
 
-    agentStatusBadge: document.getElementById('agentStatusBadge'),
-    currentRoundIdTag: document.getElementById('currentRoundIdTag'),
-    posSideText: document.getElementById('posSideText'),
-    posEntryText: document.getElementById('posEntryText'),
-    posSharesText: document.getElementById('posSharesText'),
-    posCostText: document.getElementById('posCostText'),
-    posCurrentValText: document.getElementById('posCurrentValText'),
-    posPnlText: document.getElementById('posPnlText'),
-    strategyReasoningText: document.getElementById('strategyReasoningText'),
+    consensusPill: document.getElementById('consensusPill'),
+    bullScoreText: document.getElementById('bullScoreText'),
+    bearScoreText: document.getElementById('bearScoreText'),
+    sentimentFill: document.getElementById('sentimentFill'),
+    actionVerdict: document.getElementById('actionVerdict'),
+    actionRationale: document.getElementById('actionRationale'),
 
+    posStatusPill: document.getElementById('posStatusPill'),
+    valPosSide: document.getElementById('valPosSide'),
+    valPosEntry: document.getElementById('valPosEntry'),
+    valPosShares: document.getElementById('valPosShares'),
+    valPosCost: document.getElementById('valPosCost'),
+    valPosCurrent: document.getElementById('valPosCurrent'),
+    valPosPnl: document.getElementById('valPosPnl'),
+
+    valTotalEquity: document.getElementById('valTotalEquity'),
+    valCashBalance: document.getElementById('valCashBalance'),
+    valNetPnl: document.getElementById('valNetPnl'),
+    valWinRate: document.getElementById('valWinRate'),
     inputCapital: document.getElementById('inputCapital'),
     btnResetPort: document.getElementById('btnResetPort'),
-    portTotalEquity: document.getElementById('portTotalEquity'),
-    portCashBalance: document.getElementById('portCashBalance'),
-    portNetPnl: document.getElementById('portNetPnl'),
-    portWinRate: document.getElementById('portWinRate'),
-    biasBullPct: document.getElementById('biasBullPct'),
-    biasBearPct: document.getElementById('biasBearPct'),
-    biasFillBar: document.getElementById('biasFillBar'),
 
     btnClearHistory: document.getElementById('btnClearHistory'),
     tradeHistoryBody: document.getElementById('tradeHistoryBody'),
-    localClock: document.getElementById('localClock')
+    footerClock: document.getElementById('footerClock')
   };
 
-  // --- 4. FORMATTING & MATH UTILITIES ---
+  // --- 4. FORMATTING UTILITIES ---
   function formatPrice(val, precision = 2) {
     if (val === null || isNaN(val)) return '$--';
     return '$' + Number(val).toLocaleString('en-US', {
@@ -147,23 +144,160 @@
     };
   }
 
-  // --- 5. BINANCE 5M KLINE API & WEBSOCKET ENGINE ---
+  // --- 5. TRADINGVIEW LIGHTWEIGHT CHARTS ENGINE ---
+  let tvChart = null;
+  let candleSeries = null;
+  let volumeSeries = null;
+  let ma7Series = null;
+  let ma25Series = null;
+  let strikePriceLine = null;
+
+  function initTradingViewChart() {
+    if (!dom.tvChartContainer || !window.LightweightCharts) return;
+
+    if (tvChart) {
+      try { tvChart.remove(); } catch (e) {}
+    }
+
+    const isDark = document.body.classList.contains('theme-dark');
+    const bg = isDark ? '#0b0e14' : '#ffffff';
+    const textColor = isDark ? '#8c9ba5' : '#4b5563';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+
+    tvChart = LightweightCharts.createChart(dom.tvChartContainer, {
+      layout: {
+        background: { color: bg },
+        textColor: textColor,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 11
+      },
+      grid: {
+        vertLines: { color: gridColor },
+        horzLines: { color: gridColor }
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+        vertLine: { width: 1, color: '#f0b90b', style: LightweightCharts.LineStyle.Dashed },
+        horzLine: { width: 1, color: '#f0b90b', style: LightweightCharts.LineStyle.Dashed }
+      },
+      rightPriceScale: {
+        borderColor: isDark ? '#1f293d' : '#e2e8f0',
+        scaleMargins: { top: 0.1, bottom: 0.2 }
+      },
+      timeScale: {
+        borderColor: isDark ? '#1f293d' : '#e2e8f0',
+        timeVisible: true,
+        secondsVisible: false
+      }
+    });
+
+    // 1. Candlestick Series (Exact Binance Pro Green & Red)
+    candleSeries = tvChart.addCandlestickSeries({
+      upColor: '#0ecb81',
+      downColor: '#f6465d',
+      borderVisible: false,
+      wickUpColor: '#0ecb81',
+      wickDownColor: '#f6465d'
+    });
+
+    // 2. Volume Series at bottom
+    volumeSeries = tvChart.addHistogramSeries({
+      color: '#26a69a',
+      priceFormat: { type: 'volume' },
+      priceScaleId: ''
+    });
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0.82, bottom: 0 }
+    });
+
+    // 3. MA(7) Yellow Line
+    ma7Series = tvChart.addLineSeries({
+      color: '#f0b90b',
+      lineWidth: 1.5,
+      priceLineVisible: false
+    });
+
+    // 4. MA(25) Purple Line
+    ma25Series = tvChart.addLineSeries({
+      color: '#9353d3',
+      lineWidth: 1.5,
+      priceLineVisible: false
+    });
+
+    // Crosshair legend update
+    tvChart.subscribeCrosshairMove(param => {
+      const precision = state.selectedCoin.precision;
+      if (!param || !param.time || !param.seriesData) {
+        if (state.candles5m.length > 0) {
+          const latest = state.candles5m[state.candles5m.length - 1];
+          if (dom.valO) dom.valO.textContent = formatPrice(latest.open, precision);
+          if (dom.valH) dom.valH.textContent = formatPrice(latest.high, precision);
+          if (dom.valL) dom.valL.textContent = formatPrice(latest.low, precision);
+          if (dom.valC) dom.valC.textContent = formatPrice(latest.close, precision);
+        }
+        return;
+      }
+      const data = param.seriesData.get(candleSeries);
+      if (data) {
+        if (dom.valO) dom.valO.textContent = formatPrice(data.open, precision);
+        if (dom.valH) dom.valH.textContent = formatPrice(data.high, precision);
+        if (dom.valL) dom.valL.textContent = formatPrice(data.low, precision);
+        if (dom.valC) dom.valC.textContent = formatPrice(data.close, precision);
+      }
+    });
+
+    // Resize observer
+    window.addEventListener('resize', () => {
+      if (tvChart && dom.tvChartContainer) {
+        const rect = dom.tvChartContainer.getBoundingClientRect();
+        tvChart.applyOptions({ width: rect.width, height: rect.height });
+      }
+    });
+  }
+
+  function updateStrikePriceLineOnChart() {
+    if (!candleSeries || !state.strikePrice) return;
+    if (strikePriceLine) {
+      try { candleSeries.removePriceLine(strikePriceLine); } catch (e) {}
+    }
+    strikePriceLine = candleSeries.createPriceLine({
+      price: state.strikePrice,
+      color: '#f0b90b',
+      lineWidth: 1.5,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: 'STRIKE 5M'
+    });
+  }
+
+  // Calculate Moving Averages for LightweightCharts
+  function calculateSMAData(data, period) {
+    const res = [];
+    for (let i = 0; i < data.length; i++) {
+      if (i < period - 1) continue;
+      let sum = 0;
+      for (let j = 0; j < period; j++) sum += data[i - j].close;
+      res.push({ time: data[i].time, value: sum / period });
+    }
+    return res;
+  }
+
+  // --- 6. BINANCE 5M KLINE API & WEBSOCKET ENGINE ---
   let wsBinance = null;
 
   async function loadHistoricalBinanceKlines() {
     const pair = state.selectedCoin.binancePair;
     try {
-      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=5m&limit=48`);
+      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=5m&limit=60`);
       if (res.ok) {
-        const rawKlines = await res.json();
-        state.candles5m = rawKlines.map(k => ({
-          time: k[0],
+        const raw = await res.json();
+        state.candles5m = raw.map(k => ({
+          time: Math.floor(k[0] / 1000), // Unix seconds for lightweight-charts
           open: parseFloat(k[1]),
           high: parseFloat(k[2]),
           low: parseFloat(k[3]),
           close: parseFloat(k[4]),
-          volume: parseFloat(k[5]),
-          isClosed: true
+          volume: parseFloat(k[5])
         }));
 
         if (state.candles5m.length > 0) {
@@ -173,12 +307,29 @@
             state.strikePrice = latest.close;
             state.strikeLockedAt = Date.now();
           }
+
+          // Populate chart series
+          candleSeries.setData(state.candles5m);
+          volumeSeries.setData(state.candles5m.map(c => ({
+            time: c.time,
+            value: c.volume,
+            color: c.close >= c.open ? 'rgba(14, 203, 129, 0.4)' : 'rgba(246, 70, 93, 0.4)'
+          })));
+
+          const ma7Data = calculateSMAData(state.candles5m, 7);
+          const ma25Data = calculateSMAData(state.candles5m, 25);
+          ma7Series.setData(ma7Data);
+          ma25Series.setData(ma25Data);
+
+          if (ma7Data.length > 0) dom.ma7Val.textContent = formatPrice(ma7Data[ma7Data.length - 1].value, state.selectedCoin.precision);
+          if (ma25Data.length > 0) dom.ma25Val.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
+
+          updateStrikePriceLineOnChart();
+          tvChart.timeScale().fitContent();
         }
-        computeMovingAverages();
-        state.needsRender = true;
       }
-    } catch (err) {
-      console.warn('Failed fetching historical klines:', err);
+    } catch (e) {
+      console.warn('Kline fetch error:', e);
     }
   }
 
@@ -186,49 +337,64 @@
     if (wsBinance) { try { wsBinance.close(); } catch (e) {} }
 
     const pairLower = state.selectedCoin.binancePair.toLowerCase();
-    const streamName = `${pairLower}@kline_5m/${pairLower}@ticker`;
-    
+    const url = `https://stream.binance.com:9443/ws/${pairLower}@kline_5m/${pairLower}@ticker`;
+
     try {
-      wsBinance = new WebSocket(`https://stream.binance.com:9443/ws/${streamName}`);
+      wsBinance = new WebSocket(url);
       wsBinance.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           
-          // 24h Ticker Update
           if (data.e === '24hrTicker') {
             state.price24hChange = parseFloat(data.P);
           }
-          
-          // 5m Kline Live Update
-          if (data.e === 'kline') {
+
+          if (data.e === 'kline' && data.k) {
             const k = data.k;
-            const klineObj = {
-              time: k.t,
+            const candle = {
+              time: Math.floor(k.t / 1000),
               open: parseFloat(k.o),
               high: parseFloat(k.h),
               low: parseFloat(k.l),
               close: parseFloat(k.c),
-              volume: parseFloat(k.v),
-              isClosed: k.x
+              volume: parseFloat(k.v)
             };
 
-            state.currentPrice = klineObj.close;
+            state.currentPrice = candle.close;
             if (state.strikePrice === null) {
-              state.strikePrice = klineObj.close;
+              state.strikePrice = candle.close;
               state.strikeLockedAt = Date.now();
+              updateStrikePriceLineOnChart();
             }
 
-            // Update or push candle in buffer
+            // Real-time update into Lightweight Charts
+            candleSeries.update(candle);
+            volumeSeries.update({
+              time: candle.time,
+              value: candle.volume,
+              color: candle.close >= candle.open ? 'rgba(14, 203, 129, 0.4)' : 'rgba(246, 70, 93, 0.4)'
+            });
+
+            // Update in-memory array
             const lastIdx = state.candles5m.length - 1;
-            if (lastIdx >= 0 && state.candles5m[lastIdx].time === klineObj.time) {
-              state.candles5m[lastIdx] = klineObj;
+            if (lastIdx >= 0 && state.candles5m[lastIdx].time === candle.time) {
+              state.candles5m[lastIdx] = candle;
             } else {
-              state.candles5m.push(klineObj);
-              if (state.candles5m.length > 55) state.candles5m.shift();
+              state.candles5m.push(candle);
+              if (state.candles5m.length > 70) state.candles5m.shift();
             }
 
-            computeMovingAverages();
-            state.needsRender = true;
+            // Real-time MA updates
+            const ma7Data = calculateSMAData(state.candles5m, 7);
+            const ma25Data = calculateSMAData(state.candles5m, 25);
+            if (ma7Data.length > 0) {
+              ma7Series.update(ma7Data[ma7Data.length - 1]);
+              dom.ma7Val.textContent = formatPrice(ma7Data[ma7Data.length - 1].value, state.selectedCoin.precision);
+            }
+            if (ma25Data.length > 0) {
+              ma25Series.update(ma25Data[ma25Data.length - 1]);
+              dom.ma25Val.textContent = formatPrice(ma25Data[ma25Data.length - 1].value, state.selectedCoin.precision);
+            }
           }
         } catch (err) {}
       };
@@ -240,41 +406,7 @@
     }
   }
 
-  // Authentic Binance Moving Average Calculations (MA7, MA25, MA99)
-  function computeMovingAverages() {
-    const closes = state.candles5m.map(c => c.close);
-    const n = closes.length;
-
-    const calcSMA = (period) => {
-      const res = new Array(n).fill(null);
-      for (let i = period - 1; i < n; i++) {
-        let sum = 0;
-        for (let j = 0; j < period; j++) sum += closes[i - j];
-        res[i] = sum / period;
-      }
-      return res;
-    };
-
-    const ma7 = calcSMA(7);
-    const ma25 = calcSMA(25);
-    const ma99 = calcSMA(99);
-
-    for (let i = 0; i < n; i++) {
-      state.candles5m[i].ma7 = ma7[i];
-      state.candles5m[i].ma25 = ma25[i];
-      state.candles5m[i].ma99 = ma99[i];
-    }
-
-    const latest = state.candles5m[n - 1];
-    const precision = state.selectedCoin.precision;
-    if (latest) {
-      if (dom.valMa7) dom.valMa7.textContent = latest.ma7 ? formatPrice(latest.ma7, precision) : '--';
-      if (dom.valMa25) dom.valMa25.textContent = latest.ma25 ? formatPrice(latest.ma25, precision) : '--';
-      if (dom.valMa99) dom.valMa99.textContent = latest.ma99 ? formatPrice(latest.ma99, precision) : '--';
-    }
-  }
-
-  // --- 6. ROUND BOUNDARIES & 5M TIMER ENGINE ---
+  // --- 7. ROUND BOUNDARIES & 5M TIMER ENGINE ---
   function calculateCurrentRoundBoundaries() {
     const now = Date.now();
     const intervalMs = 5 * 60 * 1000;
@@ -299,11 +431,13 @@
 
       state.strikePrice = state.currentPrice || state.selectedCoin.defaultPrice;
       state.strikeLockedAt = startTime;
-      state.needsRender = true;
+      updateStrikePriceLineOnChart();
     }
 
-    if (dom.currentRoundIdTag) dom.currentRoundIdTag.textContent = `RONDE #${roundId}`;
-    if (dom.headerStrikePrice) dom.headerStrikePrice.textContent = formatPrice(state.strikePrice, state.selectedCoin.precision);
+    if (dom.currentRoundTag) dom.currentRoundTag.textContent = `RONDE #${roundId}`;
+    if (dom.topStrikePrice) dom.topStrikePrice.textContent = formatPrice(state.strikePrice, state.selectedCoin.precision);
+    if (dom.oddsYesTarget) dom.oddsYesTarget.textContent = `≥ ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
+    if (dom.oddsNoTarget) dom.oddsNoTarget.textContent = `< ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
   }
 
   function updateTimerCountdown() {
@@ -316,47 +450,36 @@
     const tenths = Math.floor((remainingMs % 1000) / 100);
 
     const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
-    if (dom.headerTimerVal) dom.headerTimerVal.textContent = timeStr;
+    if (dom.topTimer) dom.topTimer.textContent = timeStr;
 
-    if (dom.headerTimerBox) {
-      if (remainingMs <= 15000) dom.headerTimerBox.style.borderColor = 'var(--binance-red)';
-      else if (remainingMs <= 45000) dom.headerTimerBox.style.borderColor = 'var(--binance-gold)';
-      else dom.headerTimerBox.style.borderColor = 'var(--border-color)';
-    }
-
-    if (dom.localClock) dom.localClock.textContent = `Waktu: ${formatTime(now, true)} WIB`;
+    if (dom.footerClock) dom.footerClock.textContent = `${formatTime(now, true)} WIB`;
   }
 
-  // --- 7. THROTTLED DOM METRICS & AI EVALUATION ---
+  // --- 8. DOM METRICS & AI EVALUATION LOOP (100ms) ---
   function updateThrottledMetrics() {
     if (!state.currentPrice) return;
     const precision = state.selectedCoin.precision;
 
-    // Header Price & Change
-    if (dom.headerLivePrice) dom.headerLivePrice.textContent = formatPrice(state.currentPrice, precision);
-    if (dom.headerPriceChange) {
+    // Header Price & 24h Change
+    if (dom.topLivePrice) {
+      dom.topLivePrice.textContent = formatPrice(state.currentPrice, precision);
+      const isAboveStrike = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
+      dom.topLivePrice.className = `val ${isAboveStrike ? 'price-up' : 'price-down'}`;
+    }
+
+    if (dom.topPriceChange) {
       const change = state.price24hChange;
       const isUp = change >= 0;
-      dom.headerPriceChange.textContent = `${isUp ? '+' : ''}${change.toFixed(2)}%`;
-      dom.headerPriceChange.className = `stat-change ${isUp ? 'text-green' : 'text-red'}`;
+      dom.topPriceChange.textContent = `${isUp ? '+' : ''}${change.toFixed(2)}%`;
+      dom.topPriceChange.className = `badge-change ${isUp ? 'text-green' : 'text-red'}`;
     }
 
-    // Update OHLC Header Bar (Active or Hovered Candle)
-    const activeC = state.hoveredCandle || (state.candles5m.length > 0 ? state.candles5m[state.candles5m.length - 1] : null);
-    if (activeC) {
-      if (dom.ohlcOpen) dom.ohlcOpen.textContent = formatPrice(activeC.open, precision);
-      if (dom.ohlcHigh) dom.ohlcHigh.textContent = formatPrice(activeC.high, precision);
-      if (dom.ohlcLow) dom.ohlcLow.textContent = formatPrice(activeC.low, precision);
-      if (dom.ohlcClose) dom.ohlcClose.textContent = formatPrice(activeC.close, precision);
-      if (dom.ohlcVol) dom.ohlcVol.textContent = activeC.volume.toFixed(2);
-    }
-
-    // AI Evaluation & Polymarket Odds
+    // AI Evaluation & Mark to Market
     evaluateAITradingEngine();
     updateSimulatorMarkToMarket();
   }
 
-  // --- 8. AUTONOMOUS AI PREDICTION & REVERSAL FAST-FLIP ENGINE ---
+  // --- 9. AUTONOMOUS AI PREDICTION & REVERSAL FAST-FLIP ENGINE ---
   function evaluateAITradingEngine() {
     if (!state.currentPrice || !state.strikePrice) return;
     const now = Date.now();
@@ -369,11 +492,11 @@
     state.marketOddsYes = yesOdds;
     state.marketOddsNo = noOdds;
 
-    if (dom.polymarketOddsPill) {
-      dom.polymarketOddsPill.textContent = `Polymarket: YES ${(yesOdds * 100).toFixed(0)}¢ | NO ${(noOdds * 100).toFixed(0)}¢`;
-    }
+    if (dom.oddsYesCents) dom.oddsYesCents.textContent = `${(yesOdds * 100).toFixed(0)}¢`;
+    if (dom.oddsNoCents) dom.oddsNoCents.textContent = `${(noOdds * 100).toFixed(0)}¢`;
+    if (dom.oddsBarFill) dom.oddsBarFill.style.width = `${yesOdds * 100}%`;
 
-    // Technical Factors on Binance 5M Candle
+    // Directional Factors on Binance 5M Candle
     const deltaStrike = state.currentPrice - state.strikePrice;
     const deltaStrikePct = (deltaStrike / state.strikePrice) * 100;
     
@@ -382,9 +505,10 @@
     else bullScore -= Math.min(30, Math.abs(deltaStrikePct) * 150);
 
     const latestCandle = state.candles5m[state.candles5m.length - 1];
-    if (latestCandle && latestCandle.ma7) {
-      if (state.currentPrice > latestCandle.ma7) bullScore += 10;
-      else bullScore -= 10;
+    if (latestCandle) {
+      const ma7 = parseFloat(dom.ma7Val.textContent.replace(/[^0-9.]/g, ''));
+      if (!isNaN(ma7) && state.currentPrice > ma7) bullScore += 10;
+      else if (!isNaN(ma7) && state.currentPrice < ma7) bullScore -= 10;
     }
 
     bullScore = Math.max(10, Math.min(90, Math.round(bullScore)));
@@ -392,34 +516,38 @@
     state.bullScore = bullScore;
     state.bearScore = bearScore;
 
-    if (dom.biasBullPct) dom.biasBullPct.textContent = `${bullScore}%`;
-    if (dom.biasBearPct) dom.biasBearPct.textContent = `${bearScore}%`;
-    if (dom.biasFillBar) dom.biasFillBar.style.width = `${bullScore}%`;
+    if (dom.bullScoreText) dom.bullScoreText.textContent = `${bullScore}%`;
+    if (dom.bearScoreText) dom.bearScoreText.textContent = `${bearScore}%`;
+    if (dom.sentimentFill) dom.sentimentFill.style.width = `${bullScore}%`;
 
-    // Strategy Reasoning Text
-    let reasoning = '';
+    let verdict = 'STANDBY';
+    let rationale = '';
+
     if (bullScore >= 65) {
-      reasoning = `KONSENSUS BULL: Harga berada +${deltaStrikePct.toFixed(3)}% di atas strike baseline ($${state.strikePrice.toFixed(2)}) didukung MA(7). Posisi YES memiliki keunggulan probabilitas.`;
+      verdict = 'BUY YES (UP)';
+      rationale = `KONSENSUS BULL: Harga berada +${deltaStrikePct.toFixed(3)}% di atas strike ($${state.strikePrice.toFixed(2)}) didukung momentum MA(7). Posisi YES memiliki keunggulan statistik (+EV).`;
+      if (dom.consensusPill) { dom.consensusPill.textContent = 'KONSENSUS BULL'; dom.consensusPill.className = 'consensus-pill text-green'; }
     } else if (bearScore >= 65) {
-      reasoning = `KONSENSUS BEAR: Harga tertahan -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike baseline. Tekanan jual mendominasi candle 5m. Posisi NO memiliki statistical edge.`;
+      verdict = 'BUY NO (DOWN)';
+      rationale = `KONSENSUS BEAR: Tekanan jual menahan harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike baseline. Posisi NO memiliki probabilitas keunggulan tinggi.`;
+      if (dom.consensusPill) { dom.consensusPill.textContent = 'KONSENSUS BEAR'; dom.consensusPill.className = 'consensus-pill text-red'; }
     } else {
-      reasoning = `ANALISIS NETRAL: Harga berosilasi di sekitar strike ($${state.strikePrice.toFixed(2)}). Menunggu breakout konfirmasi.`;
+      verdict = 'STANDBY (MENGANALISIS)';
+      rationale = `DELIBERASI ARBITER: Belum ada asimetri statistik yang cukup antara Bull (${bullScore}%) dan Bear (${bearScore}%). Menunggu konfirmasi breakout.`;
+      if (dom.consensusPill) { dom.consensusPill.textContent = 'DELIBERASI'; dom.consensusPill.className = 'consensus-pill'; }
     }
-    if (dom.strategyReasoningText) dom.strategyReasoningText.textContent = reasoning;
+
+    if (dom.actionVerdict) dom.actionVerdict.textContent = verdict;
+    if (dom.actionRationale) dom.actionRationale.textContent = rationale;
 
     // Trading Window: between 6% and 85% of round time
     const isTradingWindowOpen = elapsedPct >= 6 && elapsedPct <= 85;
     if (isTradingWindowOpen) {
-      // Check Reversal Flip first
       checkAndExecuteReversalProtection(bullScore, bearScore, yesOdds, noOdds, remainingMs);
 
-      // Open new trade if no position
       if (!state.portfolio.activePosition && state.portfolio.cashBalance >= 1.00) {
-        if (bullScore >= 65 && yesOdds <= 0.70) {
-          executeSimOrder('YES', yesOdds);
-        } else if (bearScore >= 65 && noOdds <= 0.70) {
-          executeSimOrder('NO', noOdds);
-        }
+        if (bullScore >= 65 && yesOdds <= 0.70) executeSimOrder('YES', yesOdds);
+        else if (bearScore >= 65 && noOdds <= 0.70) executeSimOrder('NO', noOdds);
       }
     }
   }
@@ -449,13 +577,13 @@
     updateSimulatorUI();
   }
 
-  // ⚡ FAST-FLIP REVERSAL STRATEGY
+  // ⚡ DYNAMIC FAST-FLIP REVERSAL STRATEGY
   function checkAndExecuteReversalProtection(bullScore, bearScore, yesOdds, noOdds, remainingMs) {
     const p = state.portfolio;
     if (!p.activePosition) return;
     const pos = p.activePosition;
     if (pos.isReversed) return;
-    if (remainingMs < 20000) return; // Need at least 20s for profitable reversal flip
+    if (remainingMs < 20000) return;
 
     const currentContractPrice = pos.side === 'YES' ? yesOdds : noOdds;
     const currentVal = pos.shares * currentContractPrice;
@@ -561,39 +689,39 @@
     const currentLegPnl = currentVal - pos.cost;
     const totalRoundPnl = pos.isReversed ? (currentLegPnl - pos.lossIncurred) : currentLegPnl;
 
-    if (dom.agentStatusBadge) {
+    if (dom.posStatusPill) {
       if (pos.isReversed) {
-        dom.agentStatusBadge.className = 'pos-badge reversed';
-        dom.agentStatusBadge.textContent = `🔄 REVERSAL & FLIP KE ${pos.side} (${pos.shares} Lembar | Target Profit: +$${pos.projectedNetProfit || '0.00'})`;
+        dom.posStatusPill.className = 'position-status-pill reversed';
+        dom.posStatusPill.textContent = `🔄 FLIP KE ${pos.side} (${pos.shares} Lembar | Target Profit: +$${pos.projectedNetProfit || '0.00'})`;
       } else {
-        dom.agentStatusBadge.className = `pos-badge ${pos.side === 'YES' ? 'buy-yes' : 'buy-no'}`;
-        dom.agentStatusBadge.textContent = `⚡ POSISI AKTIF: BUY ${pos.side} (${pos.shares} Lembar @ ${(pos.entryPrice * 100).toFixed(0)}¢)`;
+        dom.posStatusPill.className = `position-status-pill ${pos.side === 'YES' ? 'buy-yes' : 'buy-no'}`;
+        dom.posStatusPill.textContent = `⚡ POSISI AKTIF: BUY ${pos.side} (${pos.shares} Lembar @ ${(pos.entryPrice * 100).toFixed(0)}¢)`;
       }
     }
 
-    if (dom.posSideText) dom.posSideText.textContent = pos.isReversed ? `${pos.side} (FLIP DARI ${pos.initialSide})` : pos.side;
-    if (dom.posEntryText) dom.posEntryText.textContent = `${(pos.entryPrice * 100).toFixed(0)}¢`;
-    if (dom.posSharesText) dom.posSharesText.textContent = `${pos.shares} sh`;
-    if (dom.posCostText) dom.posCostText.textContent = `$${pos.cost.toFixed(2)}`;
-    if (dom.posCurrentValText) dom.posCurrentValText.textContent = `$${currentVal.toFixed(2)} (${(currentContractPrice * 100).toFixed(0)}¢)`;
+    if (dom.valPosSide) dom.valPosSide.textContent = pos.isReversed ? `${pos.side} (FLIP)` : pos.side;
+    if (dom.valPosEntry) dom.valPosEntry.textContent = `${(pos.entryPrice * 100).toFixed(0)}¢`;
+    if (dom.valPosShares) dom.valPosShares.textContent = `${pos.shares} sh`;
+    if (dom.valPosCost) dom.valPosCost.textContent = `$${pos.cost.toFixed(2)}`;
+    if (dom.valPosCurrent) dom.valPosCurrent.textContent = `$${currentVal.toFixed(2)} (${(currentContractPrice * 100).toFixed(0)}¢)`;
 
     const pnlSign = totalRoundPnl >= 0 ? '+' : '-';
-    if (dom.posPnlText) {
-      dom.posPnlText.className = `p-val ${totalRoundPnl >= 0 ? 'text-green' : 'text-red'}`;
-      dom.posPnlText.textContent = `${pnlSign}$${Math.abs(totalRoundPnl).toFixed(2)} (${pnlSign}${Math.abs((totalRoundPnl / pos.cost) * 100).toFixed(1)}%)`;
+    if (dom.valPosPnl) {
+      dom.valPosPnl.className = `p-val ${totalRoundPnl >= 0 ? 'text-green' : 'text-red'}`;
+      dom.valPosPnl.textContent = `${pnlSign}$${Math.abs(totalRoundPnl).toFixed(2)} (${pnlSign}${Math.abs((totalRoundPnl / pos.cost) * 100).toFixed(1)}%)`;
     }
 
     const totalEquity = p.cashBalance + currentVal;
     const netPnl = totalEquity - p.startingCapital;
     const netPnlPct = (netPnl / p.startingCapital) * 100;
 
-    if (dom.portTotalEquity) dom.portTotalEquity.textContent = `$${totalEquity.toFixed(2)}`;
-    if (dom.portCashBalance) dom.portCashBalance.textContent = `$${p.cashBalance.toFixed(2)}`;
+    if (dom.valTotalEquity) dom.valTotalEquity.textContent = `$${totalEquity.toFixed(2)}`;
+    if (dom.valCashBalance) dom.valCashBalance.textContent = `$${p.cashBalance.toFixed(2)}`;
     
     const netSign = netPnl >= 0 ? '+' : '-';
-    if (dom.portNetPnl) {
-      dom.portNetPnl.className = `port-num ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
-      dom.portNetPnl.textContent = `${netSign}$${Math.abs(netPnl).toFixed(2)} (${netSign}${Math.abs(netPnlPct).toFixed(1)}%)`;
+    if (dom.valNetPnl) {
+      dom.valNetPnl.className = `c-val ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
+      dom.valNetPnl.textContent = `${netSign}$${Math.abs(netPnl).toFixed(2)} (${netSign}${Math.abs(netPnlPct).toFixed(1)}%)`;
     }
   }
 
@@ -642,31 +770,31 @@
     const netPnl = equity - p.startingCapital;
     const netPnlPct = (netPnl / p.startingCapital) * 100;
 
-    if (dom.portTotalEquity) dom.portTotalEquity.textContent = `$${equity.toFixed(2)}`;
-    if (dom.portCashBalance) dom.portCashBalance.textContent = `$${p.cashBalance.toFixed(2)}`;
+    if (dom.valTotalEquity) dom.valTotalEquity.textContent = `$${equity.toFixed(2)}`;
+    if (dom.valCashBalance) dom.valCashBalance.textContent = `$${p.cashBalance.toFixed(2)}`;
 
     const netSign = netPnl >= 0 ? '+' : '-';
-    if (dom.portNetPnl) {
-      dom.portNetPnl.className = `port-num ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
-      dom.portNetPnl.textContent = `${netSign}$${Math.abs(netPnl).toFixed(2)} (${netSign}${Math.abs(netPnlPct).toFixed(1)}%)`;
+    if (dom.valNetPnl) {
+      dom.valNetPnl.className = `c-val ${netPnl >= 0 ? 'text-green' : 'text-red'}`;
+      dom.valNetPnl.textContent = `${netSign}$${Math.abs(netPnl).toFixed(2)} (${netSign}${Math.abs(netPnlPct).toFixed(1)}%)`;
     }
 
     const winRate = p.totalTrades > 0 ? ((p.wins / p.totalTrades) * 100).toFixed(0) : 0;
-    if (dom.portWinRate) dom.portWinRate.textContent = `${winRate}% (${p.wins}W / ${p.losses}L)`;
+    if (dom.valWinRate) dom.valWinRate.textContent = `${winRate}% (${p.wins}W / ${p.losses}L)`;
 
     if (!p.activePosition) {
-      if (dom.agentStatusBadge) {
-        dom.agentStatusBadge.className = 'pos-badge idle';
-        dom.agentStatusBadge.textContent = '⏳ MENGANALISIS PASAR (MENUNGGU KONFIRMASI TREND)';
+      if (dom.posStatusPill) {
+        dom.posStatusPill.className = 'position-status-pill idle';
+        dom.posStatusPill.textContent = 'BELUM ADA POSISI (MENUNGGU SINYAL KONSENSUS)';
       }
-      if (dom.posSideText) dom.posSideText.textContent = '--';
-      if (dom.posEntryText) dom.posEntryText.textContent = '--';
-      if (dom.posSharesText) dom.posSharesText.textContent = '--';
-      if (dom.posCostText) dom.posCostText.textContent = '--';
-      if (dom.posCurrentValText) dom.posCurrentValText.textContent = '--';
-      if (dom.posPnlText) {
-        dom.posPnlText.className = 'p-val';
-        dom.posPnlText.textContent = '--';
+      if (dom.valPosSide) dom.valPosSide.textContent = '--';
+      if (dom.valPosEntry) dom.valPosEntry.textContent = '--';
+      if (dom.valPosShares) dom.valPosShares.textContent = '--';
+      if (dom.valPosCost) dom.valPosCost.textContent = '--';
+      if (dom.valPosCurrent) dom.valPosCurrent.textContent = '--';
+      if (dom.valPosPnl) {
+        dom.valPosPnl.className = 'p-val';
+        dom.valPosPnl.textContent = '--';
       }
     }
   }
@@ -675,7 +803,7 @@
     const p = state.portfolio;
     if (!dom.tradeHistoryBody) return;
     if (p.tradeHistory.length === 0) {
-      dom.tradeHistoryBody.innerHTML = `<tr class="empty-row"><td colspan="9">Belum ada trade yang selesai. AI akan otomatis membuka posisi dan mencatat hasil di sini...</td></tr>`;
+      dom.tradeHistoryBody.innerHTML = `<tr class="empty-row"><td colspan="9">Belum ada trade yang selesai. AI akan otomatis mengeksekusi order dan mencatat audit di sini...</td></tr>`;
       return;
     }
 
@@ -702,219 +830,28 @@
     }).join('');
   }
 
-  // --- 9. AUTHENTIC BINANCE 5M CANDLESTICK CANVAS RENDERER ---
-  function cacheCanvasSize() {
-    const dpr = window.devicePixelRatio || 1;
-    if (dom.chartContainer && dom.binanceCandleCanvas) {
-      const rect = dom.chartContainer.getBoundingClientRect();
-      state.canvasDims = { w: rect.width, h: rect.height, dpr };
-      dom.binanceCandleCanvas.width = rect.width * dpr;
-      dom.binanceCandleCanvas.height = rect.height * dpr;
-      state.needsRender = true;
-    }
-  }
-
-  function renderBinanceCandlestickChart() {
-    const canvas = dom.binanceCandleCanvas;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const { w, h, dpr } = state.canvasDims;
-    ctx.save();
-    ctx.scale(dpr, dpr);
-
-    const isDark = document.body.classList.contains('theme-dark');
-    ctx.fillStyle = isDark ? '#0f141d' : '#ffffff';
-    ctx.fillRect(0, 0, w, h);
-
-    if (state.candles5m.length < 2) {
-      ctx.restore();
-      return;
-    }
-
-    const axisWidth = 72;
-    const chartW = w - axisWidth;
-    const chartH = h - 20;
-
-    const highs = state.candles5m.map(c => c.high);
-    const lows = state.candles5m.map(c => c.low);
-    const volumes = state.candles5m.map(c => c.volume || 1);
-    if (state.strikePrice) { highs.push(state.strikePrice); lows.push(state.strikePrice); }
-
-    const minP = Math.min(...lows);
-    const maxP = Math.max(...highs);
-    const maxVol = Math.max(...volumes, 5);
-    const precision = state.selectedCoin.precision;
-
-    const pad = Math.max((maxP - minP) * 0.12, state.currentPrice ? state.currentPrice * 0.0005 : 1);
-    const yMin = minP - pad;
-    const yMax = maxP + pad;
-    const yRange = yMax - yMin;
-
-    const mainPlotH = chartH * 0.78;
-    const volPlotH = chartH * 0.18;
-    const getY = (val) => mainPlotH - ((val - yMin) / yRange) * (mainPlotH - 24) - 10;
-    const numCandles = state.candles5m.length;
-    const candleWidth = Math.max(5, Math.min(16, (chartW - 20) / numCandles - 4));
-    const stepX = (chartW - 20) / numCandles;
-
-    // Right Y-Axis Divider Line
-    ctx.strokeStyle = isDark ? '#26334a' : '#e6e8eb';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(chartW, 0);
-    ctx.lineTo(chartW, h);
-    ctx.stroke();
-
-    // Horizontal Price Grid Lines & Axis Labels
-    ctx.font = '10px "JetBrains Mono", monospace';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-
-    for (let i = 0; i <= 4; i++) {
-      const priceVal = yMin + (yRange / 4) * i;
-      const gy = getY(priceVal);
-
-      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
-      ctx.beginPath();
-      ctx.moveTo(0, gy);
-      ctx.lineTo(chartW, gy);
-      ctx.stroke();
-
-      ctx.fillStyle = isDark ? '#5e6673' : '#99a1ad';
-      ctx.fillText(formatPrice(priceVal, precision), chartW + 6, gy);
-    }
-
-    // Draw Volume Bars
-    state.candles5m.forEach((c, idx) => {
-      const cx = 10 + idx * stepX + stepX / 2;
-      const isGreen = c.close >= c.open;
-      const volHeight = Math.max(2, (c.volume / maxVol) * volPlotH);
-      ctx.fillStyle = isGreen ? 'rgba(14, 203, 129, 0.35)' : 'rgba(246, 70, 93, 0.35)';
-      ctx.fillRect(cx - candleWidth / 2, chartH - volHeight, candleWidth, volHeight);
-    });
-
-    // Strike Baseline (Golden Amber)
-    if (state.strikePrice) {
-      const sy = getY(state.strikePrice);
-      ctx.save();
-      ctx.strokeStyle = '#f0b90b';
-      ctx.lineWidth = 1.4;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(0, sy);
-      ctx.lineTo(chartW, sy);
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = '#f0b90b';
-      ctx.fillRect(chartW, sy - 8, axisWidth, 16);
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 9px "JetBrains Mono", monospace';
-      ctx.fillText(`K:${formatPrice(state.strikePrice, precision).replace('$', '')}`, chartW + 4, sy);
-    }
-
-    // Candlesticks (Binance Green #0ecb81, Red #f6465d)
-    state.candles5m.forEach((c, idx) => {
-      const cx = 10 + idx * stepX + stepX / 2;
-      const isGreen = c.close >= c.open;
-      const candleColor = isGreen ? '#0ecb81' : '#f6465d';
-      const openY = getY(c.open);
-      const closeY = getY(c.close);
-
-      // Wick
-      ctx.strokeStyle = candleColor;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(cx, getY(c.high));
-      ctx.lineTo(cx, getY(c.low));
-      ctx.stroke();
-
-      // Body
-      ctx.fillStyle = candleColor;
-      const bodyTop = Math.min(openY, closeY);
-      const bodyHeight = Math.max(2.5, Math.abs(closeY - openY));
-      ctx.fillRect(cx - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
-    });
-
-    // Draw Binance Moving Averages (MA7 Yellow, MA25 Purple, MA99 Cyan)
-    const drawMALine = (key, color) => {
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      let started = false;
-      state.candles5m.forEach((c, idx) => {
-        if (c[key] !== null && c[key] !== undefined) {
-          const cx = 10 + idx * stepX + stepX / 2;
-          const cy = getY(c[key]);
-          if (!started) { ctx.moveTo(cx, cy); started = true; }
-          else ctx.lineTo(cx, cy);
-        }
-      });
-      if (started) ctx.stroke();
-      ctx.restore();
-    };
-
-    drawMALine('ma7', '#f0b90b');
-    drawMALine('ma25', '#9353d3');
-    drawMALine('ma99', '#00bcd4');
-
-    // Live Price Line & Tag on Right Y-Axis
-    if (state.currentPrice) {
-      const cy = getY(state.currentPrice);
-      const isAbove = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
-      const badgeBg = isAbove ? '#0ecb81' : '#f6465d';
-
-      ctx.save();
-      ctx.strokeStyle = badgeBg;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(0, cy);
-      ctx.lineTo(chartW, cy);
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = badgeBg;
-      ctx.fillRect(chartW, cy - 9, axisWidth, 18);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px "JetBrains Mono", monospace';
-      ctx.fillText(formatPrice(state.currentPrice, precision), chartW + 4, cy);
-    }
-
-    // X-Axis Time Markers
-    ctx.fillStyle = isDark ? '#5e6673' : '#99a1ad';
-    ctx.font = '9px "JetBrains Mono", monospace';
-    ctx.textAlign = 'center';
-    const intervalTicks = Math.max(1, Math.floor(numCandles / 7));
-    for (let i = 0; i < numCandles; i += intervalTicks) {
-      const cx = 10 + i * stepX + stepX / 2;
-      ctx.fillText(formatTime(state.candles5m[i].time), cx, h - 4);
-    }
-
-    ctx.restore();
-  }
-
-  function startRenderLoop() {
-    function loop() {
-      if (state.needsRender) {
-        renderBinanceCandlestickChart();
-        state.needsRender = false;
-      }
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-  }
-
   // --- 10. THEME & EVENT HANDLERS ---
   function applyTheme(themeName) {
     state.currentTheme = themeName;
     document.body.className = themeName;
     localStorage.setItem('kopi_tubruk_theme', themeName);
     if (dom.themeIcon) dom.themeIcon.textContent = themeName === 'theme-dark' ? '🌙' : '☀️';
-    state.needsRender = true;
+
+    if (tvChart) {
+      const isDark = themeName === 'theme-dark';
+      tvChart.applyOptions({
+        layout: {
+          background: { color: isDark ? '#0b0e14' : '#ffffff' },
+          textColor: isDark ? '#8c9ba5' : '#4b5563'
+        },
+        grid: {
+          vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
+          horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' }
+        },
+        rightPriceScale: { borderColor: isDark ? '#1f293d' : '#e2e8f0' },
+        timeScale: { borderColor: isDark ? '#1f293d' : '#e2e8f0' }
+      });
+    }
   }
 
   function toggleTheme() {
@@ -926,7 +863,7 @@
 
     // Coin Switching
     dom.coinTabs.forEach(tab => {
-      tab.addEventListener('click', function () {
+      tab.addEventListener('click', async function () {
         const symbol = this.dataset.coin;
         const selected = COINS.find(c => c.symbol === symbol);
         if (selected && selected !== state.selectedCoin) {
@@ -937,18 +874,16 @@
           state.currentPrice = null;
           state.strikePrice = null;
           state.candles5m = [];
-          state.hoveredCandle = null;
 
-          if (dom.chartPairTitle) dom.chartPairTitle.textContent = `${selected.symbol}/USDT • 5m • Binance`;
+          if (dom.chartPairName) dom.chartPairName.textContent = `${selected.symbol}/USDT • 5m`;
 
-          loadHistoricalBinanceKlines();
+          await loadHistoricalBinanceKlines();
           connectBinanceStream();
           syncRoundState();
         }
       });
     });
 
-    // Capital Input & Reset
     if (dom.inputCapital) {
       dom.inputCapital.addEventListener('input', function () {
         const val = parseFloat(this.value);
@@ -990,41 +925,16 @@
         renderTradeHistoryTable();
       });
     }
-
-    window.addEventListener('resize', cacheCanvasSize);
-
-    // Interactive Hover on Candlesticks
-    if (dom.binanceCandleCanvas) {
-      dom.binanceCandleCanvas.addEventListener('mousemove', function (e) {
-        const rect = this.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const axisWidth = 72;
-        const chartW = rect.width - axisWidth;
-        const numCandles = state.candles5m.length;
-        if (numCandles < 2) return;
-
-        const stepX = (chartW - 20) / numCandles;
-        const idx = Math.floor((mouseX - 10) / stepX);
-        if (idx >= 0 && idx < numCandles) {
-          state.hoveredCandle = state.candles5m[idx];
-          updateThrottledMetrics();
-        }
-      });
-
-      dom.binanceCandleCanvas.addEventListener('mouseleave', function () {
-        state.hoveredCandle = null;
-        updateThrottledMetrics();
-      });
-    }
   }
 
   // --- 11. INITIALIZATION ---
   async function init() {
+    initTradingViewChart();
+    
     const savedTheme = localStorage.getItem('kopi_tubruk_theme') || 'theme-dark';
     applyTheme(savedTheme);
 
     setupEventListeners();
-    cacheCanvasSize();
     updateSimulatorUI();
     renderTradeHistoryTable();
     syncRoundState();
@@ -1034,7 +944,6 @@
 
     setInterval(updateTimerCountdown, 100);
     setInterval(updateThrottledMetrics, 100);
-    startRenderLoop();
   }
 
   if (document.readyState === 'loading') {
