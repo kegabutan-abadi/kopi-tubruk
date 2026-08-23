@@ -3,525 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KOPI TUBRUK - Multi-Exchange Prediction Engine & AI Trader</title>
-  <meta name="description" content="KOPI TUBRUK: Institutional-grade real-time crypto prediction engine, multi-exchange aggregator (Binance, Coinbase, Kraken, Polymarket), dual-agent AI debate, and autonomous fast-flip trading terminal.">
+  <title>KOPI TUBRUK - Binance 5M AI Prediction Terminal</title>
+  <meta name="description" content="KOPI TUBRUK: Simple & Professional Binance 5M Candlestick AI Prediction Terminal with Autonomous Fast-Flip Reversal Strategy.">
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="theme-dark">
-  <div class="app-container">
+  <div class="terminal-container">
     
-    <!-- Top Header Navigation -->
-    <header class="app-header">
+    <!-- TOP HEADER -->
+    <header class="terminal-header">
       <div class="header-left">
-        <div class="brand-badge">
-          <span class="brand-coffee-icon">☕</span>
-          <div class="brand-text-group">
-            <span class="brand-title">KOPI <span class="brand-highlight">TUBRUK</span></span>
-            <span class="brand-tag">AI TRADING TERMINAL</span>
+        <div class="brand">
+          <span class="brand-icon">☕</span>
+          <div class="brand-text">
+            <span class="brand-name">KOPI <span class="accent-gold">TUBRUK</span></span>
+            <span class="brand-sub">BINANCE 5M AI TERMINAL</span>
           </div>
         </div>
-        
-        <div class="connection-status" id="connectionStatus" title="Status Agregasi Multi-Bursa">
-          <span class="status-dot connected" id="mainStatusDot"></span>
-          <span class="status-text" id="statusText">4-FEED LIVE</span>
-          <span class="ping-badge" id="pingBadge">12ms</span>
+
+        <!-- Coin Selector -->
+        <div class="coin-nav" id="coinNav">
+          <button class="coin-tab active" data-coin="BTC" data-pair="BTCUSDT">BTC/USDT</button>
+          <button class="coin-tab" data-coin="ETH" data-pair="ETHUSDT">ETH/USDT</button>
+          <button class="coin-tab" data-coin="SOL" data-pair="SOLUSDT">SOL/USDT</button>
+          <button class="coin-tab" data-coin="XRP" data-pair="XRPUSDT">XRP/USDT</button>
+          <button class="coin-tab" data-coin="DOGE" data-pair="DOGEUSDT">DOGE/USDT</button>
         </div>
       </div>
 
-      <!-- Coin Selector Tabs -->
-      <div class="coin-selector-wrapper">
-        <div class="coin-selector" id="coinSelector">
-          <button class="coin-btn active" data-coin="BTC" data-pair="BTCUSDT">
-            <span class="coin-icon btc">₿</span>
-            <span class="coin-name">BTC</span>
-            <span class="coin-mini-price" id="miniPrice-BTC">--</span>
-          </button>
-          <button class="coin-btn" data-coin="ETH" data-pair="ETHUSDT">
-            <span class="coin-icon eth">Ξ</span>
-            <span class="coin-name">ETH</span>
-            <span class="coin-mini-price" id="miniPrice-ETH">--</span>
-          </button>
-          <button class="coin-btn" data-coin="SOL" data-pair="SOLUSDT">
-            <span class="coin-icon sol">◎</span>
-            <span class="coin-name">SOL</span>
-            <span class="coin-mini-price" id="miniPrice-SOL">--</span>
-          </button>
-          <button class="coin-btn" data-coin="XRP" data-pair="XRPUSDT">
-            <span class="coin-icon xrp">✕</span>
-            <span class="coin-name">XRP</span>
-            <span class="coin-mini-price" id="miniPrice-XRP">--</span>
-          </button>
-          <button class="coin-btn" data-coin="DOGE" data-pair="DOGEUSDT">
-            <span class="coin-icon doge">Ð</span>
-            <span class="coin-name">DOGE</span>
-            <span class="coin-mini-price" id="miniPrice-DOGE">--</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Header Right Controls -->
+      <!-- Quick Metrics in Header -->
       <div class="header-right">
-        <!-- Exchange Live Tickers -->
-        <div class="exchange-feeds-chip-group">
-          <div class="feed-chip" id="chipBinance" title="Binance Live Feed">
-            <span class="feed-indicator online"></span>
-            <span class="feed-name">BINANCE</span>
-            <span class="feed-price" id="feedPriceBinance">--</span>
-          </div>
-          <div class="feed-chip" id="chipCoinbase" title="Coinbase Live Feed">
-            <span class="feed-indicator online"></span>
-            <span class="feed-name">COINBASE</span>
-            <span class="feed-price" id="feedPriceCoinbase">--</span>
-          </div>
-          <div class="feed-chip" id="chipKraken" title="Kraken Live Feed">
-            <span class="feed-indicator online"></span>
-            <span class="feed-name">KRAKEN</span>
-            <span class="feed-price" id="feedPriceKraken">--</span>
-          </div>
-          <div class="feed-chip polymarket-chip" id="chipPolymarket" title="Polymarket Implied Probability (YES / NO)">
-            <span class="feed-indicator online"></span>
-            <span class="feed-name">POLYMARKET</span>
-            <span class="feed-price" id="feedPricePolymarket">50¢ / 50¢</span>
-          </div>
+        <div class="header-stat">
+          <span class="stat-lbl">HARGA LIVE:</span>
+          <span class="stat-val live-price" id="headerLivePrice">$0.00</span>
+          <span class="stat-change" id="headerPriceChange">+0.00%</span>
         </div>
 
-        <!-- Timeframe Selector -->
-        <div class="timeframe-selector">
-          <button class="tf-btn active" data-minutes="5">5M</button>
-          <button class="tf-btn" data-minutes="15">15M</button>
-          <button class="tf-btn" data-minutes="20">20M</button>
-          <button class="tf-btn" data-minutes="60">1H</button>
+        <div class="header-stat">
+          <span class="stat-lbl">STRIKE 5M:</span>
+          <span class="stat-val text-gold" id="headerStrikePrice">$0.00</span>
         </div>
 
-        <!-- Theme Toggle -->
-        <button class="theme-toggle-btn" id="themeToggle" title="Ganti Tema (Terang / Gelap)">
-          <span class="theme-icon hidden" id="themeIconLight">☀️</span>
-          <span class="theme-icon" id="themeIconDark">🌙</span>
-          <span class="theme-label" id="themeLabel">GELAP</span>
-        </button>
+        <div class="header-stat timer-box" id="headerTimerBox">
+          <span class="stat-lbl">SISA 5M:</span>
+          <span class="stat-val timer-digits" id="headerTimerVal">05:00.0</span>
+        </div>
 
-        <!-- Sound Toggle -->
-        <button class="sound-btn" id="soundToggle" title="Toggle Notifikasi Suara">
-          <span class="icon-sound-on">🔊</span>
-          <span class="icon-sound-off hidden">🔇</span>
+        <button class="theme-btn" id="themeToggle" title="Ganti Tema">
+          <span id="themeIcon">🌙</span>
         </button>
       </div>
     </header>
 
-    <!-- Main Dashboard Grid -->
-    <main class="dashboard-grid">
-
-      <!-- TOP METRIC CARDS ROW -->
-      <section class="metrics-row">
-        
-        <!-- Card 1: Benchmark Spot Price -->
-        <div class="metric-card live-price-card" id="livePriceCard">
-          <div class="card-header">
-            <span class="card-label">HARGA KOMPOSIT BENCHMARK</span>
-            <span class="card-badge" id="tickSpeed">0 ticks/s</span>
+    <!-- MAIN CANDLESTICK CHART (PERSIS BINANCE 5M) -->
+    <main class="chart-section">
+      <div class="chart-header-bar">
+        <div class="chart-legend-row">
+          <span class="pair-title" id="chartPairTitle">BTC/USDT • 5m • Binance</span>
+          <div class="candle-ohlc-info" id="candleOhlcInfo">
+            <span>O: <strong id="ohlcOpen">--</strong></span>
+            <span>H: <strong id="ohlcHigh">--</strong></span>
+            <span>L: <strong id="ohlcLow">--</strong></span>
+            <span>C: <strong id="ohlcClose">--</strong></span>
+            <span>Vol: <strong id="ohlcVol">--</strong></span>
           </div>
-          <div class="card-main-val">
-            <span class="price-val" id="currentPrice">$0.00</span>
-            <div class="delta-badge" id="priceDeltaBadge">
-              <span class="delta-arrow" id="deltaArrow">▲</span>
-              <span class="delta-value" id="deltaValue">+$0.00</span>
-              <span class="delta-percent" id="deltaPercent">(+0.00%)</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="sub-stat">
-              <span class="sub-label">Cross-Exchange Spread:</span>
-              <span class="sub-val" id="crossExchangeSpread">$0.00 (0.00%)</span>
-            </div>
-            <div class="sub-stat">
-              <span class="sub-label">Tick Velocity:</span>
-              <div class="velocity-meter">
-                <div class="velocity-bar" id="velocityBar" style="width: 25%"></div>
-              </div>
-            </div>
+          <div class="ma-legend">
+            <span class="ma-7">MA(7): <strong id="valMa7">--</strong></span>
+            <span class="ma-25">MA(25): <strong id="valMa25">--</strong></span>
+            <span class="ma-99">MA(99): <strong id="valMa99">--</strong></span>
           </div>
         </div>
-
-        <!-- Card 2: Strike Baseline & Round Target -->
-        <div class="metric-card strike-card">
-          <div class="card-header">
-            <span class="card-label">STRIKE BASELINE ROUND</span>
-            <span class="round-badge" id="roundNumberTag">#5M-0</span>
-          </div>
-          <div class="card-main-val">
-            <span class="strike-val" id="strikePrice">$0.00</span>
-            <button class="manual-lock-btn" id="manualStrikeBtn" title="Kunci Ulang Strike ke Harga Saat Ini">KUNCI ULANG</button>
-          </div>
-          <div class="card-footer">
-            <div class="target-row">
-              <span class="target-item target-up">YES: <strong id="targetUpPrice">≥ $0.00</strong></span>
-              <span class="target-item target-down">NO: <strong id="targetDownPrice">&lt; $0.00</strong></span>
-            </div>
-            <div class="sub-stat">
-              <span class="sub-label">Terkunci Pada:</span>
-              <span class="sub-val" id="strikeLockedTime">00:00:00</span>
-            </div>
-          </div>
+        <div class="chart-actions">
+          <span class="odds-pill" id="polymarketOddsPill">Polymarket: YES 50¢ | NO 50¢</span>
         </div>
+      </div>
 
-        <!-- Card 3: Countdown Timer & Expiry -->
-        <div class="metric-card countdown-card" id="countdownCard">
-          <div class="card-header">
-            <span class="card-label">SISA WAKTU RESOLUSI</span>
-            <span class="period-range-badge" id="periodRangeBadge">00:00 ➔ 00:00</span>
-          </div>
-          <div class="card-main-val">
-            <div class="timer-display" id="timerDisplay">
-              <span class="timer-digits" id="timerMinutes">00</span>
-              <span class="timer-separator">:</span>
-              <span class="timer-digits" id="timerSeconds">00</span>
-              <span class="timer-ms" id="timerMs">.0</span>
-            </div>
-          </div>
-          <div class="timer-progress-track">
-            <div class="timer-progress-fill" id="timerProgressFill" style="width: 100%;"></div>
-          </div>
-          <div class="card-footer">
-            <div class="sub-stat">
-              <span class="sub-label" id="expiryLabel">Resolusi pada 00:00</span>
-              <span class="sub-val clock-val" id="currentClock">00:00:00 UTC</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 4: Live Market Outcome & Bias -->
-        <div class="metric-card outcome-card">
-          <div class="card-header">
-            <span class="card-label">STATUS KONTRAK SAAT INI</span>
-            <span class="card-badge" id="momentumStatus">MOMENTUM SEIMBANG</span>
-          </div>
-          <div class="card-main-val">
-            <div class="prediction-outcome-pill winning-up" id="outcomePill">
-              <span class="outcome-icon" id="outcomeIcon">▲</span>
-              <span class="outcome-text" id="outcomeText">POSISI YES (NAIK) UNGGUL</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="momentum-gauge-wrapper">
-              <div class="gauge-labels">
-                <span class="bear-label">BEAR: <strong id="bearPercent">50%</strong></span>
-                <span class="bull-label">BULL: <strong id="bullPercent">50%</strong></span>
-              </div>
-              <div class="momentum-gauge-track">
-                <div class="momentum-gauge-fill" id="momentumGaugeFill" style="width: 50%;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- SIDE-BY-SIDE DUAL CHARTS -->
-      <section class="charts-section">
-        
-        <!-- Left Chart: 15s Candlestick & Volume & Indicators -->
-        <div class="chart-panel candle-chart-panel">
-          <div class="chart-panel-header">
-            <div class="chart-title-group">
-              <span class="chart-title">GRAFIK CANDLESTICK 15S & INDIKATOR TEKNIKAL</span>
-              <div class="legend-tags">
-                <span class="legend-tag tag-ema7">EMA 7: <strong id="candleEma7">$0.00</strong></span>
-                <span class="legend-tag tag-ema21">EMA 21: <strong id="candleEma21">$0.00</strong></span>
-                <span class="legend-tag tag-vwap">VWAP: <strong id="candleVwap">$0.00</strong></span>
-              </div>
-            </div>
-            <span class="chart-badge">AGGREGATED 15S</span>
-          </div>
-          <div class="canvas-wrapper" id="candleCanvasContainer">
-            <canvas id="candleCanvas"></canvas>
-          </div>
-        </div>
-
-        <!-- Right Chart: Real-Time High-Frequency Tick Stream Curve -->
-        <div class="chart-panel tick-chart-panel">
-          <div class="chart-panel-header">
-            <div class="chart-title-group">
-              <span class="chart-title">REAL-TIME TICK STREAM & STRIKE BASELINE</span>
-              <div class="chart-stats-inline">
-                <span>H: <strong id="chartHighPrice">$0.00</strong></span>
-                <span>L: <strong id="chartLowPrice">$0.00</strong></span>
-                <span>Spread: <strong id="chartSpread">$0.00</strong></span>
-              </div>
-            </div>
-            <button class="clear-chart-btn" id="clearChartBtn" title="Bersihkan Buffer Grafik">RESET</button>
-          </div>
-          <div class="canvas-wrapper" id="canvasContainer">
-            <canvas id="tickCanvas"></canvas>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- AI AGENTS DEBATE & CONSENSUS ENGINE -->
-      <section class="ai-debate-section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <span class="section-icon">🧠</span>
-            <h2 class="section-title">DEBAT MULTI-AGEN AI & KONSENSUS ARBITER</h2>
-            <span class="cycle-tag" id="debateCycleCounter">#1</span>
-          </div>
-          <div class="odds-summary-bar">
-            <span class="odds-label">HARGA IMPLISIT POLYMARKET:</span>
-            <div class="odds-track">
-              <div class="odds-fill-yes" id="oddsBarYes" style="width: 50%"></div>
-            </div>
-            <span class="odds-val" id="marketOddsYes">YES: 50¢ | NO: 50¢</span>
-          </div>
-        </div>
-
-        <div class="debate-grid">
-          
-          <!-- Bull AI Agent -->
-          <div class="agent-card bull-agent-card">
-            <div class="agent-header">
-              <div class="agent-identity">
-                <span class="agent-avatar bull-avatar">🐂</span>
-                <div>
-                  <div class="agent-name">BULL AI AGENT</div>
-                  <div class="agent-role">Analisis Momentum Beli & Order Flow Naik</div>
-                </div>
-              </div>
-              <div class="agent-score" id="bullScoreVal">50%</div>
-            </div>
-            <div class="agent-thesis" id="bullThesisText">
-              "Memantau tekanan beli multi-bursa dan posisi harga terhadap strike baseline..."
-            </div>
-            <div class="agent-signals" id="bullSignalsList">
-              <span class="signal-tag">ROC: +0.00%</span>
-              <span class="signal-tag">Lead Delta: +0.00%</span>
-              <span class="signal-tag">Strike Gap: +$0.00</span>
-            </div>
-          </div>
-
-          <!-- Arbiter Consensus Panel -->
-          <div class="arbiter-consensus-card">
-            <div class="arbiter-header">
-              <div class="arbiter-identity">
-                <span class="agent-avatar arbiter-avatar">⚖️</span>
-                <div>
-                  <div class="agent-name">CHIEF ARBITER CONSENSUS</div>
-                  <div class="agent-role">Sintesis Expected Value (+EV) & Sinyal Eksekusi</div>
-                </div>
-              </div>
-              <span class="consensus-badge" id="consensusStrengthBadge">DELIBERASI NETRAL</span>
-            </div>
-            <div class="arbiter-action-wrapper">
-              <div class="verdict-action standby" id="arbiterAction">STANDBY</div>
-              <div class="verdict-confidence">
-                <span>Keyakinan:</span>
-                <strong id="arbiterConfidence">50%</strong>
-              </div>
-            </div>
-            <div class="arbiter-rationale" id="arbiterRationale">
-              "Deliberasi Arbiter: Menunggu divergensi probabilitas yang signifikan sebelum memberikan sinyal beli."
-            </div>
-          </div>
-
-          <!-- Bear AI Agent -->
-          <div class="agent-card bear-agent-card">
-            <div class="agent-header">
-              <div class="agent-identity">
-                <span class="agent-avatar bear-avatar">🐻</span>
-                <div>
-                  <div class="agent-name">BEAR AI AGENT</div>
-                  <div class="agent-role">Analisis Tekanan Jual & Time Decay</div>
-                </div>
-              </div>
-              <div class="agent-score" id="bearScoreVal">50%</div>
-            </div>
-            <div class="agent-thesis" id="bearThesisText">
-              "Memantau penolakan resistance dan kelemahan likuiditas pembeli..."
-            </div>
-            <div class="agent-signals" id="bearSignalsList">
-              <span class="signal-tag">Bear ROC: -0.00%</span>
-              <span class="signal-tag">Spread Drag: 0.00%</span>
-              <span class="signal-tag">Decay: 100% Sisa</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- AI Debate Transcripts -->
-        <div class="debate-transcripts-box">
-          <div class="transcripts-header">
-            <span class="transcripts-title">TRANSKRIP DELIBERASI & REASONING LANGSUNG</span>
-            <span class="transcript-count" id="transcriptCount">0 logs</span>
-          </div>
-          <div class="transcript-feed" id="debateTranscriptFeed">
-            <div class="transcript-item">
-              <span class="time-tag">--:--:--</span>
-              <span class="author-tag arbiter">SISTEM:</span>
-              <span class="msg-content">Menghubungkan multi-feed real-time dan menyiapkan agen penalaran AI...</span>
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- AUTONOMOUS TRADING & FAST-FLIP REVERSAL ENGINE -->
-      <section class="simulator-section">
-        <div class="section-header">
-          <div class="section-title-group">
-            <span class="section-icon">⚡</span>
-            <h2 class="section-title">TERMINAL SIMULASI EKSEKUSI & FAST-FLIP REVERSAL</h2>
-          </div>
-          <div class="sim-actions-group">
-            <div class="capital-input-group">
-              <label for="simStartingCapitalInput">Modal Awal ($):</label>
-              <input type="number" id="simStartingCapitalInput" value="20.00" min="1.00" step="1.00">
-            </div>
-            <button class="reset-sim-btn" id="resetSimBtn">RESET SIMULASI</button>
-          </div>
-        </div>
-
-        <!-- Portfolio Stats Summary -->
-        <div class="portfolio-stats-bar">
-          <div class="port-stat-item">
-            <span class="port-stat-label">TOTAL EKUITAS:</span>
-            <span class="port-stat-val" id="simEquityVal">$20.00</span>
-          </div>
-          <div class="port-stat-item">
-            <span class="port-stat-label">KAS TERSEDIA:</span>
-            <span class="port-stat-val" id="simCashVal">$20.00</span>
-          </div>
-          <div class="port-stat-item">
-            <span class="port-stat-label">DALAM TRADE:</span>
-            <span class="port-stat-val" id="simInTradeVal">$0.00</span>
-          </div>
-          <div class="port-stat-item">
-            <span class="port-stat-label">NET PROFIT / LOSS:</span>
-            <span class="port-stat-val" id="simPnlVal">+$0.00 (+0.0%)</span>
-          </div>
-          <div class="port-stat-item">
-            <span class="port-stat-label">WIN RATE:</span>
-            <span class="port-stat-val" id="simWinRateVal">0% (0W / 0L)</span>
-          </div>
-        </div>
-
-        <!-- Active Position & Reversal Protocol Card -->
-        <div class="active-position-panel">
-          <div class="pos-panel-header">
-            <div class="pos-status-badge idle" id="posStatusBadge">
-              BELUM ADA TRADE (MENUNGGU SINYAL KONSENSUS)
-            </div>
-            <div class="reversal-badge-wrapper" id="reversalStrategyBadge">
-              <span class="reversal-pill active">⚡ REVERSAL & FAST-FLIP AKTIF</span>
-            </div>
-          </div>
-
-          <div class="pos-details-grid">
-            <div class="pos-field">
-              <span class="lbl">Posisi / Sisi Kontrak:</span>
-              <span class="val" id="posSideVal">--</span>
-            </div>
-            <div class="pos-field">
-              <span class="lbl">Harga Masuk (Entry):</span>
-              <span class="val" id="posEntryPriceVal">--</span>
-            </div>
-            <div class="pos-field">
-              <span class="lbl">Jumlah Lembar (Shares):</span>
-              <span class="val" id="posSharesVal">--</span>
-            </div>
-            <div class="pos-field">
-              <span class="lbl">Biaya Modal (Cost):</span>
-              <span class="val" id="posCostVal">--</span>
-            </div>
-            <div class="pos-field">
-              <span class="lbl">Nilai Pasar Saat Ini:</span>
-              <span class="val" id="posCurrentVal">--</span>
-            </div>
-            <div class="pos-field">
-              <span class="lbl">Floating PnL:</span>
-              <span class="val" id="posUnrealizedPnlVal">--</span>
-            </div>
-            <div class="pos-field full-width">
-              <span class="lbl">Status Proteksi Strategi:</span>
-              <span class="val text-cyan" id="posStrategyAction">STANDBY MONITORING</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Trade History Ledger -->
-        <div class="trade-ledger-wrapper">
-          <div class="table-title">BUKU AUDIT TRANSAKSI & RIWAYAT SIMULASI</div>
-          <div class="table-responsive">
-            <table class="sim-table">
-              <thead>
-                <tr>
-                  <th>Koin & ID Ronde</th>
-                  <th>Sisi Kontrak</th>
-                  <th>Harga Masuk</th>
-                  <th>Modal Terpakai</th>
-                  <th>Lembar</th>
-                  <th>Hasil Resolusi</th>
-                  <th>Net PnL</th>
-                  <th>Ekuitas Akhir</th>
-                </tr>
-              </thead>
-              <tbody id="simTradeTableBody">
-                <tr class="empty-row">
-                  <td colspan="8">AI akan otomatis mengeksekusi order saat konsensus terbentuk dan mencatat hasil saat ronde selesai...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- HISTORIC ROUNDS RESOLUTION TABLE -->
-      <section class="history-section">
-        <div class="history-header">
-          <div class="history-title-group">
-            <span class="history-icon">📜</span>
-            <h2 class="history-title">REKAM HISTORIS RESOLUSI RONDE</h2>
-          </div>
-          <div class="history-controls">
-            <span class="history-count-badge" id="historyCount">0 Ronde</span>
-            <button class="clear-history-btn" id="clearHistoryBtn">HAPUS HISTORI</button>
-          </div>
-        </div>
-        
-        <div class="table-responsive">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>Koin & ID Ronde</th>
-                <th>Waktu Sesi</th>
-                <th>Harga Strike</th>
-                <th>Harga Resolusi</th>
-                <th>Divergensi (Delta)</th>
-                <th>Hasil Kontrak</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              <tr class="empty-row">
-                <td colspan="6">Ronde otomatis tersimpan di sini saat countdown rollover selesai...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
+      <div class="chart-canvas-container" id="chartContainer">
+        <canvas id="binanceCandleCanvas"></canvas>
+      </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <div class="footer-left">
-        <span>KOPI TUBRUK AI Engine v2.4 • Multi-Feed Arbitrage & Autonomous Binary Terminal</span>
+    <!-- AI TRADING AGENT & POSITION ENGINE -->
+    <section class="trading-section">
+      
+      <!-- Card 1: Agent Execution & Active Position -->
+      <div class="panel-card agent-execution-card">
+        <div class="card-top">
+          <div class="status-indicator-group">
+            <div class="pos-badge idle" id="agentStatusBadge">
+              ⏳ MENGANALISIS PASAR (MENUNGGU KONFIRMASI TREND)
+            </div>
+          </div>
+          <div class="round-id-tag" id="currentRoundIdTag">RONDE #5M-0</div>
+        </div>
+
+        <!-- Position Details Row -->
+        <div class="position-stats-grid">
+          <div class="pos-stat">
+            <span class="p-lbl">Posisi Aktif</span>
+            <span class="p-val" id="posSideText">--</span>
+          </div>
+          <div class="pos-stat">
+            <span class="p-lbl">Harga Beli</span>
+            <span class="p-val" id="posEntryText">--</span>
+          </div>
+          <div class="pos-stat">
+            <span class="p-lbl">Jumlah Lembar</span>
+            <span class="p-val" id="posSharesText">--</span>
+          </div>
+          <div class="pos-stat">
+            <span class="p-lbl">Modal Terpakai</span>
+            <span class="p-val" id="posCostText">--</span>
+          </div>
+          <div class="pos-stat">
+            <span class="p-lbl">Nilai Saat Ini</span>
+            <span class="p-val" id="posCurrentValText">--</span>
+          </div>
+          <div class="pos-stat">
+            <span class="p-lbl">Floating PnL</span>
+            <span class="p-val" id="posPnlText">--</span>
+          </div>
+        </div>
+
+        <!-- Strategy Reasoning Strip -->
+        <div class="strategy-strip">
+          <span class="strategy-icon">🧠</span>
+          <span class="strategy-text" id="strategyReasoningText">
+            AI sedang menganalisis formasi candle Binance 5m, MA divergence, dan spread likuiditas sebelum membuka order...
+          </span>
+        </div>
       </div>
-      <div class="footer-right">
-        <span id="systemClockLocal">Waktu Lokal: 00:00:00 WIB</span>
+
+      <!-- Card 2: Portfolio Capital & Stats -->
+      <div class="panel-card portfolio-card">
+        <div class="card-top">
+          <span class="card-heading">SALDO & REKAP SIMULASI</span>
+          <div class="capital-ctrl">
+            <label>Modal:</label>
+            <input type="number" id="inputCapital" value="20.00" min="1" step="1">
+            <button id="btnResetPort" title="Reset Portofolio">RESET</button>
+          </div>
+        </div>
+
+        <div class="portfolio-grid">
+          <div class="port-box">
+            <span class="port-lbl">TOTAL EKUITAS</span>
+            <span class="port-num" id="portTotalEquity">$20.00</span>
+          </div>
+          <div class="port-box">
+            <span class="port-lbl">KAS TERSEDIA</span>
+            <span class="port-num" id="portCashBalance">$20.00</span>
+          </div>
+          <div class="port-box">
+            <span class="port-lbl">NET PROFIT / LOSS</span>
+            <span class="port-num text-green" id="portNetPnl">+$0.00 (+0.0%)</span>
+          </div>
+          <div class="port-box">
+            <span class="port-lbl">WIN RATE</span>
+            <span class="port-num" id="portWinRate">0% (0W / 0L)</span>
+          </div>
+        </div>
+
+        <div class="agent-bias-bar">
+          <div class="bias-label">
+            <span>BULL: <strong id="biasBullPct">50%</strong></span>
+            <span>BEAR: <strong id="biasBearPct">50%</strong></span>
+          </div>
+          <div class="bias-track">
+            <div class="bias-fill" id="biasFillBar" style="width: 50%;"></div>
+          </div>
+        </div>
       </div>
+
+    </section>
+
+    <!-- TRADE HISTORY & AUDIT LEDGER -->
+    <section class="ledger-section">
+      <div class="ledger-header">
+        <span class="ledger-title">RIWAYAT TRANSAKSI & HASIL RONDE 5M</span>
+        <button class="clear-btn" id="btnClearHistory">BERSIHKAN</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Koin & Ronde</th>
+              <th>Strike</th>
+              <th>Close</th>
+              <th>Posisi Diambil</th>
+              <th>Modal</th>
+              <th>Hasil</th>
+              <th>Net PnL</th>
+              <th>Saldo Akhir</th>
+            </tr>
+          </thead>
+          <tbody id="tradeHistoryBody">
+            <tr class="empty-row">
+              <td colspan="9">Belum ada trade yang selesai. AI akan otomatis membuka posisi dan mencatat hasil di sini...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="terminal-footer">
+      <span>KOPI TUBRUK • Binance 5M Candle Engine & Fast-Flip Protection</span>
+      <span id="localClock">Waktu: 00:00:00 WIB</span>
     </footer>
 
   </div>
