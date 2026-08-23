@@ -3,109 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KOPI TUBRUK - AI Crypto Prediction & Trading Terminal</title>
-  <meta name="description" content="KOPI TUBRUK: Professional Binance 5M Candlestick Prediction Terminal with TradingView Charting and Autonomous AI Fast-Flip Engine.">
+  <title>KOPI TUBRUK - Dual-Chart Prediction & Trading Terminal</title>
+  <meta name="description" content="KOPI TUBRUK: Professional Dual-Chart Trading Terminal with Binance Spot Candlestick (1m/5m), Polymarket Implied Probability (1m/5m), and Resizable Layout.">
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <!-- Local TradingView Lightweight Charts Library -->
   <script src="lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="theme-dark">
-  <div class="app-layout">
+  <div class="terminal-app">
     
     <!-- TOP NAVIGATION BAR -->
-    <header class="navbar">
-      <div class="nav-left">
-        <div class="brand">
-          <span class="brand-emoji">☕</span>
-          <div class="brand-meta">
-            <span class="brand-title">KOPI <span class="gold">TUBRUK</span></span>
-            <span class="brand-badge">PREDICTION TERMINAL</span>
-          </div>
+    <header class="top-nav">
+      <div class="nav-brand-section">
+        <span class="brand-icon">☕</span>
+        <div class="brand-info">
+          <span class="brand-text">KOPI <span class="brand-accent">TUBRUK</span></span>
+          <span class="brand-tagline">DUAL-CHART AI TERMINAL</span>
         </div>
 
-        <nav class="coin-tabs" id="coinTabs">
-          <button class="coin-btn active" data-coin="BTC" data-pair="BTCUSDT">BTC/USDT</button>
-          <button class="coin-btn" data-coin="ETH" data-pair="ETHUSDT">ETH/USDT</button>
-          <button class="coin-btn" data-coin="SOL" data-pair="SOLUSDT">SOL/USDT</button>
-          <button class="coin-btn" data-coin="XRP" data-pair="XRPUSDT">XRP/USDT</button>
-          <button class="coin-btn" data-coin="DOGE" data-pair="DOGEUSDT">DOGE/USDT</button>
-        </nav>
+        <!-- Coin Selector -->
+        <div class="coin-selector-group" id="coinTabs">
+          <button class="coin-tab-btn active" data-coin="BTC" data-pair="BTCUSDT">BTC/USDT</button>
+          <button class="coin-tab-btn" data-coin="ETH" data-pair="ETHUSDT">ETH/USDT</button>
+          <button class="coin-tab-btn" data-coin="SOL" data-pair="SOLUSDT">SOL/USDT</button>
+          <button class="coin-tab-btn" data-coin="XRP" data-pair="XRPUSDT">XRP/USDT</button>
+          <button class="coin-tab-btn" data-coin="DOGE" data-pair="DOGEUSDT">DOGE/USDT</button>
+        </div>
       </div>
 
-      <div class="nav-right">
-        <!-- Live Ticker -->
-        <div class="nav-stat">
-          <span class="lbl">SPOT LIVE:</span>
-          <span class="val price-up" id="topLivePrice">Connecting...</span>
-          <span class="badge-change" id="topPriceChange">+0.00%</span>
+      <div class="nav-metrics-section">
+        <!-- Live Spot Price -->
+        <div class="metric-item">
+          <span class="metric-label">SPOT:</span>
+          <span class="metric-value text-green" id="navSpotPrice">Connecting...</span>
+          <span class="change-tag text-green" id="navSpotChange">+0.00%</span>
         </div>
 
         <!-- Strike Price -->
-        <div class="nav-stat">
-          <span class="lbl">STRIKE 5M:</span>
-          <span class="val text-gold" id="topStrikePrice">--</span>
+        <div class="metric-item">
+          <span class="metric-label">STRIKE:</span>
+          <span class="metric-value text-gold" id="navStrikePrice">--</span>
         </div>
 
-        <!-- Countdown Timer -->
-        <div class="timer-pill" id="timerContainer">
+        <!-- Round Timer -->
+        <div class="timer-badge" id="navTimerBadge">
           <span class="timer-icon">⏳</span>
-          <span class="timer-text" id="topTimer">05:00.0</span>
+          <span class="timer-val" id="navTimerVal">05:00.0</span>
         </div>
 
         <!-- Theme Toggle -->
-        <button class="theme-btn" id="themeToggle" title="Ganti Tema (Terang / Gelap)">
-          <span id="themeIcon">🌙</span>
+        <button class="theme-toggle-btn" id="themeToggle" title="Ganti Tema (Terang / Gelap)">
+          <span id="themeToggleIcon">🌙</span>
         </button>
       </div>
     </header>
 
-    <!-- MAIN TWO-COLUMN WORKSPACE -->
-    <main class="workspace-grid">
+    <!-- MAIN RESIZABLE SPLIT WORKSPACE -->
+    <div class="workspace-wrapper" id="workspaceWrapper">
       
-      <!-- LEFT COLUMN: TRADINGVIEW BINANCE 5M CHART & LEDGER -->
-      <section class="left-workspace">
+      <!-- LEFT PANE: DUAL CHARTS & TRADE LEDGER -->
+      <section class="pane-charts" id="paneCharts">
         
-        <!-- Chart Box -->
-        <div class="card chart-card">
-          <div class="card-header chart-header">
-            <div class="chart-info-group">
-              <span class="chart-pair-name" id="chartPairName">BTC/USDT • 5m Binance</span>
-              <div class="ohlc-legend" id="ohlcLegend">
+        <!-- CHART 1: BINANCE SPOT CANDLESTICK (1M / 5M) -->
+        <div class="card chart-box">
+          <div class="card-bar">
+            <div class="bar-left">
+              <span class="chart-label" id="binanceChartTitle">GRAFIK 1: BINANCE SPOT CANDLESTICK</span>
+              
+              <!-- Interval Switcher (1m / 5m) -->
+              <div class="tf-group" id="binanceTfGroup">
+                <button class="tf-btn" data-tf="1m">1m</button>
+                <button class="tf-btn active" data-tf="5m">5m</button>
+              </div>
+
+              <!-- OHLC Legend -->
+              <div class="legend-inline" id="binanceOhlcLegend">
                 <span>O: <strong id="valO">--</strong></span>
                 <span>H: <strong id="valH">--</strong></span>
                 <span>L: <strong id="valL">--</strong></span>
                 <span>C: <strong id="valC">--</strong></span>
               </div>
-              <div class="ma-badges">
-                <span class="ma-tag ma7">MA7: <strong id="ma7Val">--</strong></span>
-                <span class="ma-tag ma25">MA25: <strong id="ma25Val">--</strong></span>
+              <div class="ma-inline">
+                <span class="tag-ma7">MA7: <strong id="valMa7">--</strong></span>
+                <span class="tag-ma25">MA25: <strong id="valMa25">--</strong></span>
               </div>
             </div>
-            
-            <div class="chart-controls">
-              <button class="chart-btn" id="btnFitChart" title="Auto Fit Chart">⛶ Auto</button>
-              <div class="chart-status-tag">
-                <span class="pulse-dot"></span>
-                <span>BINANCE FEED LIVE</span>
-              </div>
+
+            <div class="bar-right">
+              <button class="ctrl-btn" id="btnFitBinanceChart" title="Auto-Fit Skala">⛶ Auto</button>
+              <div class="live-dot-wrap"><span class="dot-green"></span> BINANCE LIVE</div>
             </div>
           </div>
-
-          <div class="chart-body" id="tvChartContainer"></div>
+          <div class="chart-canvas-box" id="binanceChartContainer"></div>
         </div>
 
-        <!-- Trade History Ledger -->
-        <div class="card ledger-card">
-          <div class="card-header">
-            <span class="card-title">BUKU AUDIT TRANSAKSI & RIWAYAT RONDE</span>
-            <button class="btn-sm" id="btnClearHistory">BERSIHKAN</button>
+        <!-- CHART 2: POLYMARKET PROBABILITY & ODDS (1M / 5M) -->
+        <div class="card chart-box">
+          <div class="card-bar">
+            <div class="bar-left">
+              <span class="chart-label" id="polyChartTitle">GRAFIK 2: PELUANG PASAR PREDIKSI POLYMARKET</span>
+              
+              <!-- Interval Switcher (1m / 5m) -->
+              <div class="tf-group" id="polyTfGroup">
+                <button class="tf-btn" data-tf="1m">1m</button>
+                <button class="tf-btn active" data-tf="5m">5m</button>
+              </div>
+
+              <div class="poly-legend-inline">
+                <span class="tag-yes">YES: <strong id="polyLegendYes">50¢</strong></span>
+                <span class="tag-no">NO: <strong id="polyLegendNo">50¢</strong></span>
+                <span class="tag-baseline">BASELINE: <strong>50¢</strong></span>
+              </div>
+            </div>
+
+            <div class="bar-right">
+              <button class="ctrl-btn" id="btnFitPolyChart" title="Auto-Fit Skala">⛶ Auto</button>
+              <div class="live-dot-wrap"><span class="dot-purple"></span> POLYMARKET RESOLUTION</div>
+            </div>
           </div>
-          <div class="table-container">
-            <table class="ledger-table">
+          <div class="chart-canvas-box" id="polyChartContainer"></div>
+        </div>
+
+        <!-- TRADE AUDIT & HISTORY LEDGER -->
+        <div class="card ledger-box">
+          <div class="card-bar">
+            <span class="card-heading">BUKU AUDIT TRANSAKSI & RIWAYAT RONDE</span>
+            <button class="ctrl-btn" id="btnClearHistory">BERSIHKAN</button>
+          </div>
+          <div class="table-scroll">
+            <table class="audit-table">
               <thead>
                 <tr>
                   <th>Waktu</th>
@@ -121,7 +151,7 @@
               </thead>
               <tbody id="tradeHistoryBody">
                 <tr class="empty-row">
-                  <td colspan="9">Belum ada trade yang selesai. AI akan otomatis mengeksekusi order dan mencatat audit di sini...</td>
+                  <td colspan="9">Belum ada trade yang selesai. AI akan otomatis membuka order dan mencatat hasil di sini...</td>
                 </tr>
               </tbody>
             </table>
@@ -130,26 +160,31 @@
 
       </section>
 
-      <!-- RIGHT COLUMN: AI PREDICTION & ORDER EXECUTION -->
-      <aside class="right-workspace">
+      <!-- DRAGGABLE SPLITTER HANDLE -->
+      <div class="resizer-divider" id="resizerHandle" title="Tarik ke kiri/kanan untuk menyesuaikan ukuran layout">
+        <div class="resizer-dots"></div>
+      </div>
+
+      <!-- RIGHT PANE: ORDER & AI EXECUTION PANEL -->
+      <aside class="pane-order" id="paneOrder">
         
-        <!-- 1. Polymarket Implied Odds Card -->
-        <div class="card odds-card">
-          <div class="card-header">
-            <span class="card-title">PASAR PREDIKSI POLYMARKET</span>
-            <span class="round-tag" id="currentRoundTag">RONDE #5M-0</span>
+        <!-- 1. Polymarket Odds Card -->
+        <div class="card odds-panel">
+          <div class="card-bar">
+            <span class="card-heading">KONTRAK POLYMARKET</span>
+            <span class="round-id-pill" id="currentRoundPill">RONDE #5M-0</span>
           </div>
 
-          <div class="odds-dual-box">
-            <div class="odds-btn-mock yes-box">
-              <div class="odds-side">YES (NAIK)</div>
-              <div class="odds-cents" id="oddsYesCents">50¢</div>
-              <div class="odds-target" id="oddsYesTarget">≥ $0.00</div>
+          <div class="odds-dual-grid">
+            <div class="odds-block yes-block">
+              <div class="side-lbl">YES (NAIK)</div>
+              <div class="cents-val" id="oddsYesCents">50¢</div>
+              <div class="target-lbl" id="oddsYesTarget">≥ $0.00</div>
             </div>
-            <div class="odds-btn-mock no-box">
-              <div class="odds-side">NO (TURUN)</div>
-              <div class="odds-cents" id="oddsNoCents">50¢</div>
-              <div class="odds-target" id="oddsNoTarget">&lt; $0.00</div>
+            <div class="odds-block no-block">
+              <div class="side-lbl">NO (TURUN)</div>
+              <div class="cents-val" id="oddsNoCents">50¢</div>
+              <div class="target-lbl" id="oddsNoTarget">&lt; $0.00</div>
             </div>
           </div>
 
@@ -158,15 +193,15 @@
           </div>
         </div>
 
-        <!-- 2. AI Consensus & Reasoning Card -->
-        <div class="card consensus-card">
-          <div class="card-header">
-            <span class="card-title">KONSENSUS & SINYAL ARBITER AI</span>
-            <span class="consensus-pill" id="consensusPill">DELIBERASI</span>
+        <!-- 2. AI Consensus & Sentiment Card -->
+        <div class="card consensus-panel">
+          <div class="card-bar">
+            <span class="card-heading">KONSENSUS ARBITER AI</span>
+            <span class="consensus-status-pill" id="consensusStatusPill">MENGANALISIS</span>
           </div>
 
-          <div class="sentiment-meter">
-            <div class="sentiment-row">
+          <div class="sentiment-box">
+            <div class="sentiment-lbls">
               <span class="text-green">BULL: <strong id="bullScoreText">50%</strong></span>
               <span class="text-red">BEAR: <strong id="bearScoreText">50%</strong></span>
             </div>
@@ -175,100 +210,100 @@
             </div>
           </div>
 
-          <div class="action-recommendation" id="actionBox">
-            <div class="action-title" id="actionVerdict">STANDBY (MENGANALISIS)</div>
-            <div class="action-desc" id="actionRationale">
-              AI sedang menganalisis formasi candle Binance 5m, moving average, dan deviasi harga terhadap strike.
+          <div class="verdict-banner" id="verdictBanner">
+            <div class="verdict-title" id="verdictTitle">STANDBY (MENGANALISIS)</div>
+            <div class="verdict-desc" id="verdictDesc">
+              AI menganalisis formasi candle Binance dan deviasi harga terhadap strike baseline.
             </div>
           </div>
         </div>
 
-        <!-- 3. Active Position & Reversal Engine -->
-        <div class="card position-card">
-          <div class="card-header">
-            <span class="card-title">STATUS POSISI TRADING AI</span>
-            <span class="shield-badge" id="reversalShieldBadge">⚡ FAST-FLIP AKTIF</span>
+        <!-- 3. Active Position & Fast-Flip Reversal Card -->
+        <div class="card position-panel">
+          <div class="card-bar">
+            <span class="card-heading">POSISI TRADING AKTIF</span>
+            <span class="reversal-pill" id="reversalPill">⚡ FAST-FLIP AKTIF</span>
           </div>
 
           <div class="position-status-pill idle" id="posStatusPill">
             BELUM ADA POSISI (MENUNGGU SINYAL KONSENSUS)
           </div>
 
-          <div class="pos-metrics-grid">
-            <div class="pos-box">
-              <span class="p-lbl">POSISI</span>
-              <span class="p-val" id="valPosSide">--</span>
+          <div class="pos-details-grid">
+            <div class="pos-data-cell">
+              <span class="d-lbl">SISI POSISI</span>
+              <span class="d-val" id="valPosSide">--</span>
             </div>
-            <div class="pos-box">
-              <span class="p-lbl">HARGA MASUK</span>
-              <span class="p-val" id="valPosEntry">--</span>
+            <div class="pos-data-cell">
+              <span class="d-lbl">HARGA MASUK</span>
+              <span class="d-val" id="valPosEntry">--</span>
             </div>
-            <div class="pos-box">
-              <span class="p-lbl">LEMBAR (SHARES)</span>
-              <span class="p-val" id="valPosShares">--</span>
+            <div class="pos-data-cell">
+              <span class="d-lbl">LEMBAR (SHARES)</span>
+              <span class="d-val" id="valPosShares">--</span>
             </div>
-            <div class="pos-box">
-              <span class="p-lbl">MODAL DIGUNAKAN</span>
-              <span class="p-val" id="valPosCost">--</span>
+            <div class="pos-data-cell">
+              <span class="d-lbl">MODAL TERPAKAI</span>
+              <span class="d-val" id="valPosCost">--</span>
             </div>
-            <div class="pos-box">
-              <span class="p-lbl">NILAI SAAT INI</span>
-              <span class="p-val" id="valPosCurrent">--</span>
+            <div class="pos-data-cell">
+              <span class="d-lbl">NILAI SAAT INI</span>
+              <span class="d-val" id="valPosCurrent">--</span>
             </div>
-            <div class="pos-box">
-              <span class="p-lbl">FLOATING PNL</span>
-              <span class="p-val" id="valPosPnl">--</span>
+            <div class="pos-data-cell">
+              <span class="d-lbl">FLOATING PNL</span>
+              <span class="d-val" id="valPosPnl">--</span>
             </div>
           </div>
 
-          <!-- AI Action Log Feed -->
-          <div class="ai-log-box" id="aiActionLogBox">
-            <div class="ai-log-title">LOG AKTIVITAS AI:</div>
-            <div class="ai-log-text" id="aiActionLogText">
-              [00:00] Menghubungkan ke live stream Binance & Polymarket...
+          <!-- AI Action Activity Log -->
+          <div class="ai-activity-log">
+            <div class="log-title">LOG AKTIVITAS AI:</div>
+            <div class="log-content" id="aiActionLogText">
+              Menghubungkan ke data feed Binance & Polymarket...
             </div>
           </div>
         </div>
 
-        <!-- 4. Capital & Simulation Account -->
-        <div class="card capital-card">
-          <div class="card-header">
-            <span class="card-title">SALDO PORTOFOLIO SIMULATOR</span>
-            <button class="btn-sm" id="btnResetPort">RESET</button>
+        <!-- 4. Capital & Account Summary -->
+        <div class="card capital-panel">
+          <div class="card-bar">
+            <span class="card-heading">PORTOFOLIO SIMULATOR</span>
+            <button class="ctrl-btn" id="btnResetPort">RESET</button>
           </div>
 
-          <div class="capital-row">
-            <div class="cap-box">
+          <div class="capital-grid">
+            <div class="cap-cell">
               <span class="c-lbl">TOTAL EKUITAS</span>
-              <span class="c-val" id="valTotalEquity">$20.00</span>
+              <span class="c-num" id="valTotalEquity">$20.00</span>
             </div>
-            <div class="cap-box">
+            <div class="cap-cell">
               <span class="c-lbl">KAS TERSEDIA</span>
-              <span class="c-val" id="valCashBalance">$20.00</span>
+              <span class="c-num" id="valCashBalance">$20.00</span>
             </div>
-            <div class="cap-box">
+            <div class="cap-cell">
               <span class="c-lbl">NET PROFIT</span>
-              <span class="c-val text-green" id="valNetPnl">+$0.00 (+0.0%)</span>
+              <span class="c-num text-green" id="valNetPnl">+$0.00 (+0.0%)</span>
             </div>
-            <div class="cap-box">
+            <div class="cap-cell">
               <span class="c-lbl">WIN RATE</span>
-              <span class="c-val" id="valWinRate">0% (0W / 0L)</span>
+              <span class="c-num" id="valWinRate">0% (0W / 0L)</span>
             </div>
           </div>
 
-          <div class="input-capital-group">
-            <label for="inputCapital">Ubah Modal Awal ($):</label>
+          <div class="capital-input-row">
+            <label for="inputCapital">Modal Awal ($):</label>
             <input type="number" id="inputCapital" value="20.00" min="1" step="1">
           </div>
         </div>
 
       </aside>
 
-    </main>
+    </div>
 
-    <!-- MINIMAL FOOTER -->
-    <footer class="footer">
-      <span>KOPI TUBRUK • TradingView 5M Candle Engine & Fast-Flip Protection</span>
+    <!-- TERMINAL FOOTER -->
+    <footer class="bottom-footer">
+      <span>KOPI TUBRUK • Dual-Chart Terminal (Binance Spot & Polymarket Probability) • Resizable Layout</span>
       <span id="footerClock">00:00:00 WIB</span>
     </footer>
 
