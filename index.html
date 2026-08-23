@@ -39,15 +39,15 @@
       <div class="nav-right">
         <!-- Live Ticker -->
         <div class="nav-stat">
-          <span class="lbl">SPOT:</span>
-          <span class="val price-up" id="topLivePrice">$0.00</span>
+          <span class="lbl">SPOT LIVE:</span>
+          <span class="val price-up" id="topLivePrice">Connecting...</span>
           <span class="badge-change" id="topPriceChange">+0.00%</span>
         </div>
 
         <!-- Strike Price -->
         <div class="nav-stat">
           <span class="lbl">STRIKE 5M:</span>
-          <span class="val text-gold" id="topStrikePrice">$0.00</span>
+          <span class="val text-gold" id="topStrikePrice">--</span>
         </div>
 
         <!-- Countdown Timer -->
@@ -73,7 +73,7 @@
         <div class="card chart-card">
           <div class="card-header chart-header">
             <div class="chart-info-group">
-              <span class="chart-pair-name" id="chartPairName">BTC/USDT • 5m</span>
+              <span class="chart-pair-name" id="chartPairName">BTC/USDT • 5m Binance</span>
               <div class="ohlc-legend" id="ohlcLegend">
                 <span>O: <strong id="valO">--</strong></span>
                 <span>H: <strong id="valH">--</strong></span>
@@ -85,9 +85,13 @@
                 <span class="ma-tag ma25">MA25: <strong id="ma25Val">--</strong></span>
               </div>
             </div>
-            <div class="chart-status-tag">
-              <span class="pulse-dot"></span>
-              <span>BINANCE LIVE 5M</span>
+            
+            <div class="chart-controls">
+              <button class="chart-btn" id="btnFitChart" title="Auto Fit Chart">⛶ Auto</button>
+              <div class="chart-status-tag">
+                <span class="pulse-dot"></span>
+                <span>BINANCE FEED LIVE</span>
+              </div>
             </div>
           </div>
 
@@ -132,7 +136,7 @@
         <!-- 1. Polymarket Implied Odds Card -->
         <div class="card odds-card">
           <div class="card-header">
-            <span class="card-title">PELUANG PASAR (POLYMARKET)</span>
+            <span class="card-title">PASAR PREDIKSI POLYMARKET</span>
             <span class="round-tag" id="currentRoundTag">RONDE #5M-0</span>
           </div>
 
@@ -214,6 +218,14 @@
             <div class="pos-box">
               <span class="p-lbl">FLOATING PNL</span>
               <span class="p-val" id="valPosPnl">--</span>
+            </div>
+          </div>
+
+          <!-- AI Action Log Feed -->
+          <div class="ai-log-box" id="aiActionLogBox">
+            <div class="ai-log-title">LOG AKTIVITAS AI:</div>
+            <div class="ai-log-text" id="aiActionLogText">
+              [00:00] Menghubungkan ke live stream Binance & Polymarket...
             </div>
           </div>
         </div>
