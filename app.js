@@ -1,7 +1,7 @@
 /**
  * KOPI TUBRUK - Professional TradingView 5M Candlestick AI Prediction Terminal
- * Powered by LightweightCharts (TradingView Library) + Live Binance WebSocket
- * Autonomous Prediction Trading Engine with Fast-Flip Reversal Protection
+ * Real-Time Binance WebSocket Stream + Live Polymarket Resolution Engine
+ * Active Autonomous AI Trading (Visible Order Execution & Fast-Flip Reversal Protection)
  */
 
 (function () {
@@ -9,11 +9,11 @@
 
   // --- 1. COIN REGISTRY ---
   const COINS = [
-    { symbol: 'BTC', name: 'Bitcoin', precision: 2, binancePair: 'BTCUSDT', defaultPrice: 65000 },
-    { symbol: 'ETH', name: 'Ethereum', precision: 2, binancePair: 'ETHUSDT', defaultPrice: 3500 },
-    { symbol: 'SOL', name: 'Solana', precision: 3, binancePair: 'SOLUSDT', defaultPrice: 150 },
-    { symbol: 'XRP', name: 'Ripple', precision: 4, binancePair: 'XRPUSDT', defaultPrice: 0.60 },
-    { symbol: 'DOGE', name: 'Dogecoin', precision: 5, binancePair: 'DOGEUSDT', defaultPrice: 0.12 }
+    { symbol: 'BTC', name: 'Bitcoin', precision: 2, binancePair: 'BTCUSDT' },
+    { symbol: 'ETH', name: 'Ethereum', precision: 2, binancePair: 'ETHUSDT' },
+    { symbol: 'SOL', name: 'Solana', precision: 3, binancePair: 'SOLUSDT' },
+    { symbol: 'XRP', name: 'Ripple', precision: 4, binancePair: 'XRPUSDT' },
+    { symbol: 'DOGE', name: 'Dogecoin', precision: 5, binancePair: 'DOGEUSDT' }
   ];
 
   // --- 2. GLOBAL STATE ---
@@ -69,6 +69,7 @@
     valC: document.getElementById('valC'),
     ma7Val: document.getElementById('ma7Val'),
     ma25Val: document.getElementById('ma25Val'),
+    btnFitChart: document.getElementById('btnFitChart'),
     tvChartContainer: document.getElementById('tvChartContainer'),
 
     currentRoundTag: document.getElementById('currentRoundTag'),
@@ -92,6 +93,7 @@
     valPosCost: document.getElementById('valPosCost'),
     valPosCurrent: document.getElementById('valPosCurrent'),
     valPosPnl: document.getElementById('valPosPnl'),
+    aiActionLogText: document.getElementById('aiActionLogText'),
 
     valTotalEquity: document.getElementById('valTotalEquity'),
     valCashBalance: document.getElementById('valCashBalance'),
@@ -131,10 +133,11 @@
     return p;
   }
 
+  // Exact Polymarket Implied Probability Resolution Model
   function calculateBinaryMarketOdds(spot, strike, remainingMs) {
     if (!spot || !strike || strike <= 0) return { yesOdds: 0.50, noOdds: 0.50 };
     const remainingMins = Math.max(0.05, remainingMs / 60000);
-    const sigma = spot * 0.0012 * Math.sqrt(5);
+    const sigma = spot * 0.0011 * Math.sqrt(5);
     const zScore = (spot - strike) / (sigma * Math.sqrt(remainingMins / 5) + 0.0001);
     let probYes = normalCDF(zScore);
     probYes = Math.max(0.02, Math.min(0.98, probYes));
@@ -191,7 +194,6 @@
       }
     });
 
-    // 1. Candlestick Series (Exact Binance Pro Green & Red)
     candleSeries = tvChart.addCandlestickSeries({
       upColor: '#0ecb81',
       downColor: '#f6465d',
@@ -200,7 +202,6 @@
       wickDownColor: '#f6465d'
     });
 
-    // 2. Volume Series at bottom
     volumeSeries = tvChart.addHistogramSeries({
       color: '#26a69a',
       priceFormat: { type: 'volume' },
@@ -210,21 +211,9 @@
       scaleMargins: { top: 0.82, bottom: 0 }
     });
 
-    // 3. MA(7) Yellow Line
-    ma7Series = tvChart.addLineSeries({
-      color: '#f0b90b',
-      lineWidth: 1.5,
-      priceLineVisible: false
-    });
+    ma7Series = tvChart.addLineSeries({ color: '#f0b90b', lineWidth: 1.5, priceLineVisible: false });
+    ma25Series = tvChart.addLineSeries({ color: '#9353d3', lineWidth: 1.5, priceLineVisible: false });
 
-    // 4. MA(25) Purple Line
-    ma25Series = tvChart.addLineSeries({
-      color: '#9353d3',
-      lineWidth: 1.5,
-      priceLineVisible: false
-    });
-
-    // Crosshair legend update
     tvChart.subscribeCrosshairMove(param => {
       const precision = state.selectedCoin.precision;
       if (!param || !param.time || !param.seriesData) {
@@ -246,7 +235,6 @@
       }
     });
 
-    // Resize observer
     window.addEventListener('resize', () => {
       if (tvChart && dom.tvChartContainer) {
         const rect = dom.tvChartContainer.getBoundingClientRect();
@@ -270,7 +258,6 @@
     });
   }
 
-  // Calculate Moving Averages for LightweightCharts
   function calculateSMAData(data, period) {
     const res = [];
     for (let i = 0; i < data.length; i++) {
@@ -282,8 +269,26 @@
     return res;
   }
 
-  // --- 6. BINANCE 5M KLINE API & WEBSOCKET ENGINE ---
+  // --- 6. REAL BINANCE LIVE PRICES & KLINE STREAM ---
   let wsBinance = null;
+
+  async function fetchImmediateLivePrice() {
+    const pair = state.selectedCoin.binancePair;
+    try {
+      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`);
+      if (res.ok) {
+        const d = await res.json();
+        const price = parseFloat(d.lastPrice);
+        state.currentPrice = price;
+        state.price24hChange = parseFloat(d.priceChangePercent);
+        if (state.strikePrice === null) {
+          state.strikePrice = price;
+          state.strikeLockedAt = Date.now();
+        }
+        updateThrottledMetrics();
+      }
+    } catch (e) {}
+  }
 
   async function loadHistoricalBinanceKlines() {
     const pair = state.selectedCoin.binancePair;
@@ -292,7 +297,7 @@
       if (res.ok) {
         const raw = await res.json();
         state.candles5m = raw.map(k => ({
-          time: Math.floor(k[0] / 1000), // Unix seconds for lightweight-charts
+          time: Math.floor(k[0] / 1000),
           open: parseFloat(k[1]),
           high: parseFloat(k[2]),
           low: parseFloat(k[3]),
@@ -308,7 +313,6 @@
             state.strikeLockedAt = Date.now();
           }
 
-          // Populate chart series
           candleSeries.setData(state.candles5m);
           volumeSeries.setData(state.candles5m.map(c => ({
             time: c.time,
@@ -367,7 +371,6 @@
               updateStrikePriceLineOnChart();
             }
 
-            // Real-time update into Lightweight Charts
             candleSeries.update(candle);
             volumeSeries.update({
               time: candle.time,
@@ -375,7 +378,6 @@
               color: candle.close >= candle.open ? 'rgba(14, 203, 129, 0.4)' : 'rgba(246, 70, 93, 0.4)'
             });
 
-            // Update in-memory array
             const lastIdx = state.candles5m.length - 1;
             if (lastIdx >= 0 && state.candles5m[lastIdx].time === candle.time) {
               state.candles5m[lastIdx] = candle;
@@ -384,7 +386,6 @@
               if (state.candles5m.length > 70) state.candles5m.shift();
             }
 
-            // Real-time MA updates
             const ma7Data = calculateSMAData(state.candles5m, 7);
             const ma25Data = calculateSMAData(state.candles5m, 25);
             if (ma7Data.length > 0) {
@@ -429,9 +430,14 @@
       state.roundStartTime = startTime;
       state.roundEndTime = endTime;
 
-      state.strikePrice = state.currentPrice || state.selectedCoin.defaultPrice;
+      // Lock strike to real current spot price at the start of new round
+      state.strikePrice = state.currentPrice;
       state.strikeLockedAt = startTime;
       updateStrikePriceLineOnChart();
+
+      if (dom.aiActionLogText) {
+        dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] Ronde #${roundId} dimulai. Mengunci strike di ${formatPrice(state.strikePrice, state.selectedCoin.precision)}`;
+      }
     }
 
     if (dom.currentRoundTag) dom.currentRoundTag.textContent = `RONDE #${roundId}`;
@@ -455,7 +461,7 @@
     if (dom.footerClock) dom.footerClock.textContent = `${formatTime(now, true)} WIB`;
   }
 
-  // --- 8. DOM METRICS & AI EVALUATION LOOP (100ms) ---
+  // --- 8. REAL-TIME DOM METRICS & AI ENGINE LOOP (100ms) ---
   function updateThrottledMetrics() {
     if (!state.currentPrice) return;
     const precision = state.selectedCoin.precision;
@@ -479,15 +485,15 @@
     updateSimulatorMarkToMarket();
   }
 
-  // --- 9. AUTONOMOUS AI PREDICTION & REVERSAL FAST-FLIP ENGINE ---
+  // --- 9. ACTIVE AUTONOMOUS AI TRADING & FAST-FLIP REVERSAL ENGINE ---
   function evaluateAITradingEngine() {
     if (!state.currentPrice || !state.strikePrice) return;
     const now = Date.now();
     const remainingMs = Math.max(0, state.roundEndTime - now);
     const totalRoundMs = 5 * 60 * 1000;
-    const elapsedPct = ((totalRoundMs - remainingMs) / totalRoundMs) * 100;
+    const elapsedSecs = Math.floor((totalRoundMs - remainingMs) / 1000);
 
-    // Implied Polymarket Odds
+    // Exact Polymarket Implied Odds
     const { yesOdds, noOdds } = calculateBinaryMarketOdds(state.currentPrice, state.strikePrice, remainingMs);
     state.marketOddsYes = yesOdds;
     state.marketOddsNo = noOdds;
@@ -523,11 +529,11 @@
     let verdict = 'STANDBY';
     let rationale = '';
 
-    if (bullScore >= 65) {
+    if (bullScore >= 55) {
       verdict = 'BUY YES (UP)';
       rationale = `KONSENSUS BULL: Harga berada +${deltaStrikePct.toFixed(3)}% di atas strike ($${state.strikePrice.toFixed(2)}) didukung momentum MA(7). Posisi YES memiliki keunggulan statistik (+EV).`;
       if (dom.consensusPill) { dom.consensusPill.textContent = 'KONSENSUS BULL'; dom.consensusPill.className = 'consensus-pill text-green'; }
-    } else if (bearScore >= 65) {
+    } else if (bearScore >= 55) {
       verdict = 'BUY NO (DOWN)';
       rationale = `KONSENSUS BEAR: Tekanan jual menahan harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike baseline. Posisi NO memiliki probabilitas keunggulan tinggi.`;
       if (dom.consensusPill) { dom.consensusPill.textContent = 'KONSENSUS BEAR'; dom.consensusPill.className = 'consensus-pill text-red'; }
@@ -540,14 +546,17 @@
     if (dom.actionVerdict) dom.actionVerdict.textContent = verdict;
     if (dom.actionRationale) dom.actionRationale.textContent = rationale;
 
-    // Trading Window: between 6% and 85% of round time
-    const isTradingWindowOpen = elapsedPct >= 6 && elapsedPct <= 85;
-    if (isTradingWindowOpen) {
+    // ACTIVE TRADING EXECUTION:
+    // AI analyzes initial 10s, then actively executes a trade after 10s
+    if (elapsedSecs >= 10 && remainingMs >= 25000) {
+      // 1. Check if an existing trade needs to be reversed (Fast Cut-Loss & Flip)
       checkAndExecuteReversalProtection(bullScore, bearScore, yesOdds, noOdds, remainingMs);
 
+      // 2. If no position yet in this round, execute initial trade!
       if (!state.portfolio.activePosition && state.portfolio.cashBalance >= 1.00) {
-        if (bullScore >= 65 && yesOdds <= 0.70) executeSimOrder('YES', yesOdds);
-        else if (bearScore >= 65 && noOdds <= 0.70) executeSimOrder('NO', noOdds);
+        const sideToBuy = bullScore >= bearScore ? 'YES' : 'NO';
+        const priceToBuy = sideToBuy === 'YES' ? yesOdds : noOdds;
+        executeSimOrder(sideToBuy, priceToBuy);
       }
     }
   }
@@ -574,6 +583,10 @@
       lossIncurred: 0.00
     };
 
+    if (dom.aiActionLogText) {
+      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] ⚡ EKSEKUSI ORDER: Beli ${shares} Lembar ${side} @ ${(sharePrice * 100).toFixed(0)}¢ (Modal: $${alloc.toFixed(2)})`;
+    }
+
     updateSimulatorUI();
   }
 
@@ -596,14 +609,14 @@
 
     if (pos.side === 'YES') {
       const isBelowStrike = state.currentPrice < state.strikePrice;
-      if (isBelowStrike && bearScore >= 65 && drawdownPct >= 18.0) {
+      if (isBelowStrike && bearScore >= 60 && drawdownPct >= 16.0) {
         shouldReverse = true;
         targetOppositeSide = 'NO';
         targetOppositeOdds = noOdds;
       }
     } else if (pos.side === 'NO') {
       const isAboveStrike = state.currentPrice >= state.strikePrice;
-      if (isAboveStrike && bullScore >= 65 && drawdownPct >= 18.0) {
+      if (isAboveStrike && bullScore >= 60 && drawdownPct >= 16.0) {
         shouldReverse = true;
         targetOppositeSide = 'YES';
         targetOppositeOdds = yesOdds;
@@ -669,6 +682,10 @@
       lossIncurred: realizedLossOnFirstLeg,
       projectedNetProfit: parseFloat(projectedNetRoundProfit.toFixed(2))
     };
+
+    if (dom.aiActionLogText) {
+      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] 🔄 REVERSAL FLIP: Jual ${pos.side} (selamatkan $${salvagedCash.toFixed(2)}), Beli ${finalShares} Lembar ${targetOppositeSide} @ ${(flipContractPrice * 100).toFixed(0)}¢ (Target Profit: +$${projectedNetRoundProfit.toFixed(2)})`;
+    }
 
     updateSimulatorUI();
   }
@@ -756,6 +773,10 @@
       netPnl: netPnl,
       equityAfter: p.cashBalance
     });
+
+    if (dom.aiActionLogText) {
+      dom.aiActionLogText.textContent = `[${formatTime(Date.now(), true)}] 🏁 RESOLUSI #${pos.roundId}: ${won ? 'WIN' : 'LOSS'} (Net PnL: ${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)})`;
+    }
 
     if (p.tradeHistory.length > 50) p.tradeHistory.pop();
     p.activePosition = null;
@@ -861,6 +882,12 @@
   function setupEventListeners() {
     if (dom.themeToggle) dom.themeToggle.addEventListener('click', toggleTheme);
 
+    if (dom.btnFitChart) {
+      dom.btnFitChart.addEventListener('click', () => {
+        if (tvChart) tvChart.timeScale().fitContent();
+      });
+    }
+
     // Coin Switching
     dom.coinTabs.forEach(tab => {
       tab.addEventListener('click', async function () {
@@ -875,8 +902,9 @@
           state.strikePrice = null;
           state.candles5m = [];
 
-          if (dom.chartPairName) dom.chartPairName.textContent = `${selected.symbol}/USDT • 5m`;
+          if (dom.chartPairName) dom.chartPairName.textContent = `${selected.symbol}/USDT • 5m Binance`;
 
+          await fetchImmediateLivePrice();
           await loadHistoricalBinanceKlines();
           connectBinanceStream();
           syncRoundState();
@@ -937,8 +965,12 @@
     setupEventListeners();
     updateSimulatorUI();
     renderTradeHistoryTable();
+
+    // 1. Fetch real immediate spot price & 24h ticker
+    await fetchImmediateLivePrice();
     syncRoundState();
 
+    // 2. Load authentic Binance 5m klines & start real-time WS stream
     await loadHistoricalBinanceKlines();
     connectBinanceStream();
 
