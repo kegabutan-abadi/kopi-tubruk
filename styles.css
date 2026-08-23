@@ -359,6 +359,29 @@ html, body {
 .ma7 { color: var(--c-gold); }
 .ma25 { color: var(--c-purple); }
 
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-btn {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.chart-btn:hover {
+  color: var(--text-main);
+  border-color: var(--c-gold);
+}
+
 .chart-status-tag {
   display: flex;
   align-items: center;
@@ -644,6 +667,32 @@ html, body {
   font-size: 12px;
   font-weight: 800;
   color: var(--text-main);
+}
+
+.ai-log-box {
+  background: var(--bg-surface-subtle);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--border-subtle);
+}
+
+.ai-log-title {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+.ai-log-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--c-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Capital Card */
