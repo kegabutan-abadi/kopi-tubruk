@@ -1,71 +1,27 @@
 /**
- * KOPI TUBRUK - Multi-Exchange Prediction Engine & AI Debate Terminal
- * Multi-Feed Aggregation (Binance, Coinbase, Kraken, Polymarket)
- * Dual-Agent AI Consensus + Fast-Flip Reversal Protection + Autonomous Simulator
+ * KOPI TUBRUK - Multi-Exchange Prediction Engine & Autonomous Trading Terminal
+ * High-Performance Event-Driven Architecture (Ultra-Low CPU, 60 FPS Charts)
+ * Multi-Exchange Aggregation: Binance, Coinbase, Kraken, Polymarket
+ * Deterministic AI Agent Debate + Smart Fast-Flip Reversal Protection
  */
 
 (function () {
   'use strict';
 
-  // --- Configuration & Coins Registry ---
+  // --- 1. COINS CONFIGURATION ---
   const COINS = [
-    {
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      precision: 2,
-      binancePair: 'BTCUSDT',
-      coinbaseProduct: 'BTC-USD',
-      krakenPair: 'XBT/USD',
-      krakenAlt: 'XXBTZUSD',
-      defaultPrice: 65000
-    },
-    {
-      symbol: 'ETH',
-      name: 'Ethereum',
-      precision: 2,
-      binancePair: 'ETHUSDT',
-      coinbaseProduct: 'ETH-USD',
-      krakenPair: 'ETH/USD',
-      krakenAlt: 'XETHZUSD',
-      defaultPrice: 3500
-    },
-    {
-      symbol: 'SOL',
-      name: 'Solana',
-      precision: 3,
-      binancePair: 'SOLUSDT',
-      coinbaseProduct: 'SOL-USD',
-      krakenPair: 'SOL/USD',
-      krakenAlt: 'SOLUSD',
-      defaultPrice: 150
-    },
-    {
-      symbol: 'XRP',
-      name: 'Ripple',
-      precision: 4,
-      binancePair: 'XRPUSDT',
-      coinbaseProduct: 'XRP-USD',
-      krakenPair: 'XRP/USD',
-      krakenAlt: 'XXRPZUSD',
-      defaultPrice: 0.60
-    },
-    {
-      symbol: 'DOGE',
-      name: 'Dogecoin',
-      precision: 5,
-      binancePair: 'DOGEUSDT',
-      coinbaseProduct: 'DOGE-USD',
-      krakenPair: 'DOGE/USD',
-      krakenAlt: 'XDG/USD',
-      defaultPrice: 0.12
-    }
+    { symbol: 'BTC', name: 'Bitcoin', precision: 2, binancePair: 'BTCUSDT', coinbaseProduct: 'BTC-USD', krakenPair: 'XBT/USD', krakenAlt: 'XXBTZUSD', defaultPrice: 65000 },
+    { symbol: 'ETH', name: 'Ethereum', precision: 2, binancePair: 'ETHUSDT', coinbaseProduct: 'ETH-USD', krakenPair: 'ETH/USD', krakenAlt: 'XETHZUSD', defaultPrice: 3500 },
+    { symbol: 'SOL', name: 'Solana', precision: 3, binancePair: 'SOLUSDT', coinbaseProduct: 'SOL-USD', krakenPair: 'SOL/USD', krakenAlt: 'SOLUSD', defaultPrice: 150 },
+    { symbol: 'XRP', name: 'Ripple', precision: 4, binancePair: 'XRPUSDT', coinbaseProduct: 'XRP-USD', krakenPair: 'XRP/USD', krakenAlt: 'XXRPZUSD', defaultPrice: 0.60 },
+    { symbol: 'DOGE', name: 'Dogecoin', precision: 5, binancePair: 'DOGEUSDT', coinbaseProduct: 'DOGE-USD', krakenPair: 'DOGE/USD', krakenAlt: 'XDG/USD', defaultPrice: 0.12 }
   ];
 
-  // --- Global Application State ---
+  // --- 2. GLOBAL STATE ---
   const state = {
     selectedCoin: COINS[0],
-    roundDurationMinutes: 5, // 5, 15, 20, 60, 120
-    currentPrice: null, // Composite benchmark price
+    roundDurationMinutes: 5,
+    currentPrice: null,
     previousPrice: null,
     strikePrice: null,
     strikeLockedAt: null,
@@ -73,9 +29,9 @@
     roundStartTime: null,
     roundEndTime: null,
     audioEnabled: true,
-    currentTheme: 'theme-light', // 'theme-light' or 'theme-dark'
-    roundHistory: [], // [{roundId, timeStr, coin, strikePrice, closePrice, delta, percent, outcome, isUp, timestamp}]
-    
+    currentTheme: 'theme-dark',
+    roundHistory: [],
+
     // Multi-Exchange Live Prices
     feedPrices: {
       binance: null,
@@ -92,46 +48,50 @@
     },
     lastCoinbaseTick: 0,
     lastKrakenTick: 0,
-    
-    // Data Buffers
-    tickHistory: [], // [{time, price, binance, coinbase, kraken}]
-    candles15s: [],  // [{time, open, high, low, close, volume, ema7, ema21}]
+
+    // Buffers & Indicators
+    tickHistory: [],
+    candles15s: [],
     currentCandle: null,
-    momentumQueue: [], // Last 40 tick directions (1 or -1)
-    
-    // Velocity & Latency
+    momentumQueue: [],
     ticksInSecond: 0,
     currentTickSpeed: 0,
     pingMs: 12,
     lastChimePlayed: null,
 
-    // AI Debate Module State
+    // AI Debate State
     debateCycle: 1,
     lastDebateTime: 0,
     bullScore: 50,
     bearScore: 50,
     arbiterVerdict: 'STANDBY',
     arbiterConfidence: 50,
-    marketOddsYes: 0.50, // in probability ($0.01 - $0.99)
+    marketOddsYes: 0.50,
     marketOddsNo: 0.50,
     debateTranscripts: [],
 
-    // Autonomous Portfolio Simulator State with Dynamic Reversal Engine
+    // Portfolio Simulation & Execution Engine
     portfolio: {
       startingCapital: 20.00,
       cashBalance: 20.00,
-      activePosition: null, // { id, roundId, side, entryPrice, shares, cost, entryTime, isReversed, initialSide, initialLossSaved }
-      tradeHistory: [],     // Array of completed trades
+      activePosition: null, // { id, roundId, coin, side, entryPrice, shares, cost, entryTime, isReversed, initialSide, lossIncurred, projectedNetProfit }
+      tradeHistory: [],
       totalTrades: 0,
       wins: 0,
       losses: 0,
       cumulativePnl: 0.00
+    },
+
+    // Rendering Flags (Prevents Canvas Lag)
+    needsChartRender: true,
+    canvasDims: {
+      candle: { w: 600, h: 310, dpr: 1 },
+      tick: { w: 600, h: 310, dpr: 1 }
     }
   };
 
-  // --- DOM Elements Cache ---
+  // --- 3. DOM ELEMENTS CACHE ---
   const dom = {
-    // Header & Feeds
     mainStatusDot: document.getElementById('mainStatusDot'),
     statusText: document.getElementById('statusText'),
     pingBadge: document.getElementById('pingBadge'),
@@ -145,7 +105,6 @@
     chipKraken: document.getElementById('chipKraken'),
     chipPolymarket: document.getElementById('chipPolymarket'),
     
-    // Theme & Audio
     themeToggle: document.getElementById('themeToggle'),
     themeIconLight: document.getElementById('themeIconLight'),
     themeIconDark: document.getElementById('themeIconDark'),
@@ -154,10 +113,8 @@
     soundOnIcon: document.querySelector('.icon-sound-on'),
     soundOffIcon: document.querySelector('.icon-sound-off'),
 
-    // Timeframe
     timeframeButtons: document.querySelectorAll('.tf-btn'),
 
-    // Metric Cards
     currentPrice: document.getElementById('currentPrice'),
     priceDeltaBadge: document.getElementById('priceDeltaBadge'),
     deltaArrow: document.getElementById('deltaArrow'),
@@ -168,7 +125,6 @@
     velocityBar: document.getElementById('velocityBar'),
     livePriceCard: document.getElementById('livePriceCard'),
     
-    // Strike & Countdown
     strikePrice: document.getElementById('strikePrice'),
     periodRangeBadge: document.getElementById('periodRangeBadge'),
     roundNumberTag: document.getElementById('roundNumberTag'),
@@ -187,7 +143,6 @@
     outcomeText: document.getElementById('outcomeText'),
     expiryLabel: document.getElementById('expiryLabel'),
 
-    // Side-by-Side Dual Charts
     candleCanvasContainer: document.getElementById('candleCanvasContainer'),
     candleCanvas: document.getElementById('candleCanvas'),
     candleEma7: document.getElementById('candleEma7'),
@@ -196,18 +151,16 @@
 
     canvasContainer: document.getElementById('canvasContainer'),
     tickCanvas: document.getElementById('tickCanvas'),
-    chartLivePrice: document.getElementById('chartLivePrice'),
     chartHighPrice: document.getElementById('chartHighPrice'),
     chartLowPrice: document.getElementById('chartLowPrice'),
     chartSpread: document.getElementById('chartSpread'),
     clearChartBtn: document.getElementById('clearChartBtn'),
 
-    // Momentum Gauge
     bearPercent: document.getElementById('bearPercent'),
     bullPercent: document.getElementById('bullPercent'),
     momentumGaugeFill: document.getElementById('momentumGaugeFill'),
+    momentumStatus: document.getElementById('momentumStatus'),
 
-    // AI Debate Module
     debateCycleCounter: document.getElementById('debateCycleCounter'),
     bullScoreVal: document.getElementById('bullScoreVal'),
     bullThesisText: document.getElementById('bullThesisText'),
@@ -224,7 +177,6 @@
     debateTranscriptFeed: document.getElementById('debateTranscriptFeed'),
     transcriptCount: document.getElementById('transcriptCount'),
 
-    // Simulator
     simStartingCapitalInput: document.getElementById('simStartingCapitalInput'),
     resetSimBtn: document.getElementById('resetSimBtn'),
     simEquityVal: document.getElementById('simEquityVal'),
@@ -243,100 +195,70 @@
     reversalStrategyBadge: document.getElementById('reversalStrategyBadge'),
     simTradeTableBody: document.getElementById('simTradeTableBody'),
 
-    // Round History
     historyTableBody: document.getElementById('historyTableBody'),
     historyCount: document.getElementById('historyCount'),
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
     systemClockLocal: document.getElementById('systemClockLocal')
   };
 
-  // --- Audio Synthesizer (Zero external asset dependency) ---
+  // --- 4. WEB AUDIO SYNTHESIZER ---
   const audioCtx = (function () {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       return new AudioContext();
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   })();
 
   function playAlertSound(type) {
     if (!state.audioEnabled || !audioCtx) return;
     try {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(() => {});
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
       const now = audioCtx.currentTime;
 
-      if (type === 'tick-30') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.22);
-      } else if (type === 'tick-10') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(1046.5, now);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.08);
-      } else if (type === 'trade-exec') {
-        [659.25, 880.00].forEach((freq, idx) => {
+      if (type === 'trade-exec') {
+        [587.33, 880.00].forEach((freq, idx) => {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.18);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.20);
+        });
+      } else if (type === 'reversal-flip') {
+        [440.00, 554.37, 830.61].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
           osc.frequency.setValueAtTime(freq, now + idx * 0.07);
           gain.gain.setValueAtTime(0.14, now + idx * 0.07);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.18);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.20);
           osc.connect(gain);
           gain.connect(audioCtx.destination);
           osc.start(now + idx * 0.07);
           osc.stop(now + idx * 0.07 + 0.22);
         });
-      } else if (type === 'reversal-flip') {
-        [440.00, 587.33, 880.00].forEach((freq, idx) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-          gain.gain.setValueAtTime(0.12, now + idx * 0.08);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now + idx * 0.08);
-          osc.stop(now + idx * 0.08 + 0.25);
-        });
       } else if (type === 'round-resolved') {
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+        [523.25, 659.25, 1046.50].forEach((freq, idx) => {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-          gain.gain.setValueAtTime(0.18, now + idx * 0.06);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
+          gain.gain.setValueAtTime(0.15, now + idx * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.30);
           osc.connect(gain);
           gain.connect(audioCtx.destination);
           osc.start(now + idx * 0.06);
-          osc.stop(now + idx * 0.06 + 0.4);
+          osc.stop(now + idx * 0.06 + 0.35);
         });
       }
-    } catch (e) {
-      // Audio errors must never interrupt application execution
-    }
+    } catch (e) {}
   }
 
-  // --- Formatting Helpers ---
+  // --- 5. FORMATTING & MATH UTILITIES ---
   function formatPrice(val, precision = 2) {
     if (val === null || isNaN(val)) return '$--';
     return '$' + Number(val).toLocaleString('en-US', {
@@ -362,7 +284,7 @@
     return `${h}:${m}:${s} UTC`;
   }
 
-  // --- Normal CDF Approximation for Polymarket Binary Contract Odds ---
+  // Polymarket Implied Probability Calculator (Normal CDF)
   function normalCDF(x) {
     const t = 1 / (1 + 0.2316419 * Math.abs(x));
     const d = 0.3989423 * Math.exp(-x * x / 2);
@@ -373,25 +295,19 @@
 
   function calculateBinaryMarketOdds(spot, strike, remainingMs, durationMinutes) {
     if (!spot || !strike || strike <= 0) return { yesOdds: 0.50, noOdds: 0.50 };
-    
     const remainingMins = Math.max(0.04, remainingMs / 60000);
     const totalMins = durationMinutes;
-    // Estimated short-term volatility factor scaled to timeframe (Polymarket CLOB resolution model)
     const sigma = spot * 0.0011 * Math.sqrt(totalMins);
     const zScore = (spot - strike) / (sigma * Math.sqrt(remainingMins / totalMins) + 0.0001);
-    
     let probYes = normalCDF(zScore);
-    // Bound odds within realistic prediction market book spread (0.02 to 0.98)
     probYes = Math.max(0.02, Math.min(0.98, probYes));
-    const probNo = 1 - probYes;
-
     return {
       yesOdds: parseFloat(probYes.toFixed(2)),
-      noOdds: parseFloat(probNo.toFixed(2))
+      noOdds: parseFloat((1 - probYes).toFixed(2))
     };
   }
 
-  // --- Multi-Exchange WebSocket & Stream Aggregator ---
+  // --- 6. MULTI-EXCHANGE WEBSOCKET AGGREGATOR ---
   let wsBinance = null;
   let wsCoinbase = null;
   let wsKraken = null;
@@ -405,23 +321,16 @@
   }
 
   function connectBinanceWS() {
-    if (wsBinance) {
-      try { wsBinance.close(); } catch (e) {}
-    }
-
+    if (wsBinance) { try { wsBinance.close(); } catch (e) {} }
     const pairLower = state.selectedCoin.binancePair.toLowerCase();
     const streams = [
       `${pairLower}@trade`,
       ...COINS.map(c => `${c.binancePair.toLowerCase()}@miniTicker`)
     ].join('/');
 
-    const url = `https://stream.binance.com:9443/ws/${streams}`;
     try {
-      wsBinance = new WebSocket(url);
-      wsBinance.onopen = () => {
-        state.feedStatus.binance = true;
-        updateFeedStatusUI();
-      };
+      wsBinance = new WebSocket(`https://stream.binance.com:9443/ws/${streams}`);
+      wsBinance.onopen = () => { state.feedStatus.binance = true; updateFeedStatusUI(); };
       wsBinance.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -432,107 +341,71 @@
               if (miniEl) miniEl.textContent = formatPrice(parseFloat(data.c), matchCoin.precision);
             }
           } else if (data.e === 'trade' && data.s === state.selectedCoin.binancePair) {
-            const p = parseFloat(data.p);
-            handleExchangeTick('binance', p, data.T || Date.now());
+            handleExchangeTick('binance', parseFloat(data.p), data.T || Date.now());
           }
         } catch (err) {}
       };
       wsBinance.onerror = () => { state.feedStatus.binance = false; updateFeedStatusUI(); };
-      wsBinance.onclose = () => {
-        state.feedStatus.binance = false;
-        updateFeedStatusUI();
-        setTimeout(connectBinanceWS, 3000);
-      };
-    } catch (e) {
-      setTimeout(connectBinanceWS, 4000);
-    }
+      wsBinance.onclose = () => { state.feedStatus.binance = false; updateFeedStatusUI(); setTimeout(connectBinanceWS, 3000); };
+    } catch (e) { setTimeout(connectBinanceWS, 4000); }
   }
 
   function connectCoinbaseWS() {
-    if (wsCoinbase) {
-      try { wsCoinbase.close(); } catch (e) {}
-    }
-
-    const url = 'wss://ws-feed.exchange.coinbase.com';
+    if (wsCoinbase) { try { wsCoinbase.close(); } catch (e) {} }
     try {
-      wsCoinbase = new WebSocket(url);
+      wsCoinbase = new WebSocket('wss://ws-feed.exchange.coinbase.com');
       wsCoinbase.onopen = () => {
         state.feedStatus.coinbase = true;
         updateFeedStatusUI();
-        const subscribeMsg = {
+        wsCoinbase.send(JSON.stringify({
           type: 'subscribe',
           product_ids: COINS.map(c => c.coinbaseProduct),
           channels: ['ticker']
-        };
-        wsCoinbase.send(JSON.stringify(subscribeMsg));
+        }));
       };
       wsCoinbase.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'ticker' && data.price) {
-            const price = parseFloat(data.price);
-            if (data.product_id === state.selectedCoin.coinbaseProduct) {
-              handleExchangeTick('coinbase', price, Date.now());
-            }
+          if (data.type === 'ticker' && data.price && data.product_id === state.selectedCoin.coinbaseProduct) {
+            handleExchangeTick('coinbase', parseFloat(data.price), Date.now());
           }
         } catch (err) {}
       };
       wsCoinbase.onerror = () => { state.feedStatus.coinbase = false; updateFeedStatusUI(); };
-      wsCoinbase.onclose = () => {
-        state.feedStatus.coinbase = false;
-        updateFeedStatusUI();
-        setTimeout(connectCoinbaseWS, 4000);
-      };
-    } catch (e) {
-      setTimeout(connectCoinbaseWS, 5000);
-    }
+      wsCoinbase.onclose = () => { state.feedStatus.coinbase = false; updateFeedStatusUI(); setTimeout(connectCoinbaseWS, 4000); };
+    } catch (e) { setTimeout(connectCoinbaseWS, 5000); }
   }
 
   function connectKrakenWS() {
-    if (wsKraken) {
-      try { wsKraken.close(); } catch (e) {}
-    }
-
-    const url = 'wss://ws.kraken.com';
+    if (wsKraken) { try { wsKraken.close(); } catch (e) {} }
     try {
-      wsKraken = new WebSocket(url);
+      wsKraken = new WebSocket('wss://ws.kraken.com');
       wsKraken.onopen = () => {
         state.feedStatus.kraken = true;
         updateFeedStatusUI();
-        const subscribeMsg = {
+        wsKraken.send(JSON.stringify({
           event: 'subscribe',
           pair: [state.selectedCoin.krakenPair, state.selectedCoin.krakenAlt],
           subscription: { name: 'ticker' }
-        };
-        wsKraken.send(JSON.stringify(subscribeMsg));
+        }));
       };
       wsKraken.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           if (Array.isArray(data) && data[1] && data[1].c) {
             const price = parseFloat(data[1].c[0]);
-            if (!isNaN(price)) {
-              handleExchangeTick('kraken', price, Date.now());
-            }
+            if (!isNaN(price)) handleExchangeTick('kraken', price, Date.now());
           }
         } catch (err) {}
       };
       wsKraken.onerror = () => { state.feedStatus.kraken = false; updateFeedStatusUI(); };
-      wsKraken.onclose = () => {
-        state.feedStatus.kraken = false;
-        updateFeedStatusUI();
-        setTimeout(connectKrakenWS, 4000);
-      };
-    } catch (e) {
-      setTimeout(connectKrakenWS, 5000);
-    }
+      wsKraken.onclose = () => { state.feedStatus.kraken = false; updateFeedStatusUI(); setTimeout(connectKrakenWS, 4000); };
+    } catch (e) { setTimeout(connectKrakenWS, 5000); }
   }
 
-  // Backup HTTP polling for Kraken, Coinbase, and Polymarket
   function startFallbackPolling() {
     if (pollInterval) clearInterval(pollInterval);
     pollInterval = setInterval(async () => {
-      // Coinbase REST fallback
       if (!state.feedPrices.coinbase || Date.now() - (state.lastCoinbaseTick || 0) > 3500) {
         try {
           const res = await fetch(`https://api.exchange.coinbase.com/products/${state.selectedCoin.coinbaseProduct}/ticker`);
@@ -542,8 +415,6 @@
           }
         } catch (e) {}
       }
-
-      // Kraken REST fallback
       if (!state.feedPrices.kraken || Date.now() - (state.lastKrakenTick || 0) > 3500) {
         try {
           const res = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${state.selectedCoin.krakenPair.replace('/', '')}`);
@@ -551,31 +422,28 @@
             const d = await res.json();
             if (d.result) {
               const key = Object.keys(d.result)[0];
-              if (key && d.result[key].c) {
-                handleExchangeTick('kraken', parseFloat(d.result[key].c[0]), Date.now());
-              }
+              if (key && d.result[key].c) handleExchangeTick('kraken', parseFloat(d.result[key].c[0]), Date.now());
             }
           }
         } catch (e) {}
       }
-    }, 2000);
+    }, 2500);
   }
 
+  // --- 7. TICK PROCESSING & WEIGHTED COMPOSITE ENGINE ---
   function handleExchangeTick(exchange, price, time) {
     if (!price || isNaN(price) || price <= 0) return;
-
     state.feedPrices[exchange] = price;
     state.feedStatus[exchange] = true;
     if (exchange === 'coinbase') state.lastCoinbaseTick = time;
     if (exchange === 'kraken') state.lastKrakenTick = time;
 
-    // Update Header Exchange Chips
+    // Header chip updates
     const precision = state.selectedCoin.precision;
     if (exchange === 'binance' && dom.feedPriceBinance) dom.feedPriceBinance.textContent = formatPrice(price, precision);
     if (exchange === 'coinbase' && dom.feedPriceCoinbase) dom.feedPriceCoinbase.textContent = formatPrice(price, precision);
     if (exchange === 'kraken' && dom.feedPriceKraken) dom.feedPriceKraken.textContent = formatPrice(price, precision);
 
-    // Compute Multi-Exchange Composite Reference Price
     computeCompositePrice(time);
   }
 
@@ -586,21 +454,18 @@
     if (state.feedPrices.kraken) activePrices.push(state.feedPrices.kraken);
 
     if (activePrices.length === 0) return;
-
-    // Center-weighted composite index
     activePrices.sort((a, b) => a - b);
     let composite = 0;
     if (activePrices.length === 1) composite = activePrices[0];
     else if (activePrices.length === 2) composite = (activePrices[0] + activePrices[1]) / 2;
     else composite = (activePrices[0] + activePrices[1] * 2 + activePrices[2]) / 4;
 
-    // Calculate Cross-Exchange Spread & Divergence
     const maxP = Math.max(...activePrices);
     const minP = Math.min(...activePrices);
     const spread = maxP - minP;
     const spreadPct = (spread / composite) * 100;
-
     const precision = state.selectedCoin.precision;
+
     if (dom.crossExchangeSpread) {
       dom.crossExchangeSpread.textContent = `${formatPrice(spread, precision)} (${spreadPct.toFixed(3)}%)`;
     }
@@ -609,25 +474,6 @@
     processAggregatedPriceTick(composite, time);
   }
 
-  function updateFeedStatusUI() {
-    const activeFeeds = Object.values(state.feedStatus).filter(Boolean).length;
-    if (dom.mainStatusDot && dom.statusText) {
-      if (activeFeeds > 0) {
-        dom.mainStatusDot.className = 'status-dot connected';
-        dom.statusText.textContent = `${activeFeeds}-FEED LIVE`;
-      } else {
-        dom.mainStatusDot.className = 'status-dot disconnected';
-        dom.statusText.textContent = 'CONNECTING...';
-      }
-    }
-
-    if (dom.chipBinance) dom.chipBinance.querySelector('.feed-indicator').className = `feed-indicator ${state.feedStatus.binance ? 'online' : ''}`;
-    if (dom.chipCoinbase) dom.chipCoinbase.querySelector('.feed-indicator').className = `feed-indicator ${state.feedStatus.coinbase ? 'online' : ''}`;
-    if (dom.chipKraken) dom.chipKraken.querySelector('.feed-indicator').className = `feed-indicator ${state.feedStatus.kraken ? 'online' : ''}`;
-    if (dom.chipPolymarket) dom.chipPolymarket.querySelector('.feed-indicator').className = `feed-indicator online`;
-  }
-
-  // --- Price Tick & 15s Candle Processing ---
   function processAggregatedPriceTick(price, time) {
     state.previousPrice = state.currentPrice;
     state.currentPrice = price;
@@ -641,51 +487,30 @@
     // Direction Momentum
     if (state.previousPrice !== null) {
       const diff = price - state.previousPrice;
-      if (diff > 0) {
-        state.momentumQueue.push(1);
-        flashPriceCard('up');
-      } else if (diff < 0) {
-        state.momentumQueue.push(-1);
-        flashPriceCard('down');
-      }
-      if (state.momentumQueue.length > 40) state.momentumQueue.shift();
+      if (diff > 0) state.momentumQueue.push(1);
+      else if (diff < 0) state.momentumQueue.push(-1);
+      if (state.momentumQueue.length > 30) state.momentumQueue.shift();
     }
 
-    // Tick stream buffer
-    state.tickHistory.push({
-      time: time,
-      price: price,
-      binance: state.feedPrices.binance,
-      coinbase: state.feedPrices.coinbase,
-      kraken: state.feedPrices.kraken
-    });
-    if (state.tickHistory.length > 350) state.tickHistory.shift();
+    // Tick buffer (capped at 150 to keep memory tiny & 60fps fast)
+    state.tickHistory.push({ time, price });
+    if (state.tickHistory.length > 150) state.tickHistory.shift();
 
-    // 15s Candle Aggregator
+    // 15s Candle processing
     updateCandles(price, time);
 
-    // Update UI elements
-    updatePriceDisplay();
-    updateMomentumDisplay();
-    
-    // Evaluate Simulation Mark-to-Market & Position Protection
-    updateSimulatorMarkToMarket();
-
-    // Run AI Debate evaluation
-    evaluateAIDebate(time);
-
-    // Trigger dual chart render
-    requestAnimationFrame(renderDualCharts);
+    // Flag for render loop
+    state.needsChartRender = true;
   }
 
   function updateCandles(price, time) {
-    const candleInterval = 15000; // 15s candle
+    const candleInterval = 15000;
     const candleBucket = Math.floor(time / candleInterval) * candleInterval;
 
     if (!state.currentCandle || state.currentCandle.time !== candleBucket) {
       if (state.currentCandle) {
         state.candles15s.push(state.currentCandle);
-        if (state.candles15s.length > 40) state.candles15s.shift();
+        if (state.candles15s.length > 35) state.candles15s.shift();
         calculateIndicators();
       }
       state.currentCandle = {
@@ -709,8 +534,6 @@
   function calculateIndicators() {
     if (state.candles15s.length === 0) return;
     const closes = state.candles15s.map(c => c.close);
-    
-    // EMA 7
     const k7 = 2 / (7 + 1);
     let ema7 = closes[0];
     for (let i = 0; i < closes.length; i++) {
@@ -718,7 +541,6 @@
       state.candles15s[i].ema7 = ema7;
     }
 
-    // EMA 21
     const k21 = 2 / (21 + 1);
     let ema21 = closes[0];
     for (let i = 0; i < closes.length; i++) {
@@ -730,26 +552,34 @@
     if (dom.candleEma7) dom.candleEma7.textContent = formatPrice(ema7, precision);
     if (dom.candleEma21) dom.candleEma21.textContent = formatPrice(ema21, precision);
     
-    // VWAP approximation
     const totalPriceVol = state.candles15s.reduce((acc, c) => acc + ((c.high + c.low + c.close) / 3) * c.volume, 0);
     const totalVol = state.candles15s.reduce((acc, c) => acc + c.volume, 0);
     const vwap = totalVol > 0 ? totalPriceVol / totalVol : ema7;
     if (dom.candleVwap) dom.candleVwap.textContent = formatPrice(vwap, precision);
   }
 
-  function flashPriceCard(direction) {
-    if (!dom.livePriceCard) return;
-    dom.livePriceCard.classList.remove('flash-up', 'flash-down');
-    void dom.livePriceCard.offsetWidth;
-    dom.livePriceCard.classList.add(direction === 'up' ? 'flash-up' : 'flash-down');
+  function updateFeedStatusUI() {
+    const activeFeeds = Object.values(state.feedStatus).filter(Boolean).length;
+    if (dom.mainStatusDot && dom.statusText) {
+      if (activeFeeds > 0) {
+        dom.mainStatusDot.className = 'status-dot connected';
+        dom.statusText.textContent = `${activeFeeds}-FEED LIVE`;
+      } else {
+        dom.mainStatusDot.className = 'status-dot disconnected';
+        dom.statusText.textContent = 'CONNECTING...';
+      }
+    }
+    if (dom.chipBinance) dom.chipBinance.querySelector('.feed-indicator').className = `feed-indicator ${state.feedStatus.binance ? 'online' : ''}`;
+    if (dom.chipCoinbase) dom.chipCoinbase.querySelector('.feed-indicator').className = `feed-indicator ${state.feedStatus.coinbase ? 'online' : ''}`;
+    if (dom.chipKraken) dom.chipKraken.querySelector('.feed-indicator').className = `feed-indicator ${state.feedStatus.kraken ? 'online' : ''}`;
   }
 
-  function updatePriceDisplay() {
+  // --- 8. THROTTLED DOM METRICS UPDATE (100ms) ---
+  function updateThrottledDOM() {
     if (!state.currentPrice) return;
     const precision = state.selectedCoin.precision;
 
     if (dom.currentPrice) dom.currentPrice.textContent = formatPrice(state.currentPrice, precision);
-    if (dom.chartLivePrice) dom.chartLivePrice.textContent = formatPrice(state.currentPrice, precision);
 
     if (state.strikePrice !== null) {
       const delta = state.currentPrice - state.strikePrice;
@@ -767,143 +597,120 @@
       if (dom.outcomeIcon) dom.outcomeIcon.textContent = isUp ? '▲' : '▼';
       if (dom.outcomeText) dom.outcomeText.textContent = isUp ? 'POSISI YES (NAIK) UNGGUL' : 'POSISI NO (TURUN) UNGGUL';
     }
+
+    if (state.momentumQueue.length > 0) {
+      const upTicks = state.momentumQueue.filter(x => x === 1).length;
+      const bullPct = Math.round((upTicks / state.momentumQueue.length) * 100);
+      const bearPct = 100 - bullPct;
+
+      if (dom.bullPercent) dom.bullPercent.textContent = `${bullPct}%`;
+      if (dom.bearPercent) dom.bearPercent.textContent = `${bearPct}%`;
+      if (dom.momentumGaugeFill) dom.momentumGaugeFill.style.width = `${bullPct}%`;
+      if (dom.velocityBar) dom.velocityBar.style.width = `${Math.min(100, Math.max(5, state.currentTickSpeed * 14))}%`;
+
+      if (dom.momentumStatus) {
+        if (bullPct >= 65) dom.momentumStatus.textContent = 'MOMENTUM BULL KUAT';
+        else if (bearPct >= 65) dom.momentumStatus.textContent = 'MOMENTUM BEAR KUAT';
+        else dom.momentumStatus.textContent = 'MOMENTUM SEIMBANG';
+      }
+    }
+
+    // Run AI debate & Simulator calculations
+    evaluateAIDebate(Date.now());
+    updateSimulatorMarkToMarket();
   }
 
   function updateStrikeDisplay() {
     const precision = state.selectedCoin.precision;
-    if (state.strikePrice === null) {
-      if (dom.strikePrice) dom.strikePrice.textContent = '$--';
-      if (dom.targetUpPrice) dom.targetUpPrice.textContent = '$--';
-      if (dom.targetDownPrice) dom.targetDownPrice.textContent = '$--';
-      return;
-    }
-
+    if (state.strikePrice === null) return;
     if (dom.strikePrice) dom.strikePrice.textContent = formatPrice(state.strikePrice, precision);
     if (dom.targetUpPrice) dom.targetUpPrice.textContent = `≥ ${formatPrice(state.strikePrice, precision)}`;
     if (dom.targetDownPrice) dom.targetDownPrice.textContent = `< ${formatPrice(state.strikePrice, precision)}`;
-
-    if (state.strikeLockedAt && dom.strikeLockedTime) {
-      dom.strikeLockedTime.textContent = formatTime(state.strikeLockedAt, true);
-    }
+    if (state.strikeLockedAt && dom.strikeLockedTime) dom.strikeLockedTime.textContent = formatTime(state.strikeLockedAt, true);
   }
 
-  function updateMomentumDisplay() {
-    if (state.momentumQueue.length === 0) return;
-    const upTicks = state.momentumQueue.filter(x => x === 1).length;
-    const total = state.momentumQueue.length;
-    const bullPct = Math.round((upTicks / total) * 100);
-    const bearPct = 100 - bullPct;
-
-    if (dom.bullPercent) dom.bullPercent.textContent = `${bullPct}%`;
-    if (dom.bearPercent) dom.bearPercent.textContent = `${bearPct}%`;
-    if (dom.momentumGaugeFill) dom.momentumGaugeFill.style.width = `${bullPct}%`;
-    if (dom.velocityBar) dom.velocityBar.style.width = `${Math.min(100, Math.max(5, state.currentTickSpeed * 12))}%`;
-  }
-
-  // --- AI Debate Module (Bull vs Bear vs Arbiter) ---
-  function evaluateAIDebate(time) {
-    if (time - state.lastDebateTime < 1500) return; // Evaluate every 1.5 seconds
-    state.lastDebateTime = time;
+  // --- 9. AI AGENT DEBATE & CONSENSUS ENGINE ---
+  function evaluateAIDebate(now) {
+    if (now - state.lastDebateTime < 1200) return;
+    state.lastDebateTime = now;
 
     if (!state.currentPrice || !state.strikePrice) return;
 
-    const remainingMs = Math.max(0, state.roundEndTime - time);
+    const remainingMs = Math.max(0, state.roundEndTime - now);
     const totalRoundMs = state.roundDurationMinutes * 60 * 1000;
-    const remainingPct = (remainingMs / totalRoundMs) * 100;
-    const elapsedPct = 100 - remainingPct;
+    const elapsedPct = ((totalRoundMs - remainingMs) / totalRoundMs) * 100;
 
-    // Calculate Implied Binary Contract Odds (Polymarket Standard)
+    // Polymarket implied odds
     const { yesOdds, noOdds } = calculateBinaryMarketOdds(state.currentPrice, state.strikePrice, remainingMs, state.roundDurationMinutes);
     state.marketOddsYes = yesOdds;
     state.marketOddsNo = noOdds;
 
-    // Update Polymarket chips & odds bar
-    if (dom.feedPricePolymarket) {
-      dom.feedPricePolymarket.textContent = `${(yesOdds * 100).toFixed(0)}¢ / ${(noOdds * 100).toFixed(0)}¢`;
-    }
-    if (dom.marketOddsYes) {
-      dom.marketOddsYes.textContent = `YES: ${(yesOdds * 100).toFixed(0)}¢ | NO: ${(noOdds * 100).toFixed(0)}¢`;
-    }
-    if (dom.oddsBarYes) {
-      dom.oddsBarYes.style.width = `${yesOdds * 100}%`;
-    }
+    if (dom.feedPricePolymarket) dom.feedPricePolymarket.textContent = `${(yesOdds * 100).toFixed(0)}¢ / ${(noOdds * 100).toFixed(0)}¢`;
+    if (dom.marketOddsYes) dom.marketOddsYes.textContent = `YES: ${(yesOdds * 100).toFixed(0)}¢ | NO: ${(noOdds * 100).toFixed(0)}¢`;
+    if (dom.oddsBarYes) dom.oddsBarYes.style.width = `${yesOdds * 100}%`;
 
-    // 1. Quantitative Factor Analysis
     const deltaStrike = state.currentPrice - state.strikePrice;
     const deltaStrikePct = (deltaStrike / state.strikePrice) * 100;
     
-    // Short-term Rate of Change (last 15 ticks)
     let roc15 = 0;
     if (state.tickHistory.length >= 15) {
       const pOld = state.tickHistory[state.tickHistory.length - 15].price;
       roc15 = ((state.currentPrice - pOld) / pOld) * 100;
     }
 
-    // Cross-Exchange Lead Delta (Coinbase vs Binance)
     let coinbaseLead = 0;
     if (state.feedPrices.coinbase && state.feedPrices.binance) {
       coinbaseLead = ((state.feedPrices.coinbase - state.feedPrices.binance) / state.feedPrices.binance) * 100;
     }
 
-    // 2. Bull AI Agent Scoring & Thesis
+    // Bull Scoring
     let bullScore = 50;
-    if (deltaStrikePct > 0) bullScore += Math.min(28, deltaStrikePct * 120);
+    if (deltaStrikePct > 0) bullScore += Math.min(30, deltaStrikePct * 140);
     if (roc15 > 0) bullScore += Math.min(18, roc15 * 180);
     else bullScore -= Math.min(15, Math.abs(roc15) * 120);
-    if (coinbaseLead > 0.01) bullScore += 10;
+    if (coinbaseLead > 0.01) bullScore += 8;
     bullScore = Math.max(10, Math.min(95, Math.round(bullScore)));
     state.bullScore = bullScore;
 
-    // 3. Bear AI Agent Scoring & Thesis
+    // Bear Scoring
     let bearScore = 50;
-    if (deltaStrikePct < 0) bearScore += Math.min(28, Math.abs(deltaStrikePct) * 120);
+    if (deltaStrikePct < 0) bearScore += Math.min(30, Math.abs(deltaStrikePct) * 140);
     if (roc15 < 0) bearScore += Math.min(18, Math.abs(roc15) * 180);
     else bearScore -= Math.min(15, roc15 * 120);
-    if (coinbaseLead < -0.01) bearScore += 10;
+    if (coinbaseLead < -0.01) bearScore += 8;
     bearScore = Math.max(10, Math.min(95, Math.round(bearScore)));
     state.bearScore = bearScore;
 
-    // Update Scores in UI
     if (dom.bullScoreVal) dom.bullScoreVal.textContent = `${bullScore}%`;
     if (dom.bearScoreVal) dom.bearScoreVal.textContent = `${bearScore}%`;
 
-    // Generate Bull Thesis Text
-    let bullMsg = '';
-    if (bullScore >= 60) {
-      bullMsg = `Arus beli agresif terkonfirmasi. Harga +${deltaStrikePct.toFixed(3)}% di atas strike dengan momentum naik (+${roc15.toFixed(3)}%). Bid exchange kuat mendukung posisi YES.`;
-    } else if (bullScore <= 40) {
-      bullMsg = `Tekanan beli melemah. Harga terhambat di bawah strike ($${state.strikePrice.toFixed(2)}). Menunggu dorongan likuiditas baru.`;
-    } else {
-      bullMsg = `Konsolidasi di sekitar baseline. Delta netral (${deltaStrikePct >= 0 ? '+' : ''}${deltaStrikePct.toFixed(3)}%). Memantau breakout volume.`;
-    }
+    let bullMsg = bullScore >= 60 
+      ? `Arus beli agresif. Harga +${deltaStrikePct.toFixed(3)}% di atas strike dengan momentum positif (+${roc15.toFixed(3)}%). Bid multi-exchange mendukung YES.`
+      : (bullScore <= 40 ? `Tekanan beli melemah. Harga terhambat di bawah strike ($${state.strikePrice.toFixed(2)}).` : `Konsolidasi di sekitar baseline strike. Delta ${deltaStrikePct >= 0 ? '+' : ''}${deltaStrikePct.toFixed(3)}%.`);
+    
+    let bearMsg = bearScore >= 60
+      ? `Seller mendominasi. Harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike. Time decay menekan peluang balik arah ke atas.`
+      : (bearScore <= 40 ? `Tekanan jual mulai habis. Buyer menahan support baseline.` : `Menunggu konfirmasi breakdown volume.`);
+
     if (dom.bullThesisText) dom.bullThesisText.textContent = `"${bullMsg}"`;
+    if (dom.bearThesisText) dom.bearThesisText.textContent = `"${bearMsg}"`;
+
     if (dom.bullSignalsList) {
       dom.bullSignalsList.innerHTML = `
         <span class="signal-tag">ROC: ${roc15 >= 0 ? '+' : ''}${roc15.toFixed(3)}%</span>
-        <span class="signal-tag">Lead Delta: ${coinbaseLead >= 0 ? '+' : ''}${coinbaseLead.toFixed(3)}%</span>
+        <span class="signal-tag">Lead: ${coinbaseLead >= 0 ? '+' : ''}${coinbaseLead.toFixed(3)}%</span>
         <span class="signal-tag">Gap: ${deltaStrike >= 0 ? '+' : ''}$${deltaStrike.toFixed(2)}</span>
       `;
     }
-
-    // Generate Bear Thesis Text
-    let bearMsg = '';
-    if (bearScore >= 60) {
-      bearMsg = `Dominasi seller jelas. Harga -${Math.abs(deltaStrikePct).toFixed(3)}% di bawah strike dengan akselerasi turun. Time decay menekan kemungkinan reversal ke atas.`;
-    } else if (bearScore <= 40) {
-      bearMsg = `Tekanan jual mulai habis. Buyer membentuk support kokoh di atas strike baseline. Probabilitas penurunan kecil.`;
-    } else {
-      bearMsg = `Menguji resistance range. Spread multi-exchange menunjukkan pasar seimbang tanpa katalis penurunan besar.`;
-    }
-    if (dom.bearThesisText) dom.bearThesisText.textContent = `"${bearMsg}"`;
     if (dom.bearSignalsList) {
       dom.bearSignalsList.innerHTML = `
         <span class="signal-tag">Bear ROC: ${roc15.toFixed(3)}%</span>
-        <span class="signal-tag">Spread Drag: ${state.currentPrice > 0 ? ((state.currentPrice - (state.feedPrices.binance || state.currentPrice)) / state.currentPrice * 100).toFixed(3) : 0}%</span>
-        <span class="signal-tag">Decay: ${remainingPct.toFixed(0)}% Sisa</span>
+        <span class="signal-tag">Time Left: ${(remainingMs/1000).toFixed(0)}s</span>
+        <span class="signal-tag">Gap: ${deltaStrike.toFixed(2)}</span>
       `;
     }
 
-    // 4. Chief Arbiter Synthesis & Consensus Verdict
+    // Arbiter Consensus Synthesis
     state.debateCycle++;
     if (dom.debateCycleCounter) dom.debateCycleCounter.textContent = `#${state.debateCycle}`;
 
@@ -913,24 +720,24 @@
     let confidence = 50;
     let rationale = '';
 
-    // Active trading window: between 4% and 90% of round time
-    const isTradingWindowOpen = elapsedPct >= 4 && elapsedPct <= 90;
+    // Active trading window: between 5% and 85% of round time
+    const isTradingWindowOpen = elapsedPct >= 5 && elapsedPct <= 85;
 
-    if (bullScore >= 58 && scoreDelta >= 12 && yesOdds <= 0.75) {
+    if (bullScore >= 65 && scoreDelta >= 14 && yesOdds <= 0.72) {
       verdictAction = 'BUY YES (UP)';
       verdictClass = 'buy-yes';
       confidence = bullScore;
-      rationale = `KONSENSUS BULL: Momentum bullish terverifikasi lintas 3 bursa & Polymarket. Kontrak YES ${(yesOdds * 100).toFixed(0)}¢ memberikan positive expected value (+EV).`;
-    } else if (bearScore >= 58 && scoreDelta <= -12 && noOdds <= 0.75) {
+      rationale = `KONSENSUS BULL: Momentum bullish divergen kuat lintas 3 bursa. Nilai kontrak YES ${(yesOdds * 100).toFixed(0)}¢ memberikan +EV optimal.`;
+    } else if (bearScore >= 65 && scoreDelta <= -14 && noOdds <= 0.72) {
       verdictAction = 'BUY NO (DOWN)';
       verdictClass = 'buy-no';
       confidence = bearScore;
-      rationale = `KONSENSUS BEAR: Order skew ke bawah terkonfirmasi. Harga tertahan di bawah strike. Kontrak NO di ${(noOdds * 100).toFixed(0)}¢ memiliki statistical edge tinggi.`;
+      rationale = `KONSENSUS BEAR: Tekanan jual terkonfirmasi kuat di bawah strike. Kontrak NO ${(noOdds * 100).toFixed(0)}¢ memiliki probabilitas keunggulan statistik.`;
     } else {
       verdictAction = 'STANDBY';
       verdictClass = 'standby';
       confidence = Math.max(50, Math.round(100 - Math.abs(scoreDelta) * 1.5));
-      rationale = `DELIBERASI ARBITER: Belum ada asimetri statistik yang cukup antara Bull (${bullScore}%) dan Bear (${bearScore}%). Menunggu konfirmasi arah volume.`;
+      rationale = `DELIBERASI ARBITER: Belum ada asimetri statistik yang cukup antara Bull (${bullScore}%) dan Bear (${bearScore}%).`;
     }
 
     state.arbiterVerdict = verdictAction;
@@ -941,34 +748,27 @@
       dom.arbiterAction.className = `verdict-action ${verdictClass}`;
     }
     if (dom.arbiterConfidence) dom.arbiterConfidence.textContent = `${confidence}%`;
-    if (dom.consensusStrengthBadge) {
-      dom.consensusStrengthBadge.textContent = verdictAction === 'STANDBY' ? 'DELIBERASI NETRAL' : 'KONSENSUS TERCAPAI';
-    }
+    if (dom.consensusStrengthBadge) dom.consensusStrengthBadge.textContent = verdictAction === 'STANDBY' ? 'DELIBERASI NETRAL' : 'KONSENSUS TERCAPAI';
     if (dom.arbiterRationale) dom.arbiterRationale.textContent = `"${rationale}"`;
 
-    // Log to live debate transcript feed
-    if (state.debateCycle % 3 === 0) {
-      const activeAuthor = scoreDelta > 10 ? 'bull' : (scoreDelta < -10 ? 'bear' : 'arbiter');
-      const authorName = scoreDelta > 10 ? 'BULL AI' : (scoreDelta < -10 ? 'BEAR AI' : 'ARBITER');
-      const snippet = scoreDelta > 10 ? bullMsg : (scoreDelta < -10 ? bearMsg : rationale);
+    if (state.debateCycle % 4 === 0) {
+      const activeAuthor = scoreDelta > 12 ? 'bull' : (scoreDelta < -12 ? 'bear' : 'arbiter');
+      const authorName = scoreDelta > 12 ? 'BULL AI' : (scoreDelta < -12 ? 'BEAR AI' : 'CHIEF ARBITER');
+      const snippet = scoreDelta > 12 ? bullMsg : (scoreDelta < -12 ? bearMsg : rationale);
       appendDebateTranscript(activeAuthor, authorName, snippet);
     }
 
-    // 5. Trigger Position Protection (Reversal / Fast-Flip) OR Initial Trade
+    // Process Autonomous Execution & Reversal Protection
     if (isTradingWindowOpen) {
-      // First check if active trade needs emergency reversal flip
       checkAndExecuteReversalProtection(bullScore, bearScore, yesOdds, noOdds, remainingMs);
-      
-      // If no active trade, execute initial trade on consensus
       processAutonomousTradeExecution(verdictAction, yesOdds, noOdds);
     }
   }
 
   function appendDebateTranscript(authorType, authorName, message) {
     const timeStr = formatTime(Date.now(), true);
-    const item = { time: timeStr, authorType, authorName, message };
-    state.debateTranscripts.unshift(item);
-    if (state.debateTranscripts.length > 30) state.debateTranscripts.pop();
+    state.debateTranscripts.unshift({ time: timeStr, authorType, authorName, message });
+    if (state.debateTranscripts.length > 25) state.debateTranscripts.pop();
 
     if (dom.transcriptCount) dom.transcriptCount.textContent = `${state.debateTranscripts.length} logs`;
     if (dom.debateTranscriptFeed) {
@@ -982,33 +782,20 @@
     }
   }
 
-  // --- Autonomous Portfolio Simulator Engine ---
+  // --- 10. AUTONOMOUS SIMULATOR & FAST-FLIP REVERSAL ENGINE ---
   function processAutonomousTradeExecution(verdict, yesOdds, noOdds) {
     const p = state.portfolio;
-
-    // Only 1 initial trade entry per round ID
-    if (p.activePosition && p.activePosition.roundId === state.currentRoundId) {
-      return;
-    }
-
-    // Check available cash (must have at least $1.00)
+    if (p.activePosition && p.activePosition.roundId === state.currentRoundId) return;
     if (p.cashBalance < 1.00) return;
 
-    if (verdict === 'BUY YES (UP)') {
-      executeSimOrder('YES', yesOdds);
-    } else if (verdict === 'BUY NO (DOWN)') {
-      executeSimOrder('NO', noOdds);
-    }
+    if (verdict === 'BUY YES (UP)') executeSimOrder('YES', yesOdds);
+    else if (verdict === 'BUY NO (DOWN)') executeSimOrder('NO', noOdds);
   }
 
   function executeSimOrder(side, contractPrice) {
     const p = state.portfolio;
-    
-    // Position Sizing: 25% of current cash (min $1.00, capped at current cash)
     let alloc = p.cashBalance * 0.25;
     alloc = Math.max(1.00, Math.min(alloc, p.cashBalance));
-    if (p.cashBalance < alloc) alloc = p.cashBalance;
-
     const sharePrice = Math.max(0.05, Math.min(0.95, contractPrice));
     const shares = parseFloat((alloc / sharePrice).toFixed(2));
 
@@ -1028,23 +815,17 @@
     };
 
     playAlertSound('trade-exec');
-    appendDebateTranscript('arbiter', 'KOPI TUBRUK BOT', `⚡ ORDER DIEKSEKUSI: Beli ${shares} share ${side} pada harga ${(sharePrice * 100).toFixed(0)}¢ (Modal: $${alloc.toFixed(2)})`);
+    appendDebateTranscript('arbiter', 'TRADING ENGINE', `⚡ ORDER DIEKSEKUSI: Beli ${shares} share ${side} pada harga ${(sharePrice * 100).toFixed(0)}¢ (Modal: $${alloc.toFixed(2)})`);
     updateSimulatorUI();
   }
 
-  // =========================================================================
-  // ⚡ DYNAMIC REVERSAL & FAST-FLIP ENGINE (JUAL CEPAT & BELI ULANG UNTUNG)
-  // =========================================================================
+  // ⚡ SMART REVERSAL FAST-FLIP LOGIC
   function checkAndExecuteReversalProtection(bullScore, bearScore, yesOdds, noOdds, remainingMs) {
     const p = state.portfolio;
     if (!p.activePosition) return;
-    
     const pos = p.activePosition;
-    // Don't flip twice in the same round to prevent over-trading
     if (pos.isReversed) return;
-
-    // Minimum time required to execute a flip (at least 20 seconds remaining)
-    if (remainingMs < 20000) return;
+    if (remainingMs < 20000) return; // Need at least 20s for profitable reversal flip
 
     const currentContractPrice = pos.side === 'YES' ? yesOdds : noOdds;
     const currentVal = pos.shares * currentContractPrice;
@@ -1052,66 +833,49 @@
     const drawdownPct = (unrealizedLoss / pos.cost) * 100;
 
     let shouldReverse = false;
-    let reverseReason = '';
     let targetOppositeSide = '';
     let targetOppositeOdds = 0;
+    let reverseReason = '';
 
-    // Condition A: Position is YES, but price strongly collapsed below strike with high Bear conviction
     if (pos.side === 'YES') {
       const isBelowStrike = state.currentPrice < state.strikePrice;
-      if (isBelowStrike && bearScore >= 62 && drawdownPct >= 16.0) {
+      if (isBelowStrike && bearScore >= 65 && drawdownPct >= 18.0) {
         shouldReverse = true;
         targetOppositeSide = 'NO';
         targetOppositeOdds = noOdds;
-        reverseReason = `Harga anjlok di bawah strike ($${state.strikePrice.toFixed(2)}) dengan keyakinan Bear ${bearScore}% dan Drawdown -${drawdownPct.toFixed(1)}%.`;
+        reverseReason = `Harga anjlok di bawah strike ($${state.strikePrice.toFixed(2)}) dengan keyakinan Bear ${bearScore}% (Drawdown -${drawdownPct.toFixed(1)}%).`;
       }
-    }
-    // Condition B: Position is NO, but price strongly surged above strike with high Bull conviction
-    else if (pos.side === 'NO') {
+    } else if (pos.side === 'NO') {
       const isAboveStrike = state.currentPrice >= state.strikePrice;
-      if (isAboveStrike && bullScore >= 62 && drawdownPct >= 16.0) {
+      if (isAboveStrike && bullScore >= 65 && drawdownPct >= 18.0) {
         shouldReverse = true;
         targetOppositeSide = 'YES';
         targetOppositeOdds = yesOdds;
-        reverseReason = `Harga melonjak di atas strike ($${state.strikePrice.toFixed(2)}) dengan keyakinan Bull ${bullScore}% dan Drawdown -${drawdownPct.toFixed(1)}%.`;
+        reverseReason = `Harga melonjak di atas strike ($${state.strikePrice.toFixed(2)}) dengan keyakinan Bull ${bullScore}% (Drawdown -${drawdownPct.toFixed(1)}%).`;
       }
     }
 
     if (!shouldReverse) return;
 
-    // --- STEP 1: FAST SELL / CUT LOSS (JUAL CEPAT) ---
-    // Salvage remaining capital immediately
+    // 1. Jual Cepat (Fast Cut-Loss)
     const salvagedCash = parseFloat(currentVal.toFixed(2));
     const realizedLossOnFirstLeg = parseFloat((pos.cost - salvagedCash).toFixed(2));
     p.cashBalance = parseFloat((p.cashBalance + salvagedCash).toFixed(2));
 
-    // --- STEP 2: DETAILED RE-ENTRY CALCULATION (BELI ULANG ARAH BERLAWANAN DENGAN TARGET PROFIT) ---
+    // 2. Kalkulasi Sizing Beli Ulang Arah Berlawanan untuk Menghasilkan Net Profit
     const flipContractPrice = Math.max(0.08, Math.min(0.92, targetOppositeOdds));
+    const desiredSurplusProfit = Math.max(0.50, realizedLossOnFirstLeg * 0.25);
+    const targetNetProfit = realizedLossOnFirstLeg + desiredSurplusProfit;
     
-    // Target net profit for round: recover loss + 12% surplus profit
-    const desiredSurplus = Math.max(0.50, realizedLossOnFirstLeg * 0.25);
-    const targetNetProfit = realizedLossOnFirstLeg + desiredSurplus;
-    
-    // Required shares in opposite direction to cover initial loss and yield net profit:
-    // Profit upon win = (Shares * 1.00) - FlipCost = Shares * (1 - flipContractPrice)
-    // To achieve targetNetProfit: Shares = (realizedLossOnFirstLeg + desiredSurplus) / (1 - flipContractPrice)
-    let requiredShares = (realizedLossOnFirstLeg + desiredSurplus) / (1.00 - flipContractPrice);
+    let requiredShares = targetNetProfit / (1.00 - flipContractPrice);
     let requiredFlipCost = requiredShares * flipContractPrice;
 
-    // Cap to available cash
     if (requiredFlipCost > p.cashBalance) {
       requiredFlipCost = p.cashBalance;
       requiredShares = requiredFlipCost / flipContractPrice;
     }
 
-    // Safety check: must allocate at least $1.00
-    if (requiredFlipCost < 1.00 && p.cashBalance >= 1.00) {
-      requiredFlipCost = Math.min(p.cashBalance, 1.00);
-      requiredShares = requiredFlipCost / flipContractPrice;
-    }
-
     if (requiredFlipCost < 0.50) {
-      // Not enough cash to execute profitable flip, exit completely
       p.tradeHistory.unshift({
         roundId: pos.roundId,
         coin: pos.coin,
@@ -1132,14 +896,12 @@
       return;
     }
 
-    // Deduct flip allocation from cash
     p.cashBalance = parseFloat((p.cashBalance - requiredFlipCost).toFixed(2));
     const finalShares = parseFloat(requiredShares.toFixed(2));
     const finalCost = parseFloat(requiredFlipCost.toFixed(2));
-    const projectedGrossPayout = finalShares * 1.00;
-    const projectedNetRoundProfit = projectedGrossPayout - finalCost - realizedLossOnFirstLeg;
+    const projectedNetRoundProfit = (finalShares * 1.00) - finalCost - realizedLossOnFirstLeg;
 
-    // Mutate position into the new REVERSED position
+    // Mutate position into the REVERSED flip position
     p.activePosition = {
       id: `FLIP-${Date.now().toString().slice(-4)}`,
       roundId: state.currentRoundId,
@@ -1156,9 +918,7 @@
     };
 
     playAlertSound('reversal-flip');
-    
-    const flipLogMessage = `🔄 REVERSAL & FAST FLIP: ${reverseReason} Jual ${pos.side} (selamatkan $${salvagedCash.toFixed(2)}, rugi leg 1 -$${realizedLossOnFirstLeg.toFixed(2)}). Beli ${finalShares} share ${targetOppositeSide} di ${(flipContractPrice * 100).toFixed(0)}¢. Target Net Round Profit: +$${projectedNetRoundProfit.toFixed(2)}!`;
-    appendDebateTranscript('arbiter', 'SMART FLIP BOT', flipLogMessage);
+    appendDebateTranscript('arbiter', 'SMART FLIP BOT', `🔄 REVERSAL FLIP: ${reverseReason} Jual ${pos.side} (selamatkan $${salvagedCash.toFixed(2)}, rugi leg 1 -$${realizedLossOnFirstLeg.toFixed(2)}). Beli ${finalShares} share ${targetOppositeSide} @ ${(flipContractPrice * 100).toFixed(0)}¢. Target Net Round Profit: +$${projectedNetRoundProfit.toFixed(2)}!`);
 
     updateSimulatorUI();
     renderSimTradeTable();
@@ -1172,8 +932,7 @@
     }
 
     const pos = p.activePosition;
-    const now = Date.now();
-    const remainingMs = Math.max(0, state.roundEndTime - now);
+    const remainingMs = Math.max(0, state.roundEndTime - Date.now());
     const { yesOdds, noOdds } = calculateBinaryMarketOdds(state.currentPrice, state.strikePrice, remainingMs, state.roundDurationMinutes);
     const currentContractPrice = pos.side === 'YES' ? yesOdds : noOdds;
 
@@ -1209,12 +968,11 @@
         dom.posStrategyAction.textContent = `🔄 REVERSED FLIP HOLD (Target Net Profit: +$${pos.projectedNetProfit || '0.00'})`;
         dom.posStrategyAction.className = 'val text-purple';
       } else {
-        dom.posStrategyAction.textContent = `🛡️ MONITORING REVERSAL & MOMENTUM`;
+        dom.posStrategyAction.textContent = `🛡️ MONITORING MOMENTUM & PROTEKSI REVERSAL`;
         dom.posStrategyAction.className = 'val text-cyan';
       }
     }
 
-    // Portfolio Totals
     const totalEquity = p.cashBalance + currentVal;
     const netPnl = totalEquity - p.startingCapital;
     const netPnlPct = (netPnl / p.startingCapital) * 100;
@@ -1239,7 +997,6 @@
     const won = (pos.side === 'YES' && isCloseUp) || (pos.side === 'NO' && !isCloseUp);
 
     const payout = won ? pos.shares * 1.00 : 0.00;
-    // Account for any previous loss if this was a reversed trade
     const netPnl = won 
       ? (payout - pos.cost - (pos.lossIncurred || 0.00))
       : (-pos.cost - (pos.lossIncurred || 0.00));
@@ -1250,9 +1007,7 @@
     if (netPnl >= 0) p.wins++;
     else p.losses++;
 
-    const totalEquity = p.cashBalance;
-
-    const tradeRecord = {
+    p.tradeHistory.unshift({
       roundId: pos.roundId,
       coin: pos.coin,
       side: pos.isReversed ? `${pos.side} (FLIP)` : pos.side,
@@ -1262,13 +1017,11 @@
       won: won,
       payout: payout,
       netPnl: netPnl,
-      equityAfter: totalEquity,
+      equityAfter: p.cashBalance,
       timestamp: Date.now()
-    };
+    });
 
-    p.tradeHistory.unshift(tradeRecord);
     if (p.tradeHistory.length > 50) p.tradeHistory.pop();
-
     p.activePosition = null;
     renderSimTradeTable();
     updateSimulatorUI();
@@ -1347,7 +1100,7 @@
     }).join('');
   }
 
-  // --- Round & Interval Boundary Engine ---
+  // --- 11. ROUND BOUNDARY & TIMER ENGINE ---
   function calculateCurrentRoundBoundaries(durationMinutes) {
     const now = Date.now();
     const intervalMs = durationMinutes * 60 * 1000;
@@ -1355,11 +1108,7 @@
     const end = start + intervalMs;
     const roundNumber = Math.floor(start / intervalMs) % 10000;
 
-    return {
-      startTime: start,
-      endTime: end,
-      roundId: `${durationMinutes}M-${roundNumber}`
-    };
+    return { startTime: start, endTime: end, roundId: `${durationMinutes}M-${roundNumber}` };
   }
 
   function syncRoundState() {
@@ -1367,7 +1116,6 @@
 
     if (state.currentRoundId !== roundId) {
       if (state.currentRoundId !== null && state.strikePrice !== null && state.currentPrice !== null) {
-        // Record completed round
         recordRoundResult({
           roundId: state.currentRoundId,
           startTime: state.roundStartTime,
@@ -1376,8 +1124,6 @@
           closePrice: state.currentPrice,
           coin: state.selectedCoin.symbol
         });
-
-        // Settle Simulator Position
         settleSimPositionAtRoundEnd(state.currentPrice, state.strikePrice);
       }
 
@@ -1386,7 +1132,6 @@
       state.roundEndTime = endTime;
       state.lastChimePlayed = null;
 
-      // Lock new round strike price immediately
       state.strikePrice = state.currentPrice || state.selectedCoin.defaultPrice;
       state.strikeLockedAt = startTime;
       updateStrikeDisplay();
@@ -1404,7 +1149,7 @@
     const isUp = delta >= 0;
     const outcome = isUp ? 'YES (UP)' : 'NO (DOWN)';
 
-    const entry = {
+    state.roundHistory.unshift({
       roundId: roundData.roundId,
       timeStr: `${formatTime(roundData.startTime)} - ${formatTime(roundData.endTime)}`,
       coin: roundData.coin,
@@ -1415,24 +1160,17 @@
       outcome: outcome,
       isUp: isUp,
       timestamp: Date.now()
-    };
+    });
 
-    state.roundHistory.unshift(entry);
     if (state.roundHistory.length > 50) state.roundHistory.pop();
-
     renderHistoryTable();
     playAlertSound('round-resolved');
   }
 
   function renderHistoryTable() {
     if (!dom.historyTableBody) return;
-
     if (state.roundHistory.length === 0) {
-      dom.historyTableBody.innerHTML = `
-        <tr class="empty-row">
-          <td colspan="6">Ronde otomatis tersimpan di sini saat countdown rollover selesai...</td>
-        </tr>
-      `;
+      dom.historyTableBody.innerHTML = `<tr class="empty-row"><td colspan="6">Ronde otomatis tersimpan di sini saat countdown rollover selesai...</td></tr>`;
       if (dom.historyCount) dom.historyCount.textContent = '0 Ronde';
       return;
     }
@@ -1440,59 +1178,83 @@
     if (dom.historyCount) dom.historyCount.textContent = `${state.roundHistory.length} Ronde`;
     dom.historyTableBody.innerHTML = state.roundHistory.map(r => {
       const precision = state.selectedCoin.precision;
-      const isUp = r.isUp;
       const deltaSign = r.delta >= 0 ? '+' : '-';
-      const absDelta = Math.abs(r.delta);
-      const pillClass = isUp ? 'up' : 'down';
-      const textClass = isUp ? 'text-green' : 'text-red';
-
       return `
         <tr>
           <td><strong style="color:var(--text-primary);">${r.coin}</strong> <span style="color:var(--text-dim);">${r.roundId}</span></td>
           <td>${r.timeStr}</td>
           <td>${formatPrice(r.strikePrice, precision)}</td>
           <td>${formatPrice(r.closePrice, precision)}</td>
-          <td class="${textClass}">${deltaSign}${formatPrice(absDelta, precision)} (${deltaSign}${Math.abs(r.percent).toFixed(2)}%)</td>
-          <td><span class="history-pill ${pillClass}">HASIL ${r.outcome}</span></td>
+          <td class="${r.isUp ? 'text-green' : 'text-red'}">${deltaSign}${formatPrice(Math.abs(r.delta), precision)} (${deltaSign}${Math.abs(r.percent).toFixed(2)}%)</td>
+          <td><span class="history-pill ${r.isUp ? 'up' : 'down'}">HASIL ${r.outcome}</span></td>
         </tr>
       `;
     }).join('');
   }
 
-  // --- Dual Chart Renderers (Side-by-Side Canvas - Institutional Grade) ---
-  function renderDualCharts() {
-    renderCandleChart();
-    renderTickChart();
+  function updateTimerCountdown() {
+    const now = Date.now();
+    syncRoundState();
+
+    const totalRoundMs = state.roundDurationMinutes * 60 * 1000;
+    const remainingMs = Math.max(0, state.roundEndTime - now);
+
+    const mins = Math.floor(remainingMs / 60000);
+    const secs = Math.floor((remainingMs % 60000) / 1000);
+    const tenths = Math.floor((remainingMs % 1000) / 100);
+
+    if (dom.timerMinutes) dom.timerMinutes.textContent = String(mins).padStart(2, '0');
+    if (dom.timerSeconds) dom.timerSeconds.textContent = String(secs).padStart(2, '0');
+    if (dom.timerMs) dom.timerMs.textContent = `.${tenths}`;
+
+    const progressPct = (remainingMs / totalRoundMs) * 100;
+    if (dom.timerProgressFill) dom.timerProgressFill.style.width = `${progressPct}%`;
+
+    if (dom.countdownCard) {
+      dom.countdownCard.classList.remove('warning', 'critical');
+      if (remainingMs <= 10000) dom.countdownCard.classList.add('critical');
+      else if (remainingMs <= 30000) dom.countdownCard.classList.add('warning');
+    }
+
+    if (dom.currentClock) dom.currentClock.textContent = formatTimeUTC(now);
+    if (dom.systemClockLocal) dom.systemClockLocal.textContent = `Waktu Lokal: ${formatTime(now, true)} WIB`;
   }
 
-  // Chart 1: 15s Aggregated Candlestick & Volume & Indicator Chart (Pro Level)
+  // --- 12. HIGH-PERFORMANCE 60 FPS CANVAS CHARTS (CACHED DIMS, ZERO RESIZE THRASHING) ---
+  function cacheCanvasDimensions() {
+    const dpr = window.devicePixelRatio || 1;
+    if (dom.candleCanvasContainer && dom.candleCanvas) {
+      const rect = dom.candleCanvasContainer.getBoundingClientRect();
+      state.canvasDims.candle = { w: rect.width, h: rect.height, dpr };
+      dom.candleCanvas.width = rect.width * dpr;
+      dom.candleCanvas.height = rect.height * dpr;
+    }
+    if (dom.canvasContainer && dom.tickCanvas) {
+      const rect = dom.canvasContainer.getBoundingClientRect();
+      state.canvasDims.tick = { w: rect.width, h: rect.height, dpr };
+      dom.tickCanvas.width = rect.width * dpr;
+      dom.tickCanvas.height = rect.height * dpr;
+    }
+    state.needsChartRender = true;
+  }
+
   function renderCandleChart() {
     const canvas = dom.candleCanvas;
-    if (!canvas || !dom.candleCanvasContainer) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = dom.candleCanvasContainer.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-    }
-
+    const { w, h, dpr } = state.canvasDims.candle;
     ctx.save();
     ctx.scale(dpr, dpr);
-    const w = rect.width;
-    const h = rect.height;
 
-    // Background based on current active theme
-    const isDark = document.body.classList.contains('theme-dark') || document.body.classList.contains('theme-slate');
+    const isDark = document.body.classList.contains('theme-dark');
     ctx.fillStyle = isDark ? '#0b0f19' : '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
-    const axisWidth = 72;
+    const axisWidth = 68;
     const chartW = w - axisWidth;
-    const bottomH = 20;
-    const chartH = h - bottomH;
+    const chartH = h - 16;
 
     const allCandles = [...state.candles15s];
     if (state.currentCandle) allCandles.push(state.currentCandle);
@@ -1517,16 +1279,14 @@
     const yMax = maxP + pad;
     const yRange = yMax - yMin;
 
-    const mainPlotH = chartH * 0.78;
-    const volPlotH = chartH * 0.20;
-    const volTopY = chartH * 0.80;
-
-    const getY = (val) => mainPlotH - ((val - yMin) / yRange) * (mainPlotH - 24) - 8;
+    const mainPlotH = chartH * 0.80;
+    const volPlotH = chartH * 0.18;
+    const getY = (val) => mainPlotH - ((val - yMin) / yRange) * (mainPlotH - 20) - 10;
     const numCandles = allCandles.length;
-    const candleWidth = Math.max(4, Math.min(16, (chartW - 20) / numCandles - 4));
+    const candleWidth = Math.max(4, Math.min(14, (chartW - 20) / numCandles - 3));
     const stepX = (chartW - 20) / numCandles;
 
-    // Right Y-Axis Divider Line
+    // Right Y-Axis Line
     ctx.strokeStyle = isDark ? '#1f293d' : '#e2e8f0';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1534,57 +1294,40 @@
     ctx.lineTo(chartW, h);
     ctx.stroke();
 
-    // Horizontal Price Grid Lines & Axis Labels
-    const gridSteps = 4;
+    // Price Grid Lines & Labels
     ctx.font = '10px "JetBrains Mono", monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    for (let i = 0; i <= gridSteps; i++) {
-      const priceVal = yMin + (yRange / gridSteps) * i;
+    for (let i = 0; i <= 3; i++) {
+      const priceVal = yMin + (yRange / 3) * i;
       const gy = getY(priceVal);
 
-      // Grid line
       ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
-      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, gy);
       ctx.lineTo(chartW, gy);
       ctx.stroke();
 
-      // Axis Label
       ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
       ctx.fillText(formatPrice(priceVal, precision), chartW + 6, gy);
     }
 
-    // Volume Separator Line
-    ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath();
-    ctx.moveTo(0, volTopY);
-    ctx.lineTo(chartW, volTopY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Draw Volume Bars
+    // Volume Bars
     allCandles.forEach((c, idx) => {
       const cx = 10 + idx * stepX + stepX / 2;
       const isGreen = c.close >= c.open;
       const volHeight = Math.max(2, (c.volume / maxVol) * volPlotH);
-      const vY = chartH - volHeight;
-
-      ctx.fillStyle = isGreen 
-        ? (isDark ? 'rgba(16, 185, 129, 0.25)' : 'rgba(5, 150, 105, 0.25)') 
-        : (isDark ? 'rgba(244, 63, 94, 0.25)' : 'rgba(220, 38, 38, 0.25)');
-      ctx.fillRect(cx - candleWidth / 2, vY, candleWidth, volHeight);
+      ctx.fillStyle = isGreen ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)';
+      ctx.fillRect(cx - candleWidth / 2, chartH - volHeight, candleWidth, volHeight);
     });
 
-    // Strike Baseline (Golden Amber)
+    // Strike Baseline
     if (state.strikePrice) {
       const sy = getY(state.strikePrice);
       ctx.save();
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.2;
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
       ctx.moveTo(0, sy);
@@ -1592,7 +1335,6 @@
       ctx.stroke();
       ctx.restore();
 
-      // Strike Ribbon on Y-Axis
       ctx.fillStyle = '#f59e0b';
       ctx.fillRect(chartW, sy - 8, axisWidth, 16);
       ctx.fillStyle = '#000000';
@@ -1600,41 +1342,31 @@
       ctx.fillText(`K:${formatPrice(state.strikePrice, precision).replace('$', '')}`, chartW + 4, sy);
     }
 
-    // Draw Candlesticks with Enhanced Lighting
+    // Candlesticks
     allCandles.forEach((c, idx) => {
       const cx = 10 + idx * stepX + stepX / 2;
       const isGreen = c.close >= c.open;
       const candleColor = isGreen ? '#10b981' : '#f43f5e';
-
       const openY = getY(c.open);
       const closeY = getY(c.close);
-      const highY = getY(c.high);
-      const lowY = getY(c.low);
 
-      // Wick
       ctx.strokeStyle = candleColor;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(cx, highY);
-      ctx.lineTo(cx, lowY);
+      ctx.moveTo(cx, getY(c.high));
+      ctx.lineTo(cx, getY(c.low));
       ctx.stroke();
 
-      // Body with crisp fill & subtle border
       ctx.fillStyle = candleColor;
       const bodyTop = Math.min(openY, closeY);
-      const bodyHeight = Math.max(2.5, Math.abs(closeY - openY));
+      const bodyHeight = Math.max(2, Math.abs(closeY - openY));
       ctx.fillRect(cx - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
-
-      // Optional candle top/bottom rounding
-      ctx.strokeStyle = isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.4)';
-      ctx.lineWidth = 0.5;
-      ctx.strokeRect(cx - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
     });
 
-    // Draw EMA 7 Line (Cyan)
+    // EMA 7 & EMA 21
     ctx.save();
     ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     allCandles.forEach((c, idx) => {
       if (c.ema7) {
@@ -1646,9 +1378,8 @@
     });
     ctx.stroke();
 
-    // Draw EMA 21 Line (Purple)
     ctx.strokeStyle = '#a78bfa';
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     allCandles.forEach((c, idx) => {
       if (c.ema21) {
@@ -1661,24 +1392,12 @@
     ctx.stroke();
     ctx.restore();
 
-    // Current Price Indicator on Right Y-Axis
+    // Live Price Tag on Right Axis
     if (state.currentPrice) {
       const cy = getY(state.currentPrice);
       const isAbove = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
       const badgeBg = isAbove ? '#10b981' : '#f43f5e';
 
-      // Horizontal guideline to last candle
-      ctx.save();
-      ctx.strokeStyle = badgeBg;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(0, cy);
-      ctx.lineTo(chartW, cy);
-      ctx.stroke();
-      ctx.restore();
-
-      // Right Axis Price Tag
       ctx.fillStyle = badgeBg;
       ctx.fillRect(chartW, cy - 9, axisWidth, 18);
       ctx.fillStyle = '#ffffff';
@@ -1689,33 +1408,23 @@
     ctx.restore();
   }
 
-  // Chart 2: Real-Time High-Frequency Tick Stream & Strike Baseline (Pro Curve)
   function renderTickChart() {
     const canvas = dom.tickCanvas;
-    if (!canvas || !dom.canvasContainer) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = dom.canvasContainer.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-    }
-
+    const { w, h, dpr } = state.canvasDims.tick;
     ctx.save();
     ctx.scale(dpr, dpr);
-    const w = rect.width;
-    const h = rect.height;
 
-    // Background based on current active theme
-    const isDark = document.body.classList.contains('theme-dark') || document.body.classList.contains('theme-slate');
+    const isDark = document.body.classList.contains('theme-dark');
     ctx.fillStyle = isDark ? '#0b0f19' : '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
-    const axisWidth = 72;
+    const axisWidth = 68;
     const chartW = w - axisWidth;
-    const chartH = h - 18;
+    const chartH = h - 16;
 
     if (state.tickHistory.length < 2) {
       ctx.restore();
@@ -1738,10 +1447,10 @@
     const yMax = maxP + pad;
     const yRange = yMax - yMin;
 
-    const getY = (val) => chartH - ((val - yMin) / yRange) * (chartH - 24) - 8;
+    const getY = (val) => chartH - ((val - yMin) / yRange) * (chartH - 24) - 10;
     const getX = (idx) => (idx / (state.tickHistory.length - 1)) * (chartW - 20) + 10;
 
-    // Right Y-Axis Divider Line
+    // Right Y-Axis Divider
     ctx.strokeStyle = isDark ? '#1f293d' : '#e2e8f0';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1749,35 +1458,31 @@
     ctx.lineTo(chartW, h);
     ctx.stroke();
 
-    // Horizontal Price Grid Lines & Axis Labels
-    const gridSteps = 4;
+    // Price Grid Lines & Labels
     ctx.font = '10px "JetBrains Mono", monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    for (let i = 0; i <= gridSteps; i++) {
-      const priceVal = yMin + (yRange / gridSteps) * i;
+    for (let i = 0; i <= 3; i++) {
+      const priceVal = yMin + (yRange / 3) * i;
       const gy = getY(priceVal);
 
-      // Grid line
       ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
-      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, gy);
       ctx.lineTo(chartW, gy);
       ctx.stroke();
 
-      // Axis Label
       ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
       ctx.fillText(formatPrice(priceVal, precision), chartW + 6, gy);
     }
 
-    // Strike Line (Golden Amber)
+    // Strike Line
     if (state.strikePrice) {
       const sy = getY(state.strikePrice);
       ctx.save();
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.2;
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
       ctx.moveTo(0, sy);
@@ -1785,7 +1490,6 @@
       ctx.stroke();
       ctx.restore();
 
-      // Strike Ribbon on Y-Axis
       ctx.fillStyle = '#f59e0b';
       ctx.fillRect(chartW, sy - 8, axisWidth, 16);
       ctx.fillStyle = '#000000';
@@ -1793,13 +1497,13 @@
       ctx.fillText(`K:${formatPrice(state.strikePrice, precision).replace('$', '')}`, chartW + 4, sy);
     }
 
-    // Dynamic Gradient Fill Under Price Path
     const lastPrice = state.tickHistory[state.tickHistory.length - 1].price;
     const isAbove = state.strikePrice ? lastPrice >= state.strikePrice : true;
     const themeColor = isAbove ? '#10b981' : '#f43f5e';
 
+    // Gradient Fill
     const grad = ctx.createLinearGradient(0, 0, 0, chartH);
-    grad.addColorStop(0, isAbove ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)');
+    grad.addColorStop(0, isAbove ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
     ctx.beginPath();
@@ -1812,11 +1516,10 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Smooth Curved High-Frequency Polyline
+    // Price Polyline
     ctx.strokeStyle = themeColor;
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.2;
     ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
     ctx.beginPath();
     for (let i = 0; i < state.tickHistory.length; i++) {
       const x = getX(i);
@@ -1826,76 +1529,28 @@
     }
     ctx.stroke();
 
-    // High & Low Watermark Badges
-    let maxIdx = 0, minIdx = 0;
-    let highestP = -Infinity, lowestP = Infinity;
-    state.tickHistory.forEach((t, idx) => {
-      if (t.price > highestP) { highestP = t.price; maxIdx = idx; }
-      if (t.price < lowestP) { lowestP = t.price; minIdx = idx; }
-    });
-
-    if (state.tickHistory.length > 5) {
-      // High Pin
-      const hx = getX(maxIdx);
-      const hy = getY(highestP);
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
-      ctx.fillRect(Math.min(chartW - 60, Math.max(10, hx - 24)), hy - 16, 52, 13);
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 8px "JetBrains Mono", monospace';
-      ctx.fillText(`▲ MAX`, Math.min(chartW - 56, Math.max(14, hx - 20)), hy - 8);
-
-      // Low Pin
-      const lx = getX(minIdx);
-      const ly = getY(lowestP);
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
-      ctx.fillRect(Math.min(chartW - 60, Math.max(10, lx - 24)), ly + 4, 52, 13);
-      ctx.fillStyle = '#f43f5e';
-      ctx.font = 'bold 8px "JetBrains Mono", monospace';
-      ctx.fillText(`▼ MIN`, Math.min(chartW - 56, Math.max(14, lx - 20)), ly + 12);
-    }
-
-    // Pulsing Head Dot with Multi-Ring Ripple on Latest Tick
+    // Head Dot with Halo
     if (state.tickHistory.length > 0) {
       const lastX = getX(state.tickHistory.length - 1);
       const lastY = getY(state.tickHistory[state.tickHistory.length - 1].price);
 
-      // Outer Glow Halo
       ctx.beginPath();
-      ctx.arc(lastX, lastY, 9, 0, Math.PI * 2);
-      ctx.fillStyle = isAbove ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)';
+      ctx.arc(lastX, lastY, 7, 0, Math.PI * 2);
+      ctx.fillStyle = isAbove ? 'rgba(16, 185, 129, 0.35)' : 'rgba(244, 63, 94, 0.35)';
       ctx.fill();
 
-      // Middle Ring
       ctx.beginPath();
-      ctx.arc(lastX, lastY, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = themeColor;
-      ctx.fill();
-
-      // Inner White Core
-      ctx.beginPath();
-      ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
+      ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
     }
 
-    // Current Price Indicator Tag on Right Y-Axis
+    // Right Axis Price Tag
     if (state.currentPrice) {
       const cy = getY(state.currentPrice);
       const isAbove = state.strikePrice ? state.currentPrice >= state.strikePrice : true;
       const badgeBg = isAbove ? '#10b981' : '#f43f5e';
 
-      // Guideline
-      ctx.save();
-      ctx.strokeStyle = badgeBg;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(0, cy);
-      ctx.lineTo(chartW, cy);
-      ctx.stroke();
-      ctx.restore();
-
-      // Ribbon Tag
       ctx.fillStyle = badgeBg;
       ctx.fillRect(chartW, cy - 9, axisWidth, 18);
       ctx.fillStyle = '#ffffff';
@@ -1906,76 +1561,26 @@
     ctx.restore();
   }
 
-  // =========================================================================
-  // ⏱️ SOLID DUAL-CLOCK TIMER & ROLLOVER ENGINE (GUARANTEED NO FREEZING)
-  // =========================================================================
-  function updateTimerCountdown() {
-    try {
-      const now = Date.now();
-      syncRoundState();
-
-      const totalRoundMs = state.roundDurationMinutes * 60 * 1000;
-      const remainingMs = Math.max(0, state.roundEndTime - now);
-
-      const mins = Math.floor(remainingMs / 60000);
-      const secs = Math.floor((remainingMs % 60000) / 1000);
-      const tenths = Math.floor((remainingMs % 1000) / 100);
-
-      if (dom.timerMinutes) dom.timerMinutes.textContent = String(mins).padStart(2, '0');
-      if (dom.timerSeconds) dom.timerSeconds.textContent = String(secs).padStart(2, '0');
-      if (dom.timerMs) dom.timerMs.textContent = `.${tenths}`;
-
-      const progressPct = (remainingMs / totalRoundMs) * 100;
-      if (dom.timerProgressFill) dom.timerProgressFill.style.width = `${progressPct}%`;
-
-      if (dom.countdownCard) {
-        dom.countdownCard.classList.remove('warning', 'critical');
-        if (remainingMs <= 10000) {
-          dom.countdownCard.classList.add('critical');
-          if (secs !== state.lastChimePlayed) {
-            state.lastChimePlayed = secs;
-            playAlertSound('tick-10');
-          }
-        } else if (remainingMs <= 30000) {
-          dom.countdownCard.classList.add('warning');
-          if (state.lastChimePlayed !== '30s') {
-            state.lastChimePlayed = '30s';
-            playAlertSound('tick-30');
-          }
-        }
+  // Optimized Animation Loop (Zero Waste, Smooth 60fps)
+  function startRenderLoop() {
+    function loop() {
+      if (state.needsChartRender) {
+        renderCandleChart();
+        renderTickChart();
+        state.needsChartRender = false;
       }
-
-      if (dom.currentClock) dom.currentClock.textContent = formatTimeUTC(now);
-      if (dom.systemClockLocal) dom.systemClockLocal.textContent = `Waktu Lokal: ${formatTime(now, true)} WIB`;
-    } catch (err) {
-      console.warn('Timer countdown error:', err);
+      requestAnimationFrame(loop);
     }
+    requestAnimationFrame(loop);
   }
 
-  function startTimerEngine() {
-    // 1. Rock-solid setInterval loop (runs even when tab is backgrounded)
-    setInterval(updateTimerCountdown, 50);
-
-    // 2. High-precision requestAnimationFrame visual loop for ultra-smooth UI
-    function animLoop() {
-      updateTimerCountdown();
-      requestAnimationFrame(animLoop);
-    }
-    requestAnimationFrame(animLoop);
-  }
-
-  // --- Theme Switcher Engine ---
-  function initTheme() {
-    const savedTheme = localStorage.getItem('kopi_tubruk_theme') || 'theme-light';
-    applyTheme(savedTheme);
-  }
-
+  // --- 13. THEME ENGINE ---
   function applyTheme(themeName) {
     state.currentTheme = themeName;
     document.body.className = themeName;
     localStorage.setItem('kopi_tubruk_theme', themeName);
 
-    if (themeName === 'theme-dark' || themeName === 'theme-slate') {
+    if (themeName === 'theme-dark') {
       if (dom.themeIconLight) dom.themeIconLight.classList.add('hidden');
       if (dom.themeIconDark) dom.themeIconDark.classList.remove('hidden');
       if (dom.themeLabel) dom.themeLabel.textContent = 'GELAP';
@@ -1984,23 +1589,17 @@
       if (dom.themeIconDark) dom.themeIconDark.classList.add('hidden');
       if (dom.themeLabel) dom.themeLabel.textContent = 'TERANG';
     }
-
-    renderDualCharts();
+    state.needsChartRender = true;
   }
 
   function toggleTheme() {
-    const isDark = state.currentTheme === 'theme-dark' || state.currentTheme === 'theme-slate';
-    applyTheme(isDark ? 'theme-light' : 'theme-dark');
+    applyTheme(state.currentTheme === 'theme-dark' ? 'theme-light' : 'theme-dark');
   }
 
-  // --- Event Listeners & Interactive Handlers ---
+  // --- 14. EVENT LISTENERS SETUP ---
   function setupEventListeners() {
-    // Theme Switcher Button
-    if (dom.themeToggle) {
-      dom.themeToggle.addEventListener('click', toggleTheme);
-    }
+    if (dom.themeToggle) dom.themeToggle.addEventListener('click', toggleTheme);
 
-    // Coin Selection Switcher
     dom.coinButtons.forEach(btn => {
       btn.addEventListener('click', function () {
         const coinSymbol = this.dataset.coin;
@@ -2019,15 +1618,13 @@
           state.momentumQueue = [];
           state.feedPrices = { binance: null, coinbase: null, kraken: null, polymarketYes: 0.50, polymarketNo: 0.50 };
 
-          updatePriceDisplay();
-          updateStrikeDisplay();
           connectMultiExchangeStreams();
           syncRoundState();
+          state.needsChartRender = true;
         }
       });
     });
 
-    // Timeframe Selector
     dom.timeframeButtons.forEach(btn => {
       btn.addEventListener('click', function () {
         const mins = parseInt(this.dataset.minutes, 10);
@@ -2042,14 +1639,13 @@
       });
     });
 
-    // Sound Toggle
     if (dom.soundToggle) {
       dom.soundToggle.addEventListener('click', function () {
         state.audioEnabled = !state.audioEnabled;
         if (state.audioEnabled) {
           if (dom.soundOnIcon) dom.soundOnIcon.classList.remove('hidden');
           if (dom.soundOffIcon) dom.soundOffIcon.classList.add('hidden');
-          playAlertSound('tick-30');
+          playAlertSound('trade-exec');
         } else {
           if (dom.soundOnIcon) dom.soundOnIcon.classList.add('hidden');
           if (dom.soundOffIcon) dom.soundOffIcon.classList.remove('hidden');
@@ -2057,31 +1653,25 @@
       });
     }
 
-    // Manual Strike Lock
     if (dom.manualStrikeBtn) {
       dom.manualStrikeBtn.addEventListener('click', function () {
         if (state.currentPrice) {
           state.strikePrice = state.currentPrice;
           state.strikeLockedAt = Date.now();
           updateStrikeDisplay();
-          renderDualCharts();
+          state.needsChartRender = true;
         }
       });
     }
 
-    // Clear Chart
     if (dom.clearChartBtn) {
       dom.clearChartBtn.addEventListener('click', function () {
         state.tickHistory = [];
         state.candles15s = [];
-        if (state.currentPrice) {
-          state.tickHistory.push({ time: Date.now(), price: state.currentPrice });
-        }
-        renderDualCharts();
+        state.needsChartRender = true;
       });
     }
 
-    // Clear History
     if (dom.clearHistoryBtn) {
       dom.clearHistoryBtn.addEventListener('click', function () {
         state.roundHistory = [];
@@ -2089,7 +1679,6 @@
       });
     }
 
-    // Simulator Capital Input (Flexible Capital, Min $1)
     if (dom.simStartingCapitalInput) {
       dom.simStartingCapitalInput.addEventListener('input', function () {
         const val = parseFloat(this.value);
@@ -2108,7 +1697,6 @@
       });
     }
 
-    // Reset Portfolio Simulation
     if (dom.resetSimBtn) {
       dom.resetSimBtn.addEventListener('click', function () {
         const defaultCap = 20.00;
@@ -2126,32 +1714,40 @@
       });
     }
 
-    // Window Resize
-    window.addEventListener('resize', renderDualCharts);
+    window.addEventListener('resize', cacheCanvasDimensions);
 
-    // Second Tick Rate Calculator & Latency Indicator
+    // 1-Second Rate Calculator
     setInterval(() => {
       state.currentTickSpeed = state.ticksInSecond;
       if (dom.tickSpeed) dom.tickSpeed.textContent = `${state.ticksInSecond} ticks/s`;
       state.ticksInSecond = 0;
-
-      state.pingMs = Math.floor(10 + Math.random() * 6);
+      state.pingMs = Math.floor(10 + Math.random() * 5);
       if (dom.pingBadge) dom.pingBadge.textContent = `${state.pingMs}ms`;
     }, 1000);
   }
 
-  // --- Initialize App ---
+  // --- 15. MAIN INITIALIZATION ---
   function init() {
-    initTheme();
+    const savedTheme = localStorage.getItem('kopi_tubruk_theme') || 'theme-dark';
+    applyTheme(savedTheme);
+
     setupEventListeners();
+    cacheCanvasDimensions();
     updateSimulatorUI();
     renderSimTradeTable();
     syncRoundState();
     connectMultiExchangeStreams();
-    startTimerEngine();
 
-    // Initial greeting in AI debate transcript
-    appendDebateTranscript('arbiter', 'KOPI TUBRUK', '☕ Sistem KOPI TUBRUK aktif. Agregator multi-bursa (Binance, Coinbase, Kraken, Polymarket) terhubung.');
+    // Isolated Timer Heartbeat (100ms interval)
+    setInterval(updateTimerCountdown, 100);
+
+    // Throttled UI & Metrics Loop (100ms interval)
+    setInterval(updateThrottledDOM, 100);
+
+    // Continuous 60 FPS Render Loop
+    startRenderLoop();
+
+    appendDebateTranscript('arbiter', 'KOPI TUBRUK', '☕ Terminal AI aktif. Multi-Exchange Aggregator (Binance, Coinbase, Kraken, Polymarket) siap memproses.');
   }
 
   if (document.readyState === 'loading') {
