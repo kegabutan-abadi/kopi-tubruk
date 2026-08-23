@@ -2,19 +2,19 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KOPI TUBRUK - Dual-Chart Prediction & Trading Terminal</title>
-  <meta name="description" content="KOPI TUBRUK: Professional Dual-Chart Trading Terminal with Binance Spot Candlestick (1m/5m), Polymarket Implied Probability (1m/5m), and Resizable Layout.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>KOPI TUBRUK - Polymarket 5-Minute UP/DOWN Terminal</title>
+  <meta name="description" content="KOPI TUBRUK: Dedicated 5-Minute UP or DOWN Prediction Trading Terminal with Binance Spot, Polymarket Probability, and Resizable Zoom UI.">
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <!-- Local TradingView Lightweight Charts Library -->
   <script src="lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="theme-dark">
-  <div class="terminal-app">
+  <div class="terminal-app" id="terminalApp">
     
     <!-- TOP NAVIGATION BAR -->
     <header class="top-nav">
@@ -22,7 +22,7 @@
         <span class="brand-icon">☕</span>
         <div class="brand-info">
           <span class="brand-text">KOPI <span class="brand-accent">TUBRUK</span></span>
-          <span class="brand-tagline">DUAL-CHART AI TERMINAL</span>
+          <span class="brand-tagline">POLYMARKET 5M UP/DOWN TERMINAL</span>
         </div>
 
         <!-- Coin Selector -->
@@ -45,7 +45,7 @@
 
         <!-- Strike Price -->
         <div class="metric-item">
-          <span class="metric-label">STRIKE:</span>
+          <span class="metric-label">STRIKE 5M:</span>
           <span class="metric-value text-gold" id="navStrikePrice">--</span>
         </div>
 
@@ -53,6 +53,14 @@
         <div class="timer-badge" id="navTimerBadge">
           <span class="timer-icon">⏳</span>
           <span class="timer-val" id="navTimerVal">05:00.0</span>
+        </div>
+
+        <!-- Global Zoom Controls (A- / A+) -->
+        <div class="zoom-controls-group">
+          <button class="zoom-btn" id="btnZoomOut" title="Perkecil Ukuran Tampilan (Zoom Out)">A-</button>
+          <span class="zoom-label" id="zoomLevelLabel">100%</span>
+          <button class="zoom-btn" id="btnZoomIn" title="Perbesar Ukuran Tampilan (Zoom In)">A+</button>
+          <button class="zoom-btn" id="btnZoomReset" title="Reset Ukuran (100%)">↺</button>
         </div>
 
         <!-- Theme Toggle -->
@@ -94,18 +102,22 @@
             </div>
 
             <div class="bar-right">
-              <button class="ctrl-btn" id="btnFitBinanceChart" title="Auto-Fit Skala">⛶ Auto</button>
+              <div class="chart-zoom-group">
+                <button class="ctrl-btn" id="btnBinanceZoomIn" title="Zoom In Grafik">+</button>
+                <button class="ctrl-btn" id="btnBinanceZoomOut" title="Zoom Out Grafik">-</button>
+                <button class="ctrl-btn" id="btnFitBinanceChart" title="Auto-Fit Skala">⛶ Auto</button>
+              </div>
               <div class="live-dot-wrap"><span class="dot-green"></span> BINANCE LIVE</div>
             </div>
           </div>
           <div class="chart-canvas-box" id="binanceChartContainer"></div>
         </div>
 
-        <!-- CHART 2: POLYMARKET PROBABILITY & ODDS (1M / 5M) -->
+        <!-- CHART 2: POLYMARKET 5M UP/DOWN PROBABILITY -->
         <div class="card chart-box">
           <div class="card-bar">
             <div class="bar-left">
-              <span class="chart-label" id="polyChartTitle">GRAFIK 2: PELUANG PASAR PREDIKSI POLYMARKET</span>
+              <span class="chart-label" id="polyChartTitle">GRAFIK 2: POLYMARKET 5M UP/DOWN PROBABILITY</span>
               
               <!-- Interval Switcher (1m / 5m) -->
               <div class="tf-group" id="polyTfGroup">
@@ -114,15 +126,19 @@
               </div>
 
               <div class="poly-legend-inline">
-                <span class="tag-yes">YES: <strong id="polyLegendYes">50¢</strong></span>
-                <span class="tag-no">NO: <strong id="polyLegendNo">50¢</strong></span>
-                <span class="tag-baseline">BASELINE: <strong>50¢</strong></span>
+                <span class="tag-yes">UP (YES): <strong id="polyLegendYes">50¢</strong></span>
+                <span class="tag-no">DOWN (NO): <strong id="polyLegendNo">50¢</strong></span>
+                <span class="tag-baseline">PAR: <strong>50¢</strong></span>
               </div>
             </div>
 
             <div class="bar-right">
-              <button class="ctrl-btn" id="btnFitPolyChart" title="Auto-Fit Skala">⛶ Auto</button>
-              <div class="live-dot-wrap"><span class="dot-purple"></span> POLYMARKET LIVE FEED</div>
+              <div class="chart-zoom-group">
+                <button class="ctrl-btn" id="btnPolyZoomIn" title="Zoom In Grafik">+</button>
+                <button class="ctrl-btn" id="btnPolyZoomOut" title="Zoom Out Grafik">-</button>
+                <button class="ctrl-btn" id="btnFitPolyChart" title="Auto-Fit Skala">⛶ Auto</button>
+              </div>
+              <div class="live-dot-wrap"><span class="dot-purple"></span> POLYMARKET RESOLUTION</div>
             </div>
           </div>
           <div class="chart-canvas-box" id="polyChartContainer"></div>
@@ -161,28 +177,33 @@
       </section>
 
       <!-- DRAGGABLE SPLITTER HANDLE -->
-      <div class="resizer-divider" id="resizerHandle" title="Tarik ke kiri/kanan untuk menyesuaikan ukuran layout">
+      <div class="resizer-divider" id="resizerHandle" title="Tarik ke kiri/kanan untuk menyesuaikan lebar kolom">
         <div class="resizer-dots"></div>
       </div>
 
       <!-- RIGHT PANE: ORDER & AI EXECUTION PANEL -->
       <aside class="pane-order" id="paneOrder">
         
-        <!-- 1. Polymarket Odds Card -->
+        <!-- 1. Polymarket 5M UP/DOWN Binary Contract Box -->
         <div class="card odds-panel">
           <div class="card-bar">
-            <span class="card-heading">KONTRAK POLYMARKET</span>
+            <span class="card-heading" id="polyContractHeading">POLYMARKET 5M UP/DOWN</span>
             <span class="round-id-pill" id="currentRoundPill">RONDE #5M-0</span>
+          </div>
+
+          <div class="market-info-banner">
+            <span class="banner-title" id="marketQuestionTitle">Pasar: Apakah harga BTC berada di atas Strike saat ronde berakhir?</span>
+            <span class="banner-sub">Resolusi: $1.00 untuk sisi menang • $0.00 untuk sisi kalah</span>
           </div>
 
           <div class="odds-dual-grid">
             <div class="odds-block yes-block">
-              <div class="side-lbl">YES (NAIK)</div>
+              <div class="side-lbl">UP (YES)</div>
               <div class="cents-val" id="oddsYesCents">50¢</div>
               <div class="target-lbl" id="oddsYesTarget">≥ $0.00</div>
             </div>
             <div class="odds-block no-block">
-              <div class="side-lbl">NO (TURUN)</div>
+              <div class="side-lbl">DOWN (NO)</div>
               <div class="cents-val" id="oddsNoCents">50¢</div>
               <div class="target-lbl" id="oddsNoTarget">&lt; $0.00</div>
             </div>
@@ -193,20 +214,7 @@
           </div>
         </div>
 
-        <!-- 2. Live Polymarket Official Active Markets -->
-        <div class="card live-poly-events-panel">
-          <div class="card-bar">
-            <span class="card-heading">PASAR AKTIF RESMI POLYMARKET</span>
-            <span class="tag-official-api">GAMMA API LIVE</span>
-          </div>
-          <div class="poly-events-list" id="polyEventsList">
-            <div class="poly-event-item loading">
-              <span class="ev-q">Memuat pasar prediksi Polymarket live...</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. AI Consensus & Sentiment Card -->
+        <!-- 2. AI Consensus & Sentiment Card -->
         <div class="card consensus-panel">
           <div class="card-bar">
             <span class="card-heading">KONSENSUS ARBITER AI</span>
@@ -215,8 +223,8 @@
 
           <div class="sentiment-box">
             <div class="sentiment-lbls">
-              <span class="text-green">BULL: <strong id="bullScoreText">50%</strong></span>
-              <span class="text-red">BEAR: <strong id="bearScoreText">50%</strong></span>
+              <span class="text-green">BULL (UP): <strong id="bullScoreText">50%</strong></span>
+              <span class="text-red">BEAR (DOWN): <strong id="bearScoreText">50%</strong></span>
             </div>
             <div class="sentiment-track">
               <div class="sentiment-fill" id="sentimentFill" style="width: 50%;"></div>
@@ -231,10 +239,10 @@
           </div>
         </div>
 
-        <!-- 4. Active Position & Fast-Flip Reversal Card -->
+        <!-- 3. Active Position & Fast-Flip Reversal Card -->
         <div class="card position-panel">
           <div class="card-bar">
-            <span class="card-heading">POSISI TRADING AKTIF</span>
+            <span class="card-heading">STATUS POSISI TRADING AI</span>
             <span class="reversal-pill" id="reversalPill">⚡ FAST-FLIP AKTIF</span>
           </div>
 
@@ -273,12 +281,12 @@
           <div class="ai-activity-log">
             <div class="log-title">LOG AKTIVITAS AI:</div>
             <div class="log-content" id="aiActionLogText">
-              Menghubungkan ke data feed Binance & Polymarket...
+              Menghubungkan ke data feed Binance 5M & Polymarket...
             </div>
           </div>
         </div>
 
-        <!-- 5. Capital & Account Summary -->
+        <!-- 4. Capital & Account Summary -->
         <div class="card capital-panel">
           <div class="card-bar">
             <span class="card-heading">PORTOFOLIO SIMULATOR</span>
@@ -316,7 +324,7 @@
 
     <!-- TERMINAL FOOTER -->
     <footer class="bottom-footer">
-      <span>KOPI TUBRUK • Dual-Chart Terminal (Binance Spot & Polymarket Probability) • Real-Time Polymarket API</span>
+      <span>KOPI TUBRUK • Khusus Pasar 5M UP/DOWN Polymarket • Resizable & Zoomable UI</span>
       <span id="footerClock">00:00:00 WIB</span>
     </footer>
 
